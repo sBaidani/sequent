@@ -98,4 +98,18 @@ describe('Task Store', () => {
     taskStore.toggleTask(taskId);
     expect(taskStore.state.tasks[0].completed).toBe(false);
   });
+  
+  test('updateTaskDate updates the scheduled_date and enqueues sync', () => {
+    taskStore.addTask('Schedule me');
+    const taskId = taskStore.state.tasks[0].id;
+    const dateStr = '2026-06-15T00:00:00.000Z';
+    
+    taskStore.updateTaskDate(taskId, dateStr);
+    
+    expect(taskStore.state.tasks[0].scheduled_date).toBe(dateStr);
+    expect(syncEngine.enqueue).toHaveBeenCalledWith('tasks', 'UPDATE', expect.objectContaining({
+      id: taskId,
+      scheduled_date: dateStr
+    }));
+  });
 });

@@ -53,5 +53,31 @@ export const eventStore = {
     
     // Sync
     syncEngine.enqueue('events', 'DELETE', { id });
+  },
+  
+  updateCalendar: (id, updates) => {
+    // Optimistic UI
+    setEventsState('calendars', (c) => c.id === id, updates);
+    
+    // Sync
+    const calendar = eventsState.calendars.find(c => c.id === id);
+    if (calendar) {
+      syncEngine.enqueue('calendars', 'UPDATE', calendar);
+    }
+  },
+  
+  deleteCalendar: (id) => {
+    // Optimistic UI
+    setEventsState('calendars', (prev) => prev.filter(c => c.id !== id));
+    
+    // Delete all events belonging to this calendar
+    const eventsToDelete = eventsState.events.filter(e => e.calendarId === id);
+    setEventsState('events', (prev) => prev.filter(e => e.calendarId !== id));
+    
+    // Sync
+    syncEngine.enqueue('calendars', 'DELETE', { id });
+    eventsToDelete.forEach(e => {
+      syncEngine.enqueue('events', 'DELETE', { id: e.id });
+    });
   }
 };

@@ -50,6 +50,50 @@ function SettingsView() {
           </div>
         </section>
 
+        {/* Calendars */}
+        <section>
+          <div style={{"display":"flex", "justify-content":"space-between", "align-items":"center", "margin-bottom":"16px"}}>
+            <h3 style={{ "font-size": "16px", "font-weight": "800", "color": "#fff" }}>Local Calendars</h3>
+            <button 
+              onClick={() => uiStore.setActiveModal('addCalendar')}
+              style={{"background":"var(--accent)", "color":"#fff", "border":"none", "padding":"6px 12px", "border-radius":"8px", "font-size":"13px", "font-weight":"600", "cursor":"pointer"}}
+            >
+              + New Calendar
+            </button>
+          </div>
+          
+          <div style={{ "background": "var(--card)", "border-radius": "var(--card-radius-lg)", "border": "1px solid var(--border)", "overflow":"hidden" }}>
+            {eventState.calendars.map(cal => (
+              <div style={{ "padding": "16px 20px", "display": "flex", "align-items": "center", "justify-content": "space-between", "border-bottom": "1px solid var(--border)" }}>
+                <div style={{"display":"flex", "align-items":"center", "gap":"12px"}}>
+                  <input 
+                    type="color" 
+                    value={cal.color} 
+                    onChange={(e) => eventStore.updateCalendar(cal.id, { color: e.target.value })}
+                    style={{"width":"24px", "height":"24px", "border":"none", "border-radius":"50%", "cursor":"pointer", "padding":"0", "background":"transparent"}} 
+                  />
+                  <input 
+                    type="text" 
+                    value={cal.name}
+                    onChange={(e) => eventStore.updateCalendar(cal.id, { name: e.target.value })}
+                    style={{"background":"transparent", "border":"none", "color":"#fff", "font-size":"14px", "font-weight":"600", "outline":"none"}}
+                  />
+                </div>
+                <button 
+                  onClick={() => { if(confirm('Delete calendar and all its events?')) eventStore.deleteCalendar(cal.id); }}
+                  style={{"background":"transparent", "border":"none", "color":"#ff4d4f", "cursor":"pointer", "font-size":"18px"}}
+                  title="Delete Calendar"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+            {eventState.calendars.length === 0 && (
+              <div style={{"padding":"20px", "text-align":"center", "color":"var(--text-muted)", "font-size":"13px"}}>No calendars found.</div>
+            )}
+          </div>
+        </section>
+
         {/* Preferences */}
         <section>
           <h3 style={{ "font-size": "16px", "font-weight": "800", "margin-bottom": "16px", "color": "#fff" }}>Preferences</h3>

@@ -11,7 +11,7 @@ test('Add Event Modal creates new event in Timeline', async ({ page }) => {
   page.on('pageerror', err => consoleLogs.push(`[error] ${err.message}`));
 
   // Go to the app
-  await page.goto('http://localhost:3001/?test=true');
+  await page.goto('http://localhost:3000/?test=true');
 
   // Wait for the app to load
   await page.waitForTimeout(2000);

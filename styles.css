@@ -701,6 +701,21 @@ a { color: var(--accent); }
 }
 .list-card-add:hover { background: rgba(255,255,255,0.22); color: #fff; }
 
+/* Schedule Pad */
+.schedule-pad-day {
+  display: flex;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 8px;
+  padding: 12px;
+  min-height: 48px;
+  transition: all 0.2s;
+}
+.schedule-pad-day.drag-over {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  border-color: var(--accent);
+}
+
 .lists-add-fab {
   position: fixed; bottom: 160px; right: 24px;
   width: 52px; height: 52px;

@@ -1,11 +1,13 @@
-import { createSignal, onMount, onCleanup } from 'solid-js';
+import { createSignal, onMount, onCleanup, Show } from 'solid-js';
 import { uiStore } from '../../stores/uiStore';
 import { eventStore } from '../../stores/eventStore';
+import SidebarHeatmap from './SidebarHeatmap';
 
 function Sidebar() {
   const { state: uiState, setView } = uiStore;
   const { state: eventState } = eventStore;
   const [deferredPrompt, setDeferredPrompt] = createSignal(null);
+  const [calendarsExpanded, setCalendarsExpanded] = createSignal(true);
 
   onMount(() => {
     const handleBeforeInstallPrompt = (e) => {
@@ -53,14 +55,12 @@ function Sidebar() {
         </div>
       </div>
 
+      <SidebarHeatmap />
+
       <nav class="sidebar-nav">
         <button class={`nav-item ${uiState.view === 'timeline' ? 'active' : ''}`} onClick={() => setView('timeline')}>
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
           Timeline
-        </button>
-        <button class={`nav-item ${uiState.view === 'calendar' ? 'active' : ''}`} onClick={() => setView('calendar')}>
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-          Calendars
         </button>
         <button class={`nav-item ${uiState.view === 'tasks' ? 'active' : ''}`} onClick={() => setView('tasks')}>
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
@@ -73,14 +73,25 @@ function Sidebar() {
       </nav>
 
       <div class="sidebar-calendars" style={{ "padding": "0 12px", "margin-top": "20px" }}>
-        <div class="cal-group-title">My Calendars</div>
-        <div style={{ "display": "flex", "flex-direction": "column", "gap": "2px" }}>
-          {eventState.calendars.map(cal => (
-            <button class="cal-list-item">
-              <span class="cal-color-dot" style={{ "background-color": cal.color }}></span>
-              {cal.name}
-            </button>
-          ))}
+        <button class="accordion-header" onClick={() => setCalendarsExpanded(!calendarsExpanded())}>
+          <span>My Calendars</span>
+          <svg 
+            fill="none" stroke="currentColor" viewBox="0 0 24 24" 
+            style={{ width: "16px", height: "16px", transform: calendarsExpanded() ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
+        
+        <div class="accordion-content" style={{ "max-height": calendarsExpanded() ? "500px" : "0px", "opacity": calendarsExpanded() ? "1" : "0", "transition": "all 0.3s ease" }}>
+          <div style={{ "display": "flex", "flex-direction": "column", "gap": "2px", "padding-top": "8px" }}>
+            {eventState.calendars.map(cal => (
+              <button class="cal-list-item">
+                <span class="cal-color-dot" style={{ "background-color": cal.color }}></span>
+                {cal.name}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

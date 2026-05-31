@@ -58,6 +58,19 @@ export const taskStore = {
     syncEngine.enqueue('tasks', 'UPDATE', updatedTask);
   },
   
+  updateTaskDate: (id, dateStr) => {
+    const task = tasksState.tasks.find(t => t.id === id);
+    if (!task) return;
+    
+    const updatedTask = { ...task, scheduled_date: dateStr, updated_at: new Date().toISOString() };
+    
+    // Optimistic UI
+    setTasksState('tasks', t => t.id === id, 'scheduled_date', dateStr);
+    
+    // Sync
+    syncEngine.enqueue('tasks', 'UPDATE', updatedTask);
+  },
+  
   deleteTask: (id) => {
     // Optimistic UI
     setTasksState('tasks', (prev) => prev.filter(t => t.id !== id));
