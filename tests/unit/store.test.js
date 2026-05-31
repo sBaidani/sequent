@@ -32,7 +32,7 @@ describe('Event Store', () => {
     
     expect(syncEngine.enqueue).toHaveBeenCalledWith('events', 'INSERT', expect.objectContaining({
       title: 'Meeting with John',
-      calendarId: 'c-1'
+      calendarId: 'default-cal'
     }));
   });
 
@@ -93,7 +93,7 @@ describe('Task Store', () => {
     expect(taskStore.state.tasks.length).toBe(1);
     expect(taskStore.state.tasks[0].title).toBe('Buy groceries');
     expect(taskStore.state.tasks[0].completed).toBe(false);
-    expect(taskStore.state.tasks[0].listId).toBe('l-1');
+    expect(taskStore.state.tasks[0].listId).toBe('default-list');
     
     expect(syncEngine.enqueue).toHaveBeenCalledWith('tasks', 'INSERT', expect.objectContaining({
       title: 'Buy groceries'
