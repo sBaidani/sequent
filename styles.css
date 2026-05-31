@@ -1813,3 +1813,117 @@ a { color: var(--accent); }
 .month-day-cell.heatmap-3 .month-day-num { color: #fff; }
 .month-day-cell.heatmap-3 .month-day-event-item { color: #fff; }
 
+/* ═══════════════════════════════════════════════════════════════
+   SIDEBAR HEATMAP
+   ═══════════════════════════════════════════════════════════════ */
+.sidebar-heatmap {
+  padding: 16px;
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  margin-bottom: 16px;
+}
+.heatmap-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.heatmap-month-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.heatmap-nav-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 8px;
+  border-radius: 4px;
+}
+.heatmap-nav-btn:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--text-primary);
+}
+.heatmap-grid-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+.heatmap-dow {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.heatmap-day {
+  aspect-ratio: 1;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+.heatmap-day:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--text-primary);
+}
+.heatmap-day.other-month {
+  opacity: 0.3;
+}
+.heatmap-day.is-today {
+  border-color: var(--accent);
+  color: var(--text-primary);
+  font-weight: 700;
+}
+.heatmap-day.heatmap-1 {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  color: var(--text-primary);
+}
+.heatmap-day.heatmap-2 {
+  background: color-mix(in srgb, var(--accent) 50%, transparent);
+  color: var(--text-primary);
+}
+.heatmap-day.heatmap-3 {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* Accordion */
+.accordion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 8px 12px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: color 0.2s;
+}
+.accordion-header:hover {
+  color: var(--text-primary);
+}
+.accordion-content {
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
