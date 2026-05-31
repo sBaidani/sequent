@@ -48,6 +48,36 @@ describe('Event Store', () => {
       color: '#C0185A'
     }));
   });
+
+  test('updateCalendar modifies calendar and enqueues sync', () => {
+    eventStore.addCalendar('Personal', '#C0185A');
+    const calId = eventStore.state.calendars[0].id;
+    
+    eventStore.updateCalendar(calId, { name: 'Work', color: '#000000' });
+    
+    expect(eventStore.state.calendars[0].name).toBe('Work');
+    expect(eventStore.state.calendars[0].color).toBe('#000000');
+    expect(syncEngine.enqueue).toHaveBeenCalledWith('calendars', 'UPDATE', expect.objectContaining({
+      id: calId,
+      name: 'Work',
+      color: '#000000'
+    }));
+  });
+
+  test('deleteCalendar removes calendar and associated events, and enqueues sync', () => {
+    eventStore.addCalendar('Personal', '#C0185A');
+    const calId = eventStore.state.calendars[0].id;
+    eventStore.addEvent('Test Event', new Date().toISOString(), new Date().toISOString(), calId);
+    
+    expect(eventStore.state.events.length).toBe(1);
+    
+    eventStore.deleteCalendar(calId);
+    
+    expect(eventStore.state.calendars.length).toBe(0);
+    expect(eventStore.state.events.length).toBe(0);
+    expect(syncEngine.enqueue).toHaveBeenCalledWith('calendars', 'DELETE', { id: calId });
+    // Assuming the event ID was e-something, but we just verify events were deleted
+  });
 });
 
 describe('Task Store', () => {
