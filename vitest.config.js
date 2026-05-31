@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config';
 import solidPlugin from 'vite-plugin-solid';
 
 export default defineConfig({
-  plugins: [solidPlugin()],
+  plugins: [solidPlugin({ hot: false })],
   test: {
     environment: 'jsdom',
     globals: true,
@@ -11,5 +11,6 @@ export default defineConfig({
     deps: {
       inline: [/solid-js/],
     },
+    exclude: ['node_modules', 'dist', 'tests/e2e/**', 'tests/*.spec.js', 'tests/**/*.spec.js'],
   },
 });

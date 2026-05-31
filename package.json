@@ -10,9 +10,10 @@
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview",
-    "start": "electron .",
-    "build:win": "electron-builder --win",
-    "build:linux": "electron-builder --linux"
+    "start": "npm run build && electron .",
+    "sync:android": "npx cap sync android",
+    "build:win": "npm run build && electron-builder --win",
+    "build:linux": "npm run build && electron-builder --linux"
   },
   "build": {
     "appId": "com.sequent.app",
@@ -39,9 +40,9 @@
   "devDependencies": {
     "@playwright/test": "^1.60.0",
     "@solidjs/testing-library": "^0.8.10",
+    "@testing-library/jest-dom": "^6.9.1",
     "electron": "^31.7.7",
     "electron-builder": "^26.8.1",
-    "jest": "^30.4.2",
     "jsdom": "^29.1.1",
     "vite": "^8.0.14",
     "vite-plugin-solid": "^2.11.12",

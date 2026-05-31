@@ -1,58 +1,74 @@
 import { For } from 'solid-js';
 import { createAutoAnimate } from '@formkit/auto-animate/solid';
 import { taskStore } from '../../stores/taskStore';
+import EmptyState from '../ui/EmptyState';
 
 function TasksView() {
   const { state: taskState, toggleTask, deleteTask } = taskStore;
-  let listsBoardRef;
+  let listsGridRef;
   
-  createAutoAnimate(() => listsBoardRef);
+  createAutoAnimate(() => listsGridRef);
 
   return (
-    <div class="tasks-container">
-      <div class="lists-board" ref={listsBoardRef}>
-        <For each={taskState.lists}>
-          {(list) => {
-            const listTasks = taskState.tasks.filter(t => t.listId === list.id);
-            
-            return (
-              <div class="task-list-panel">
-                <div class="list-header" style={{ "border-left-color": list.color }}>
-                  <h3>{list.name}</h3>
-                  <span class="task-count">{listTasks.length}</span>
-                </div>
-                
-                <div class="list-body">
-                  {listTasks.length === 0 ? (
-                    <div class="empty-state-micro">No tasks</div>
-                  ) : (
-                    <For each={listTasks}>
-                      {(task) => (
-                        <div class={`task-card ${task.completed ? 'completed' : ''}`}>
-                          <button 
-                            class="checkbox-btn" 
-                            onClick={() => toggleTask(task.id)}
-                          >
-                            <div class={`checkbox-inner ${task.completed ? 'checked' : ''}`}></div>
-                          </button>
-                          
-                          <div class="task-content">
-                            <h4>{task.title}</h4>
-                            {task.priority === 'urgent' && <span class="priority-icon">🔥</span>}
-                          </div>
-                          
-                          <button class="delete-btn" onClick={() => deleteTask(task.id)}>×</button>
-                        </div>
-                      )}
-                    </For>
-                  )}
-                </div>
-              </div>
-            );
-          }}
-        </For>
+    <>
+      <div class="lists-topbar">
+        <div class="lists-title">Tasks</div>
+        <div class="lists-topbar-actions">
+          <button class="topbar-icon-btn">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+          </button>
+        </div>
       </div>
-    </div>
+
+      <div class="lists-layout">
+        <div class="schedule-pane">
+          <div class="schedule-pane-title">Upcoming</div>
+          <p style={{"color":"#888","font-size":"12px"}}>Schedule pane feature coming soon.</p>
+        </div>
+
+        <div class="lists-grid" ref={listsGridRef}>
+          <For each={taskState.lists}>
+            {(list) => {
+              const listTasks = taskState.tasks.filter(t => t.listId === list.id);
+              
+              return (
+                <div class="list-card" style={{ "background-color": list.color || '#333' }}>
+                  <div class="list-card-name">{list.name}</div>
+                  
+                  <div class="list-card-tasks" style={{"margin-top":"12px"}}>
+                    {listTasks.length === 0 ? (
+                      <EmptyState type="tasks" message="Hooray! No tasks here." />
+                    ) : (
+                      <For each={listTasks}>
+                        {(task) => (
+                          <div class="list-card-task" style={{"opacity": task.completed ? "0.5" : "1"}}>
+                            <span>{task.title}</span>
+                            <div style={{"display":"flex","gap":"8px","align-items":"center"}}>
+                              <input 
+                                type="checkbox" 
+                                checked={task.completed} 
+                                onChange={() => toggleTask(task.id)}
+                                style={{"cursor":"pointer"}}
+                              />
+                              <button onClick={() => deleteTask(task.id)} style={{"color":"#ff4d4f","font-weight":"bold"}}>×</button>
+                            </div>
+                          </div>
+                        )}
+                      </For>
+                    )}
+                    <button class="list-card-add">+</button>
+                  </div>
+                </div>
+              );
+            }}
+          </For>
+        </div>
+      </div>
+      
+      <button class="lists-add-fab">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+      </button>
+    </>
   );
 }
 

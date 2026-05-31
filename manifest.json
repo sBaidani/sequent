@@ -9,12 +9,12 @@
   "icons": [
     {
       "src": "icons/icon-192x192.png",
-      "sizes": "192x192",
+      "sizes": "any",
       "type": "image/png"
     },
     {
       "src": "icons/icon-512x512.png",
-      "sizes": "512x512",
+      "sizes": "any",
       "type": "image/png"
     }
   ]

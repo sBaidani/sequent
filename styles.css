@@ -3,7 +3,7 @@
    Faithfully clones Timepage + Actions visual DNA
    ═══════════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,1..1000&display=swap');
 
 /* ─── Design Tokens ─────────────────────────────────────────── */
 :root {
@@ -43,7 +43,7 @@
   --bottom-nav-h: 80px;
 
   /* Font */
-  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font: 'Google Sans Flex', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* ─── Theme: Amber (default) ────────────────────────────────── */
@@ -60,6 +60,7 @@
 /* ─── Reset ─────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { height: 100%; font-size: 16px; }
+#root { width: 100%; height: 100%; display: flex; }
 body {
   background: var(--bg);
   color: var(--text-primary);
@@ -1223,21 +1224,6 @@ a { color: var(--accent); }
    RESPONSIVE — Desktop (≥1024px)
    ═══════════════════════════════════════════════════════════════ */
 @media (min-width: 1024px) {
-  .sidebar {
-    width: var(--sidebar-w);
-    background: color-mix(in srgb, var(--sidebar-bg) 65%, transparent);
-    backdrop-filter: blur(20px) saturate(1.5);
-    -webkit-backdrop-filter: blur(20px) saturate(1.5);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.3s cubic-bezier(0.2,0.8,0.2,1);
-    position: fixed;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    z-index: 200;
-  }
   .bottom-nav { display: none; }
   .topbar-menu { display: none; }
   .ai-input-container { left: var(--sidebar-width); bottom: 0; }
