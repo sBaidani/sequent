@@ -86,7 +86,7 @@ a { color: var(--accent); }
   width: var(--sidebar-width);
   min-width: var(--sidebar-width);
   height: 100vh;
-  background: rgba(20, 20, 24, 0.75);
+  background: #000;
   backdrop-filter: blur(20px) saturate(1.4);
   -webkit-backdrop-filter: blur(20px) saturate(1.4);
   border-right: 1px solid rgba(255,255,255,0.06);
@@ -246,6 +246,7 @@ a { color: var(--accent); }
   display: flex;
   flex-direction: column;
   position: relative;
+  background-color: var(--bg, var(--bg-default));
 }
 .view { display: none; flex: 1; flex-direction: column; overflow: hidden; height: 100%; }
 .view.active { display: flex; }

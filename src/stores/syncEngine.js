@@ -81,8 +81,10 @@ class SyncEngine {
     }
   }
 
-  // Initial pull from server or local DB
   async hydrate() {
+    // Clear syncQueue to wipe out any bad IDs from before the UUID fix
+    await localDB.clear('syncQueue');
+
     // 1. Load from IndexedDB for instant UI
     const [localTasks, localEvents] = await Promise.all([
       localDB.getAll('tasks'),

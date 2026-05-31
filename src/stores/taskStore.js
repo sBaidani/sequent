@@ -13,11 +13,14 @@ export const taskStore = {
   setTasks: (tasks) => setTasksState('tasks', tasks),
   setLists: (lists) => setTasksState('lists', lists),
   
-  addTask: (title, listId = 'l-1', priority = 'normal') => {
+  addTask: (title, listId = null, priority = 'normal') => {
+    // If no listId provided, default to the first available list, or generate a dummy one if empty
+    const targetListId = listId || (tasksState.lists[0]?.id) || 'default-list';
+    
     const newTask = {
-      id: generateId('t-'),
+      id: generateId(),
       title,
-      listId,
+      listId: targetListId,
       completed: false,
       priority,
       created_at: new Date().toISOString(),
@@ -33,7 +36,7 @@ export const taskStore = {
   
   addList: (name, color, icon) => {
     const newList = {
-      id: generateId('l-'),
+      id: generateId(),
       name,
       color,
       icon,
@@ -43,6 +46,26 @@ export const taskStore = {
     
     setTasksState('lists', (prev) => [...prev, newList]);
     syncEngine.enqueue('lists', 'INSERT', newList);
+  },
+  
+  updateList: (id, updates) => {
+    setTasksState('lists', (l) => l.id === id, updates);
+    const list = tasksState.lists.find(l => l.id === id);
+    if (list) {
+      syncEngine.enqueue('lists', 'UPDATE', list);
+    }
+  },
+  
+  deleteList: (id) => {
+    setTasksState('lists', (prev) => prev.filter(l => l.id !== id));
+    
+    const tasksToDelete = tasksState.tasks.filter(t => t.listId === id);
+    setTasksState('tasks', (prev) => prev.filter(t => t.listId !== id));
+    
+    syncEngine.enqueue('lists', 'DELETE', { id });
+    tasksToDelete.forEach(t => {
+      syncEngine.enqueue('tasks', 'DELETE', { id: t.id });
+    });
   },
   
   toggleTask: (id) => {

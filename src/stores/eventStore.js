@@ -13,13 +13,14 @@ export const eventStore = {
   setEvents: (events) => setEventsState('events', events),
   setCalendars: (calendars) => setEventsState('calendars', calendars),
   
-  addEvent: (title, startTime, endTime, calendarId = 'c-1') => {
+  addEvent: (title, startTime, endTime, calendarId = null) => {
+    const targetCalendarId = calendarId || (eventsState.calendars[0]?.id) || 'default-cal';
     const newEvent = {
-      id: generateId('e-'),
+      id: generateId(),
       title,
       start_time: startTime,
       end_time: endTime,
-      calendarId,
+      calendarId: targetCalendarId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -33,7 +34,7 @@ export const eventStore = {
   
   addCalendar: (name, color) => {
     const newCalendar = {
-      id: generateId('c-'),
+      id: generateId(),
       name,
       color,
       created_at: new Date().toISOString(),

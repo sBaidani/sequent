@@ -1,11 +1,13 @@
 import { uiStore } from '../../stores/uiStore';
 import { settingsStore } from '../../stores/settingsStore';
 import { eventStore } from '../../stores/eventStore';
+import { taskStore } from '../../stores/taskStore';
 
 function SettingsView() {
   const { state: uiState, setTheme } = uiStore;
   const { state: settings, setStartOfWeek, setDefaultDuration } = settingsStore;
   const { state: eventState } = eventStore;
+  const { state: taskState } = taskStore;
   
   const themes = [
     { name: 'Amber', color: '#E8942A' },
@@ -91,6 +93,53 @@ function SettingsView() {
             ))}
             {eventState.calendars.length === 0 && (
               <div style={{"padding":"20px", "text-align":"center", "color":"var(--text-muted)", "font-size":"13px"}}>No calendars found.</div>
+            )}
+          </div>
+        </section>
+
+        {/* Task Lists */}
+        <section>
+          <div style={{"display":"flex", "justify-content":"space-between", "align-items":"center", "margin-bottom":"16px"}}>
+            <h3 style={{ "font-size": "16px", "font-weight": "800", "color": "#fff" }}>Task Lists</h3>
+            <button 
+              onClick={() => {
+                const name = prompt('New list name:');
+                if (name) taskStore.addList(name, '#3B6ED6');
+              }}
+              style={{"background":"var(--accent)", "color":"#fff", "border":"none", "padding":"6px 12px", "border-radius":"8px", "font-size":"13px", "font-weight":"600", "cursor":"pointer"}}
+            >
+              + New List
+            </button>
+          </div>
+          
+          <div style={{ "background": "var(--card)", "border-radius": "var(--card-radius-lg)", "border": "1px solid var(--border)", "overflow":"hidden" }}>
+            {taskState.lists.map(list => (
+              <div style={{ "padding": "16px 20px", "display": "flex", "align-items": "center", "justify-content": "space-between", "border-bottom": "1px solid var(--border)" }}>
+                <div style={{"display":"flex", "align-items":"center", "gap":"12px"}}>
+                  <input 
+                    type="color" 
+                    value={list.color} 
+                    onChange={(e) => taskStore.updateList(list.id, { color: e.target.value })}
+                    style={{"width":"24px", "height":"24px", "border":"none", "border-radius":"50%", "cursor":"pointer", "padding":"0", "background":"transparent"}} 
+                  />
+                  <input 
+                    type="text" 
+                    value={list.name}
+                    onChange={(e) => taskStore.updateList(list.id, { name: e.target.value })}
+                    style={{"background":"transparent", "border":"none", "color":"#fff", "font-size":"14px", "font-weight":"600", "outline":"none"}}
+                  />
+                </div>
+                <button 
+                  onClick={() => { if(confirm('Delete list and all its tasks?')) taskStore.deleteList(list.id); }}
+                  style={{"background":"transparent", "border":"none", "color":"#ff4d4f", "cursor":"pointer", "font-size":"18px"}}
+                  title="Delete List"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+            {taskState.lists.length === 0 && (
+              <div style={{"padding":"20px", "text-align":"center", "color":"var(--text-muted)", "font-size":"13px"}}>No task lists found.</div>
             )}
           </div>
         </section>
