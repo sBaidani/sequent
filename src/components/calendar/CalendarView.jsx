@@ -1,4 +1,5 @@
 import { For } from 'solid-js';
+import { uiStore } from '../../stores/uiStore';
 import { eventStore } from '../../stores/eventStore';
 
 function CalendarView() {
@@ -9,7 +10,7 @@ function CalendarView() {
       <div class="lists-topbar">
         <div class="lists-title">Calendars</div>
         <div class="lists-topbar-actions">
-          <button class="topbar-icon-btn">
+          <button class="topbar-icon-btn" onClick={() => uiStore.setActiveModal('addCalendar')}>
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
           </button>
         </div>
@@ -40,7 +41,7 @@ function CalendarView() {
         </div>
       </div>
       
-      <button class="lists-add-fab">
+      <button class="lists-add-fab" onClick={() => uiStore.setActiveModal('addCalendar')}>
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
       </button>
     </>

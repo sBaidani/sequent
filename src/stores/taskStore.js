@@ -31,6 +31,20 @@ export const taskStore = {
     syncEngine.enqueue('tasks', 'INSERT', newTask);
   },
   
+  addList: (name, color, icon) => {
+    const newList = {
+      id: generateId('l-'),
+      name,
+      color,
+      icon,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    
+    setTasksState('lists', (prev) => [...prev, newList]);
+    syncEngine.enqueue('lists', 'INSERT', newList);
+  },
+  
   toggleTask: (id) => {
     const task = tasksState.tasks.find(t => t.id === id);
     if (!task) return;

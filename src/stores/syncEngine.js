@@ -89,9 +89,9 @@ class SyncEngine {
       localDB.getAll('events')
     ]);
     
-    // Hydrate stores immediately from local data (not fully implemented in dummy stores yet)
-    // taskStore.setTasks(localTasks);
-    // eventStore.setEvents(localEvents);
+    // Hydrate stores immediately from local data
+    taskStore.setTasks(localTasks || []);
+    eventStore.setEvents(localEvents || []);
 
     // 2. Fetch fresh data from Supabase if online
     const { data: { session } } = await supabase.auth.getSession();

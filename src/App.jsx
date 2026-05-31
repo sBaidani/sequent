@@ -6,14 +6,22 @@ import CalendarView from './components/calendar/CalendarView';
 import TasksView from './components/tasks/TasksView';
 import SettingsView from './components/settings/SettingsView';
 import OnboardingModal from './components/onboarding/OnboardingModal';
+import AddEventModal from './components/events/AddEventModal';
+import AddTaskModal from './components/tasks/AddTaskModal';
+import AddCalendarModal from './components/calendar/AddCalendarModal';
 import ToastProvider from './components/ui/ToastProvider';
 import { uiStore } from './stores/uiStore';
+import { syncEngine } from './stores/syncEngine';
 
 function App() {
   const { state: uiState } = uiStore;
   let viewContainerRef;
   
   createAutoAnimate(() => viewContainerRef);
+
+  onMount(() => {
+    syncEngine.hydrate();
+  });
 
   return (
     <div id="app" class="theme-default" style={{ "--app-theme": uiState.theme, "display": "flex", "width": "100%", "height": "100%" }}>
@@ -30,6 +38,9 @@ function App() {
       </div>
       
       {!uiState.hasSeenOnboarding && <OnboardingModal />}
+      <AddEventModal />
+      <AddTaskModal />
+      <AddCalendarModal />
       <ToastProvider />
     </div>
   );

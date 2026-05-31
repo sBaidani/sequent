@@ -1,6 +1,7 @@
 import { For } from 'solid-js';
 import { createAutoAnimate } from '@formkit/auto-animate/solid';
 import { taskStore } from '../../stores/taskStore';
+import { uiStore } from '../../stores/uiStore';
 import EmptyState from '../ui/EmptyState';
 
 function TasksView() {
@@ -14,7 +15,7 @@ function TasksView() {
       <div class="lists-topbar">
         <div class="lists-title">Tasks</div>
         <div class="lists-topbar-actions">
-          <button class="topbar-icon-btn">
+          <button class="topbar-icon-btn" onClick={() => uiStore.setActiveModal('addTask')}>
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
           </button>
         </div>
@@ -56,7 +57,7 @@ function TasksView() {
                         )}
                       </For>
                     )}
-                    <button class="list-card-add">+</button>
+                    <button class="list-card-add" onClick={() => uiStore.setActiveModal('addTask')}>+</button>
                   </div>
                 </div>
               );
@@ -65,7 +66,7 @@ function TasksView() {
         </div>
       </div>
       
-      <button class="lists-add-fab">
+      <button class="lists-add-fab" onClick={() => uiStore.setActiveModal('addTask')}>
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
       </button>
     </>

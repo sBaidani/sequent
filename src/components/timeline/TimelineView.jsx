@@ -22,7 +22,7 @@ function TimelineView() {
           <div class="topbar-today-label">Timeline</div>
           <div class="topbar-week-label">Upcoming Schedule</div>
         </div>
-        <button class="topbar-add" onClick={() => uiStore.showToast("Add event coming soon")}>
+        <button class="topbar-add" onClick={() => uiStore.setActiveModal('addEvent')}>
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
         </button>
       </div>
@@ -31,7 +31,7 @@ function TimelineView() {
         <For each={days}>
           {(day) => {
             const isToday = isSameDay(day, today);
-            const eventsForDay = eventState.events.filter(e => isSameDay(new Date(e.startTime), day));
+            const eventsForDay = eventState.events.filter(e => e.start_time && isSameDay(new Date(e.start_time), day));
 
             return (
               <div class={`day-section ${isToday ? 'is-today' : ''}`}>
@@ -57,7 +57,7 @@ function TimelineView() {
                             <div class="event-card-body">
                               <div class="event-card-title">{ev.title}</div>
                               <div class="event-card-meta">
-                                <span class="event-card-time">{format(new Date(ev.startTime), 'h:mm a')}</span> - {format(new Date(ev.endTime), 'h:mm a')}
+                                <span class="event-card-time">{format(new Date(ev.start_time), 'h:mm a')}</span> - {format(new Date(ev.end_time), 'h:mm a')}
                               </div>
                             </div>
                           </div>

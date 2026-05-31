@@ -31,6 +31,22 @@ export const eventStore = {
     syncEngine.enqueue('events', 'INSERT', newEvent);
   },
   
+  addCalendar: (name, color) => {
+    const newCalendar = {
+      id: generateId('c-'),
+      name,
+      color,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    
+    // Optimistic UI
+    setEventsState('calendars', (prev) => [...prev, newCalendar]);
+    
+    // Sync
+    syncEngine.enqueue('calendars', 'INSERT', newCalendar);
+  },
+  
   deleteEvent: (id) => {
     // Optimistic UI
     setEventsState('events', (prev) => prev.filter(e => e.id !== id));
