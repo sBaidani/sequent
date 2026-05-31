@@ -1,17 +1,21 @@
 {
   "name": "Sequent",
   "short_name": "Sequent",
-  "description": "Unified calendar and tasks. Your timeline, reimagined.",
-  "start_url": "/",
+  "description": "A modern calendar and task management application.",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0A0A0A",
-  "theme_color": "#0A0A0A",
-  "orientation": "any",
+  "background_color": "#0F0F0F",
+  "theme_color": "#0F0F0F",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='42' fill='%23E8942A'/><text x='96' y='128' font-family='Arial Black,Arial' font-size='96' font-weight='900' text-anchor='middle' fill='white'>S</text></svg>",
+      "src": "icons/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml"
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
     }
   ]
 }
