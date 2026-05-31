@@ -30,17 +30,17 @@ function TasksView() {
         <div class="lists-grid" ref={listsGridRef}>
           <For each={taskState.lists}>
             {(list) => {
-              const listTasks = taskState.tasks.filter(t => t.listId === list.id);
+              const listTasks = () => taskState.tasks.filter(t => t.listId === list.id);
               
               return (
                 <div class="list-card" style={{ "background-color": list.color || '#333' }}>
                   <div class="list-card-name">{list.name}</div>
                   
                   <div class="list-card-tasks" style={{"margin-top":"12px"}}>
-                    {listTasks.length === 0 ? (
+                    {listTasks().length === 0 ? (
                       <EmptyState type="tasks" message="Hooray! No tasks here." />
                     ) : (
-                      <For each={listTasks}>
+                      <For each={listTasks()}>
                         {(task) => (
                           <div class="list-card-task" style={{"opacity": task.completed ? "0.5" : "1"}}>
                             <span>{task.title}</span>

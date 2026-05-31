@@ -31,7 +31,7 @@ function TimelineView() {
         <For each={days}>
           {(day) => {
             const isToday = isSameDay(day, today);
-            const eventsForDay = eventState.events.filter(e => e.start_time && isSameDay(new Date(e.start_time), day));
+            const eventsForDay = () => eventState.events.filter(e => e.start_time && isSameDay(new Date(e.start_time), day));
 
             return (
               <div class={`day-section ${isToday ? 'is-today' : ''}`}>
@@ -48,10 +48,10 @@ function TimelineView() {
                 <div class="day-content">
                   <div class="day-col-events">
                     <div class="section-label">Schedule</div>
-                    {eventsForDay.length === 0 ? (
+                    {eventsForDay().length === 0 ? (
                       <div class="day-empty">A clear day ahead.</div>
                     ) : (
-                      <For each={eventsForDay}>
+                      <For each={eventsForDay()}>
                         {(ev) => (
                           <div class="event-card" style={{ "--cal-color": "#E8942A" }}>
                             <div class="event-card-body">

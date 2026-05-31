@@ -1,4 +1,4 @@
-import { createEffect } from 'solid-js';
+import { createEffect, onMount } from 'solid-js';
 import { createAutoAnimate } from '@formkit/auto-animate/solid';
 import Sidebar from './components/layout/Sidebar';
 import TimelineView from './components/timeline/TimelineView';

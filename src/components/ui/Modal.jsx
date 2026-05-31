@@ -13,6 +13,7 @@ function Modal(props) {
   return (
     <Show when={uiStore.state.activeModal === props.id}>
       <div 
+        id={props.id}
         class="modal-overlay" 
         ref={overlayRef} 
         onClick={handleOverlayClick}
