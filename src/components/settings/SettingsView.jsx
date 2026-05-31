@@ -5,6 +5,7 @@ import { eventStore } from '../../stores/eventStore';
 function SettingsView() {
   const { state: uiState, setTheme } = uiStore;
   const { state: settings, setStartOfWeek, setDefaultDuration } = settingsStore;
+  const { state: eventState } = eventStore;
   
   const themes = [
     { name: 'Amber', color: '#E8942A' },

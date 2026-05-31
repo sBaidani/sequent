@@ -73,8 +73,11 @@ function Sidebar() {
       </nav>
 
       <div class="sidebar-calendars" style={{ "padding": "0 12px", "margin-top": "20px" }}>
-        <button class="accordion-header" onClick={() => setCalendarsExpanded(!calendarsExpanded())}>
-          <span>My Calendars</span>
+        <button class="nav-item" onClick={() => setCalendarsExpanded(!calendarsExpanded())} style={{"justify-content": "space-between"}}>
+          <div style={{"display":"flex", "align-items":"center", "gap":"12px"}}>
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            My Calendars
+          </div>
           <svg 
             fill="none" stroke="currentColor" viewBox="0 0 24 24" 
             style={{ width: "16px", height: "16px", transform: calendarsExpanded() ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
