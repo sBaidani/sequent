@@ -39,7 +39,6 @@ describe('Task Store', () => {
     taskStore.toggleTask(task.id);
     expect(taskStore.state.tasks[0].completed).toBe(false);
   });
-
   it('should delete a task', () => {
     taskStore.addTask('Task to delete', null);
     const task = taskStore.state.tasks[0];
@@ -47,5 +46,22 @@ describe('Task Store', () => {
     taskStore.deleteTask(task.id);
     expect(taskStore.state.tasks.length).toBe(0);
     expect(syncEngine.enqueue).toHaveBeenCalledWith('tasks', 'DELETE', { id: task.id });
+  });
+
+  it('should auto-create a list if none exists, and schedule the task date', () => {
+    // Clear lists to simulate empty state
+    taskStore.state.lists.forEach(l => taskStore.deleteList(l.id));
+    
+    const targetDate = '2026-06-01T00:00:00.000Z';
+    taskStore.addTask('Task with auto list', null, targetDate);
+    
+    // Auto-created default list
+    expect(taskStore.state.lists.length).toBe(1);
+    expect(taskStore.state.lists[0].name).toBe('My Tasks');
+    
+    // Task created inside it
+    expect(taskStore.state.tasks.length).toBe(1);
+    expect(taskStore.state.tasks[0].listId).toBe(taskStore.state.lists[0].id);
+    expect(taskStore.state.tasks[0].scheduled_date).toBe(targetDate);
   });
 });

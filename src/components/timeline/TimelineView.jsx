@@ -13,6 +13,7 @@ function TimelineView() {
   const today = new Date();
   // Start with 15 days before and 30 days after
   const [days, setDays] = createSignal(Array.from({ length: 45 }).map((_, i) => addDays(today, i - 15)));
+  const [isReady, setIsReady] = createSignal(false);
 
   let topSentinel;
   let bottomSentinel;
@@ -23,11 +24,23 @@ function TimelineView() {
         if (entry.isIntersecting) {
           if (entry.target === topSentinel) {
             // Load past
+            const scrollContainer = document.getElementById('timelineScroll');
+            const oldScrollHeight = scrollContainer ? scrollContainer.scrollHeight : 0;
+            const oldScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
+
             setDays(prev => {
               const firstDay = prev[0];
               const pastDays = Array.from({ length: 15 }).map((_, i) => addDays(firstDay, -(15 - i)));
               return [...pastDays, ...prev];
             });
+
+            if (scrollContainer) {
+              // Wait for DOM update and adjust scrollTop by the height of newly prepended days
+              requestAnimationFrame(() => {
+                const newScrollHeight = scrollContainer.scrollHeight;
+                scrollContainer.scrollTop = oldScrollTop + (newScrollHeight - oldScrollHeight);
+              });
+            }
           } else if (entry.target === bottomSentinel) {
             // Load future
             setDays(prev => {
@@ -43,11 +56,22 @@ function TimelineView() {
     if (topSentinel) observer.observe(topSentinel);
     if (bottomSentinel) observer.observe(bottomSentinel);
 
-    // Initial scroll to today
-    setTimeout(() => {
-      const todayEl = document.querySelector('.day-section.is-today');
-      if (todayEl) todayEl.scrollIntoView({ block: 'start' });
-    }, 100);
+    // Initial scroll to today without jumping visibly
+    const scrollContainer = document.getElementById('timelineScroll');
+    const todayEl = document.querySelector('.day-section.is-today');
+    if (todayEl && scrollContainer) {
+      scrollContainer.scrollTop = todayEl.offsetTop;
+      setIsReady(true);
+    } else {
+      setTimeout(() => {
+        const todayEl = document.querySelector('.day-section.is-today');
+        const scrollContainer = document.getElementById('timelineScroll');
+        if (todayEl && scrollContainer) {
+          scrollContainer.scrollTop = todayEl.offsetTop;
+        }
+        setIsReady(true);
+      }, 50);
+    }
 
     onCleanup(() => observer.disconnect());
   });
@@ -70,7 +94,10 @@ function TimelineView() {
         </button>
       </div>
 
-      <div class="flex-1 overflow-y-auto overflow-x-hidden relative scroll-smooth" id="timelineScroll">
+      <div 
+        id="timelineScroll" 
+        class={`flex-1 overflow-y-auto overflow-x-hidden relative scroll-smooth transition-opacity duration-300 ${isReady() ? 'opacity-100' : 'opacity-0'}`}
+      >
         <div ref={topSentinel} style={{ height: '1px' }}></div>
         <For each={days()}>
           {(day) => {

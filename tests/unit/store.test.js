@@ -29,10 +29,11 @@ describe('Event Store', () => {
     expect(eventStore.state.events[0].title).toBe(title);
     expect(eventStore.state.events[0].start_time).toBe(start);
     expect(eventStore.state.events[0].end_time).toBe(end);
+    expect(eventStore.state.calendars.length).toBe(1); // Auto-created Personal calendar
     
     expect(syncEngine.enqueue).toHaveBeenCalledWith('events', 'INSERT', expect.objectContaining({
       title: 'Meeting with John',
-      calendarId: 'default-cal'
+      calendarId: eventStore.state.calendars[0].id
     }));
   });
 
@@ -93,10 +94,12 @@ describe('Task Store', () => {
     expect(taskStore.state.tasks.length).toBe(1);
     expect(taskStore.state.tasks[0].title).toBe('Buy groceries');
     expect(taskStore.state.tasks[0].completed).toBe(false);
-    expect(taskStore.state.tasks[0].listId).toBe('default-list');
+    expect(taskStore.state.lists.length).toBe(1); // Auto-created default task list
+    expect(taskStore.state.tasks[0].listId).toBe(taskStore.state.lists[0].id);
     
     expect(syncEngine.enqueue).toHaveBeenCalledWith('tasks', 'INSERT', expect.objectContaining({
-      title: 'Buy groceries'
+      title: 'Buy groceries',
+      listId: taskStore.state.lists[0].id
     }));
   });
   
