@@ -32,10 +32,13 @@ function AddEventModal() {
     e.preventDefault();
     if (!title().trim()) return;
     
-    const startObj = new Date(`${date()}T${time()}`);
-    const endObj = new Date(startObj.getTime() + 60 * 60 * 1000); // Default 1 hour duration
+    const dateStr = date() || new Date().toISOString().split('T')[0];
+    const timeStr = time() || '12:00';
+    const startObj = new Date(`${dateStr}T${timeStr}`);
+    const validStart = isNaN(startObj.getTime()) ? new Date() : startObj;
+    const endObj = new Date(validStart.getTime() + 60 * 60 * 1000); // Default 1 hour duration
     
-    eventStore.addEvent(title(), startObj.toISOString(), endObj.toISOString(), calendarId() || null);
+    eventStore.addEvent(title(), validStart.toISOString(), endObj.toISOString(), calendarId() || null);
     
     setTitle('');
     uiStore.setActiveModal(null);

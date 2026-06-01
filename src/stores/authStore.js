@@ -38,10 +38,42 @@ export const authStore = {
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
       
     if (!error && data) {
       setAuthState('profile', data);
+    } else if (!error && !data) {
+      // Profile not found, let's create it
+      const { data: { session } } = await supabase.auth.getSession();
+      const defaultProfile = {
+        id: userId,
+        display_name: session?.user?.user_metadata?.full_name || 'Sequent User',
+        avatar_url: session?.user?.user_metadata?.avatar_url || null,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+        updated_at: new Date().toISOString()
+      };
+      
+      const { data: newProfile, error: insertError } = await supabase
+        .from('profiles')
+        .insert(defaultProfile)
+        .select()
+        .maybeSingle();
+        
+      if (!insertError && newProfile) {
+        setAuthState('profile', newProfile);
+      } else {
+        console.error('Failed to auto-create profile:', insertError);
+        if (insertError?.code === '23503' || insertError?.message?.includes('violates foreign key constraint')) {
+          console.warn('Stale user session detected. Signing out...');
+          authStore.signOut();
+        }
+      }
+    } else if (error) {
+      console.error('Error fetching profile:', error);
+      if (error?.code === '23503' || error?.message?.includes('violates foreign key constraint')) {
+        console.warn('Stale user session detected. Signing out...');
+        authStore.signOut();
+      }
     }
   },
 
@@ -65,6 +97,19 @@ export const authStore = {
   },
 
   signOut: async () => {
+    // Clear local IndexedDB tables to prevent leaking user data to another session
+    const { localDB } = await import('../lib/db');
+    try {
+      await Promise.all([
+        localDB.clear('tasks'),
+        localDB.clear('events'),
+        localDB.clear('lists'),
+        localDB.clear('calendars'),
+        localDB.clear('syncQueue')
+      ]);
+    } catch (err) {
+      console.error('Failed to clear local DB on signOut:', err);
+    }
     return supabase.auth.signOut();
   }
 };

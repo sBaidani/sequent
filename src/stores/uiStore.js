@@ -18,7 +18,6 @@ const [uiState, setUiState] = createStore({
 
 // Initialize CSS variables to match default theme
 document.documentElement.style.setProperty('--accent', uiState.theme);
-document.documentElement.style.setProperty('--bg', uiState.theme);
 document.documentElement.style.setProperty('--accent-rgb', '232, 148, 42');
 
 window.addEventListener('click', (e) => {
@@ -36,7 +35,6 @@ export const uiStore = {
     
     // Set HEX accent
     document.documentElement.style.setProperty('--accent', theme);
-    document.documentElement.style.setProperty('--bg', theme); // Main page background is the theme color!
     
     // Convert HEX to RGB for transparencies
     let r = 0, g = 0, b = 0;

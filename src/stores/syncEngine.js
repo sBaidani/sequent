@@ -62,14 +62,16 @@ class SyncEngine {
 
   // Add mutation to local indexedDB queue
   async enqueue(table, action, payload) {
-    const queueItem = { table, action, payload, timestamp: Date.now() };
+    // Strip SolidJS stores reactive proxies before storing in IndexedDB
+    const cleanPayload = JSON.parse(JSON.stringify(payload));
+    const queueItem = { table, action, payload: cleanPayload, timestamp: Date.now() };
     await localDB.put('syncQueue', queueItem);
     
     // Also save to local DB directly for instant offline reads (in UI format)
     if (action === 'INSERT' || action === 'UPDATE') {
-      await localDB.put(table, payload);
+      await localDB.put(table, cleanPayload);
     } else if (action === 'DELETE') {
-      await localDB.delete(table, payload.id);
+      await localDB.delete(table, cleanPayload.id);
     }
 
     // Try to sync to cloud if online
@@ -89,11 +91,34 @@ class SyncEngine {
       queue.sort((a, b) => a.timestamp - b.timestamp);
 
       for (const item of queue) {
-        await this._processItem(item);
-        await localDB.delete('syncQueue', item.queueId);
+        try {
+          await this._processItem(item);
+          await localDB.delete('syncQueue', item.queueId);
+        } catch (err) {
+          console.error(`Sync failed for item ${item.queueId} (${item.table} ${item.action}):`, err);
+          
+          // Network errors should stop queue processing to retry later when online
+          const isNetworkError = !navigator.onLine || 
+            err.message?.includes('Failed to fetch') || 
+            err.status === 0 || 
+            err.code === 'TypeError';
+            
+          if (isNetworkError) {
+            break;
+          } else {
+            // Permanent application/validation error: delete from queue to avoid blocking other syncs
+            await localDB.delete('syncQueue', item.queueId);
+
+            // Check for stale session due to local db reset or user deletion on backend
+            if (err?.code === '23503' && (err.message?.includes('violates foreign key') || err.details?.includes('Key is not present in table "users"'))) {
+              console.warn('Session user does not exist in backend database. Logging out...');
+              import('./authStore').then(({ authStore }) => authStore.signOut());
+            }
+          }
+        }
       }
     } catch (err) {
-      console.error('Background sync failed:', err);
+      console.error('Queue processing failed:', err);
     } finally {
       this.isSyncing = false;
     }
@@ -113,12 +138,12 @@ class SyncEngine {
     const dbPayload = mapToDbFormat(table, payload, userId);
     
     // Conflict resolution: Last-Write-Wins based on updated_at
-    if (action === 'UPDATE') {
+    if (action === 'UPDATE' || action === 'INSERT') {
       const { data: serverRecord } = await supabase
         .from(table)
         .select('updated_at')
         .eq('id', dbPayload.id)
-        .single();
+        .maybeSingle();
         
       if (serverRecord && new Date(serverRecord.updated_at) > new Date(dbPayload.updated_at)) {
         console.log(`Conflict detected for ${table} ${dbPayload.id}, server won`);
@@ -126,11 +151,8 @@ class SyncEngine {
       }
     }
 
-    if (action === 'INSERT') {
-      const { error } = await supabase.from(table).insert(dbPayload);
-      if (error) throw error;
-    } else if (action === 'UPDATE') {
-      const { error } = await supabase.from(table).update(dbPayload).eq('id', dbPayload.id);
+    if (action === 'INSERT' || action === 'UPDATE') {
+      const { error } = await supabase.from(table).upsert(dbPayload);
       if (error) throw error;
     } else if (action === 'DELETE') {
       const { error } = await supabase.from(table).delete().eq('id', dbPayload.id);

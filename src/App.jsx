@@ -27,7 +27,7 @@ function App() {
   });
 
   return (
-    <div class={`w-full h-full flex ${uiState.theme}`}>
+    <div class="w-full h-full flex">
       <Sidebar />
       
       {/* Click overlay for closing sidebar on mobile viewports */}

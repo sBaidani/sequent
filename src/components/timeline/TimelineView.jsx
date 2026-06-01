@@ -130,7 +130,13 @@ function TimelineView() {
                             <div class="flex flex-col gap-1 min-w-0">
                               <div class="text-[15px] font-bold text-white/90 truncate">{ev.title}</div>
                               <div class="text-xs font-semibold text-text-muted truncate">
-                                <span>{format(new Date(ev.start_time), 'h:mm a')}</span> - {format(new Date(ev.end_time), 'h:mm a')}
+                                  <span>{(() => {
+                                    const d = new Date(ev.start_time);
+                                    return isNaN(d.getTime()) ? '' : format(d, 'h:mm a');
+                                  })()}</span> - {(() => {
+                                    const d = new Date(ev.end_time);
+                                    return isNaN(d.getTime()) ? '' : format(d, 'h:mm a');
+                                  })()}
                               </div>
                             </div>
                           </div>

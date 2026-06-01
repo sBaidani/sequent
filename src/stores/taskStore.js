@@ -17,8 +17,10 @@ export const taskStore = {
     let finalListId = listId;
     let finalScheduledDate = scheduledDate;
     
+    const isUuid = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+    
     // Auto-detect legacy calls passing an ISO date string as the second parameter
-    if (typeof listId === 'string' && (listId.includes('-') || listId.includes('T')) && listId.length > 10) {
+    if (typeof listId === 'string' && !isUuid(listId) && (listId.includes('-') || listId.includes('T')) && listId.length > 10) {
       finalListId = null;
       finalScheduledDate = listId;
     }

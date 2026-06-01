@@ -14,13 +14,21 @@ function ArchiveView() {
     let items = [];
     
     if (filter() === 'all' || filter() === 'events') {
-      const pastEvents = eventState.events.filter(e => e.end_time && isPast(new Date(e.end_time)));
+      const pastEvents = eventState.events.filter(e => {
+        if (!e.end_time) return false;
+        const d = new Date(e.end_time);
+        return !isNaN(d.getTime()) && isPast(d);
+      });
       items = [...items, ...pastEvents.map(e => ({ ...e, _type: 'event', _date: new Date(e.end_time) }))];
     }
     
     if (filter() === 'all' || filter() === 'tasks') {
       const completedTasks = taskState.tasks.filter(t => t.completed);
-      items = [...items, ...completedTasks.map(t => ({ ...t, _type: 'task', _date: new Date(t.updated_at) }))];
+      items = [...items, ...completedTasks.map(t => {
+        const d = t.updated_at ? new Date(t.updated_at) : new Date();
+        const validDate = isNaN(d.getTime()) ? new Date() : d;
+        return { ...t, _type: 'task', _date: validDate };
+      })];
     }
     
     // Sort descending (newest first)
@@ -82,9 +90,15 @@ function ArchiveView() {
                           <div class="text-[15px] font-bold text-white/90">{item.title}</div>
                           <div class="text-xs font-semibold text-text-muted flex items-center gap-1.5">
                             {item._type === 'event' ? (
-                              <span>Event • {format(new Date(item.start_time), 'MMM d, h:mm a')}</span>
+                              <span>Event • {(() => {
+                                const d = new Date(item.start_time);
+                                return isNaN(d.getTime()) ? 'No Date' : format(d, 'MMM d, h:mm a');
+                              })()}</span>
                             ) : (
-                              <span>Completed Task • {format(item._date, 'MMM d')}</span>
+                              <span>Completed Task • {(() => {
+                                const d = new Date(item._date);
+                                return isNaN(d.getTime()) ? 'No Date' : format(d, 'MMM d');
+                              })()}</span>
                             )}
                           </div>
                         </div>
