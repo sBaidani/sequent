@@ -24,18 +24,16 @@ function App() {
   });
 
   return (
-    <div class={`w-full h-full flex ${uiState.theme}`}>
-      <Show when={uiState.sidebarOpen}>
-        <Sidebar />
-      </Show>
+    <div class={`w-full h-full flex ${uiState.theme} ${uiState.sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+      <Sidebar />
       
       <div id="main-content" class="flex-1 h-screen flex flex-col relative overflow-hidden bg-bg-theme text-text-primary">
         <div ref={viewContainerRef} class="flex-1 flex flex-col overflow-hidden h-full">
-          {uiState.view === 'timeline' && <TimelineView />}
-          {uiState.view === 'calendar' && <CalendarView />}
-          {uiState.view === 'tasks' && <TasksView />}
-          {uiState.view === 'archive' && <ArchiveView />}
-          {uiState.view === 'settings' && <SettingsView />}
+          {uiState.view === 'timeline' && <div class="view-enter flex-1 flex flex-col overflow-hidden h-full"><TimelineView /></div>}
+          {uiState.view === 'calendar' && <div class="view-enter flex-1 flex flex-col overflow-hidden h-full"><CalendarView /></div>}
+          {uiState.view === 'tasks' && <div class="view-enter flex-1 flex flex-col overflow-hidden h-full"><TasksView /></div>}
+          {uiState.view === 'archive' && <div class="view-enter flex-1 flex flex-col overflow-hidden h-full"><ArchiveView /></div>}
+          {uiState.view === 'settings' && <div class="view-enter flex-1 flex flex-col overflow-hidden h-full"><SettingsView /></div>}
         </div>
       </div>
       

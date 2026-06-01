@@ -49,7 +49,7 @@ function Modal(props) {
         }}
       >
         <div 
-          class={`bg-card w-full max-w-[100vw] rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden relative ${props.compact ? 'sm:w-[400px]' : 'sm:w-[500px]'}`}
+          class={`bg-card w-full max-w-[100vw] rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden relative modal-pop-in ${props.compact ? 'sm:w-[400px]' : 'sm:w-[500px]'}`}
           style={{
             "transform": `translateY(${touchDelta()}px)`,
             "transition": touchStart() === null ? "transform 0.3s ease-out" : "none"

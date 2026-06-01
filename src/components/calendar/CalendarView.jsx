@@ -14,6 +14,7 @@ function CalendarView() {
   const [viewMode, setViewMode] = createSignal('month'); // 'month' or 'week'
   const [workWeekOnly, setWorkWeekOnly] = createSignal(false);
   const [currentDate, setCurrentDate] = createSignal(new Date());
+  const [animationClass, setAnimationClass] = createSignal('');
 
   const { state: eventState } = eventStore;
   const { state: taskState } = taskStore;
@@ -23,14 +24,23 @@ function CalendarView() {
 
   // Navigation
   const prev = () => {
+    setAnimationClass("slide-right-anim");
+    setTimeout(() => setAnimationClass(""), 300);
     if (viewMode() === 'month') setCurrentDate(subMonths(currentDate(), 1));
     else setCurrentDate(subWeeks(currentDate(), 1));
   };
   const next = () => {
+    setAnimationClass("slide-left-anim");
+    setTimeout(() => setAnimationClass(""), 300);
     if (viewMode() === 'month') setCurrentDate(addMonths(currentDate(), 1));
     else setCurrentDate(addWeeks(currentDate(), 1));
   };
-  const today = () => setCurrentDate(new Date());
+  const today = () => {
+    const isFuture = new Date().getTime() > currentDate().getTime();
+    setAnimationClass(isFuture ? "slide-left-anim" : "slide-right-anim");
+    setTimeout(() => setAnimationClass(""), 300);
+    setCurrentDate(new Date());
+  };
 
   // Month View Days
   const monthDays = createMemo(() => {
@@ -142,7 +152,7 @@ function CalendarView() {
             </For>
           </div>
           {/* Month Grid */}
-          <div class="grid grid-cols-7 auto-rows-[minmax(120px,1fr)] flex-1 overflow-y-auto bg-black/20">
+          <div class={`grid grid-cols-7 auto-rows-[minmax(120px,1fr)] flex-1 overflow-y-auto bg-black/20 ${animationClass()}`}>
             <For each={monthDays()}>
               {date => {
                 const items = getDayItems(date);
@@ -161,7 +171,11 @@ function CalendarView() {
                 
                 return (
                   <div 
-                    class={`border-r border-b border-white/5 p-2 flex flex-col gap-1 transition-colors ${isCurrentMonth ? 'bg-transparent' : 'bg-black/20'}`}
+                    class={`border-r border-b border-white/5 p-2 flex flex-col gap-1 transition-colors calendar-day-cell ${isCurrentMonth ? 'bg-transparent' : 'bg-black/20'}`}
+                    onClick={() => {
+                      uiStore.setActiveDate(date.toISOString());
+                      uiStore.setActiveModal('addItem');
+                    }}
                     onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-white/10'); }}
                     onDragLeave={(e) => { e.currentTarget.classList.remove('bg-white/10'); }}
                     onDrop={(e) => {
@@ -183,6 +197,9 @@ function CalendarView() {
                             onDragStart={(e) => {
                               e.dataTransfer.setData('id', item.id);
                               e.dataTransfer.setData('type', item.type);
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
                             }}
                             class={`py-1 px-1.5 rounded-r-md text-[11px] flex items-center gap-1.5 cursor-grab hover:bg-white/5 transition-colors ${(item.type === 'task' && item.completed) ? 'opacity-50' : 'opacity-100'}`}
                             style={{ "border-left": `2px solid ${item.color}` }}
@@ -218,7 +235,7 @@ function CalendarView() {
             </div>
             
             {/* Days columns */}
-            <div class="flex flex-1 overflow-x-auto overflow-y-scroll bg-bg-theme">
+            <div class={`flex flex-1 overflow-x-auto overflow-y-scroll bg-bg-theme ${animationClass()}`}>
               <For each={weekDays()}>
                 {date => {
                   const isToday = isSameDay(date, new Date());

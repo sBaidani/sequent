@@ -11,9 +11,178 @@
 }
 
 @layer base {
-  * {
-    transition: all 0.2s ease-out;
+  body, button, input, select, textarea, a, .clickable {
+    transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
+  
+  /* Tactile feedback scale-down on active clicks */
+  button:active, 
+  .clickable:active,
+  input[type="submit"]:active,
+  [role="button"]:active {
+    transform: scale(0.96) !important;
+  }
+}
+
+/* View transitions */
+@keyframes viewEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.view-enter {
+  animation: viewEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Sidebar sliding drawer configuration */
+.sidebar-transition {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), margin-left 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sidebar-closed aside {
+  transform: translateX(-100%);
+  margin-left: -280px;
+}
+
+/* CSS Grid accordion dropdown for sidebar calendars */
+.accordion-menu {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+  opacity: 0;
+}
+.accordion-menu.open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.accordion-content {
+  overflow: hidden;
+}
+
+/* Satifying Checkbox & Strike Animations */
+@keyframes strikeThrough {
+  from { width: 0; }
+  to { width: 100%; }
+}
+.task-strike-animate {
+  position: relative;
+}
+.task-strike-animate::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 52%;
+  height: 2px;
+  background: currentColor;
+  opacity: 0.6;
+  animation: strikeThrough 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Custom checkbox spring drawing styles */
+.task-checkbox-animate {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 6px;
+  outline: none;
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: transparent;
+}
+.task-checkbox-animate:checked {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  transform: scale(1.12);
+}
+.task-checkbox-animate:checked::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 1.5px;
+  width: 5px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.task-checkbox-animate:active {
+  transform: scale(0.9);
+}
+
+/* Spring modal pop keyframes */
+@keyframes modalPopIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.modal-pop-in {
+  animation: modalPopIn 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Calendar month sliding transitions */
+@keyframes slideLeft {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideRight {
+  from { transform: translateX(-100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.slide-left-anim {
+  animation: slideLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.slide-right-anim {
+  animation: slideRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Timeline entrance and card micro-interactions */
+@keyframes rowFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.timeline-row-enter {
+  animation: rowFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.timeline-card {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, background-color 0.2s ease;
+}
+.timeline-card:hover {
+  transform: translateY(-2px);
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+.timeline-card:active {
+  transform: translateY(1px) scale(0.98) !important;
+}
+
+.calendar-day-cell {
+  cursor: pointer;
+  transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.calendar-day-cell:hover {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+}
+.calendar-day-cell:active {
+  transform: scale(0.98) !important;
 }
 
 /* ─── Variables & Themes ─────────────────────────────────────── */

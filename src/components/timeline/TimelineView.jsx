@@ -77,7 +77,7 @@ function TimelineView() {
             const tasksForDay = () => taskState.tasks.filter(t => t.scheduled_date && isSameDay(new Date(t.scheduled_date), day));
 
             return (
-              <div class={`day-section flex border-b border-white/5 min-h-[250px] transition-colors relative ${isDayToday ? 'bg-accent/5 is-today' : ''}`} data-date={dateStr}>
+              <div class={`day-section timeline-row-enter flex border-b border-white/5 min-h-[250px] transition-colors relative ${isDayToday ? 'bg-accent/5 is-today' : ''}`} data-date={dateStr}>
                 <div class="w-20 min-w-20 border-r border-white/5 p-4 flex flex-col items-center sticky top-0">
                   {day.getDate() === 1 && (
                     <div class="text-xs font-bold text-text-secondary uppercase mb-2">{format(day, 'MMMM')}</div>
@@ -96,7 +96,7 @@ function TimelineView() {
                     ) : (
                       <For each={eventsForDay()}>
                         {(ev) => (
-                          <div class="relative pl-3 bg-card border border-border rounded-lg p-3.5 flex items-center justify-between transition-all overflow-hidden before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-[var(--cal-color)]" style={{ "--cal-color": "#E8942A" }}>
+                          <div class="relative pl-3 bg-card border border-border rounded-lg p-3.5 flex items-center justify-between transition-all overflow-hidden before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-[var(--cal-color)] timeline-card cursor-pointer" style={{ "--cal-color": "#E8942A" }}>
                             <div class="flex flex-col gap-1 min-w-0">
                               <div class="text-[15px] font-bold text-white/90 truncate">{ev.title}</div>
                               <div class="text-xs font-semibold text-text-muted truncate">
@@ -115,7 +115,7 @@ function TimelineView() {
                     ) : (
                       <For each={tasksForDay()}>
                         {(task) => (
-                          <div class="relative pl-3 bg-card border border-border rounded-lg p-3.5 flex items-center justify-between transition-all overflow-hidden before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-[var(--cal-color)]" style={{ "--cal-color": "#6B5BDB", opacity: task.completed ? 0.5 : 1 }}>
+                          <div class="relative pl-3 bg-card border border-border rounded-lg p-3.5 flex items-center justify-between transition-all overflow-hidden before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-[var(--cal-color)] timeline-card cursor-pointer" style={{ "--cal-color": "#6B5BDB", opacity: task.completed ? 0.5 : 1 }}>
                             <div class="flex flex-col gap-1 min-w-0">
                               <div class="text-[15px] font-bold text-white/90 truncate">{task.title}</div>
                               <div class="text-xs font-semibold text-text-muted truncate">Scheduled Task</div>

@@ -46,7 +46,7 @@ function TasksView() {
                             class={`flex items-center justify-between py-2 border-b border-white/10 last:border-b-0 ${task.completed ? 'opacity-50' : 'opacity-100'}`}
                           >
                             <div class="flex flex-col">
-                              <span>{task.title}</span>
+                              <span class={task.completed ? "task-strike-animate text-white/40" : ""}>{task.title}</span>
                               <input 
                                 type="date" 
                                 value={task.scheduled_date ? format(new Date(task.scheduled_date), 'yyyy-MM-dd') : ''}
@@ -66,7 +66,7 @@ function TasksView() {
                                 type="checkbox" 
                                 checked={task.completed} 
                                 onChange={() => toggleTask(task.id)}
-                                class="cursor-pointer"
+                                class="task-checkbox-animate cursor-pointer"
                               />
                               <button onClick={() => deleteTask(task.id)} class="text-[#ff4d4f] font-bold bg-transparent border-none cursor-pointer">×</button>
                             </div>

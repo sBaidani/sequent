@@ -41,7 +41,7 @@ function Sidebar() {
   ];
 
   return (
-    <aside class="w-[280px] min-w-[280px] h-screen bg-black border-r border-white/10 flex flex-col py-6 overflow-y-auto overflow-x-hidden z-[100]">
+    <aside class="w-[280px] min-w-[280px] h-screen bg-black border-r border-white/10 flex flex-col py-6 overflow-y-auto overflow-x-hidden z-[100] sidebar-transition">
       <div class="flex items-center gap-2.5 px-5 pb-6 border-b border-white/10 mb-5">
         <div class="w-8 h-8 rounded-[10px] bg-accent flex items-center justify-center font-bold text-lg text-white shadow-[0_0_15px_var(--color-accent)]">S</div>
         <div class="flex flex-col">
@@ -80,14 +80,16 @@ function Sidebar() {
             )}
           </button>
           
-          <div class={`overflow-hidden transition-all duration-300 ease-in-out ${(uiState.view === 'calendar' && calendarsExpanded()) ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"}`}>
-            <div class="flex flex-col gap-0.5 pt-2 px-3 pl-9">
-              {eventState.calendars.map(cal => (
-                <button class="w-full flex items-center gap-2 px-2 py-1.5 bg-transparent border-none text-text-secondary text-[13px] cursor-pointer rounded-md hover:bg-white/5 hover:text-white transition-colors text-left">
-                  <span class="w-2 h-2 rounded-full" style={{ "background-color": cal.color }}></span>
-                  {cal.name}
-                </button>
-              ))}
+          <div class={`accordion-menu ${(uiState.view === 'calendar' && calendarsExpanded()) ? "open" : ""}`}>
+            <div class="accordion-content">
+              <div class="flex flex-col gap-0.5 pt-2 px-3 pl-9">
+                {eventState.calendars.map(cal => (
+                  <button class="w-full flex items-center gap-2 px-2 py-1.5 bg-transparent border-none text-text-secondary text-[13px] cursor-pointer rounded-md hover:bg-white/5 hover:text-white transition-colors text-left">
+                    <span class="w-2 h-2 rounded-full" style={{ "background-color": cal.color }}></span>
+                    {cal.name}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
