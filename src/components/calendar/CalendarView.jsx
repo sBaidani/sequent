@@ -112,6 +112,12 @@ function CalendarView() {
       {/* Header */}
       <div class="px-6 py-5 flex justify-between items-center border-b border-white/5">
         <div class="flex items-center gap-4">
+          <button 
+            onClick={() => uiStore.toggleSidebar()}
+            class="flex w-9 h-9 rounded-full bg-white/5 border-none text-white items-center justify-center cursor-pointer transition-colors hover:bg-white/20 mr-2"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+          </button>
           <h2 class="text-2xl font-extrabold text-white min-w-[200px]">
             {format(currentDate(), viewMode() === 'month' ? 'MMMM yyyy' : 'MMM yyyy')}
           </h2>
@@ -174,7 +180,10 @@ function CalendarView() {
                     class={`border-r border-b border-white/5 p-2 flex flex-col gap-1 transition-colors calendar-day-cell ${isCurrentMonth ? 'bg-transparent' : 'bg-black/20'}`}
                     onClick={() => {
                       uiStore.setActiveDate(date.toISOString());
-                      uiStore.setActiveModal('addItem');
+                    }}
+                    onDblClick={() => {
+                      uiStore.setActiveDate(date.toISOString());
+                      uiStore.setActiveModal('addEvent');
                     }}
                     onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-white/10'); }}
                     onDragLeave={(e) => { e.currentTarget.classList.remove('bg-white/10'); }}
@@ -251,6 +260,15 @@ function CalendarView() {
                       <div class="relative h-[1440px]"
                            onDragOver={(e) => { e.preventDefault(); }}
                            onDrop={(e) => handleDrop(e, date)}
+                           onDblClick={(e) => {
+                             const rect = e.currentTarget.getBoundingClientRect();
+                             const clickY = e.clientY - rect.top;
+                             const hour = Math.floor(clickY / 60);
+                             const targetDate = new Date(date);
+                             targetDate.setHours(hour, 0, 0, 0);
+                             uiStore.setActiveDate(targetDate.toISOString());
+                             uiStore.setActiveModal('addEvent');
+                           }}
                       >
                         {/* Shading for 9am-5pm (hours 9 to 17) */}
                         <div class="absolute top-[540px] h-[480px] w-full bg-white/5 pointer-events-none"></div>
@@ -308,6 +326,14 @@ function CalendarView() {
           </div>
         </Show>
       </div>
+
+      {/* Calendar View Floating Action Button */}
+      <button 
+        class="fixed bottom-8 right-8 w-14 h-14 rounded-full bg-accent text-white border-none shadow-xl flex items-center justify-center cursor-pointer transition-transform hover:scale-105 active:scale-95 z-[100]" 
+        onClick={() => uiStore.setActiveModal('addEvent')}
+      >
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+      </button>
 
     </div>
   );

@@ -23,8 +23,25 @@ export const taskStore = {
       finalScheduledDate = listId;
     }
     
-    // If no listId provided, default to the first available list, or generate a dummy one if empty
-    const targetListId = finalListId || (tasksState.lists[0]?.id) || 'default-list';
+    // Ensure we have a valid list UUID (auto-create default list if empty)
+    let targetListId = finalListId;
+    if (!targetListId) {
+      if (tasksState.lists.length > 0) {
+        targetListId = tasksState.lists[0].id;
+      } else {
+        const defaultListId = generateId();
+        const defaultList = {
+          id: defaultListId,
+          name: 'My Tasks',
+          color: '#6B5BDB',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        setTasksState('lists', (prev) => [...prev, defaultList]);
+        syncEngine.enqueue('lists', 'INSERT', defaultList);
+        targetListId = defaultListId;
+      }
+    }
     
     const newTask = {
       id: generateId(),

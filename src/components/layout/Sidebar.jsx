@@ -41,7 +41,7 @@ function Sidebar() {
   ];
 
   return (
-    <aside class="w-[280px] min-w-[280px] h-screen bg-black border-r border-white/10 flex flex-col py-6 overflow-y-auto overflow-x-hidden z-[100] sidebar-transition">
+    <aside class={`fixed lg:static top-0 bottom-0 left-0 w-[280px] min-w-[280px] h-screen bg-black border-r border-white/10 flex flex-col py-6 overflow-y-auto overflow-x-hidden z-[100] transition-all duration-300 ease-out ${uiState.sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-0 lg:min-w-0 lg:overflow-hidden lg:border-none'}`}>
       <div class="flex items-center gap-2.5 px-5 pb-6 border-b border-white/10 mb-5">
         <div class="w-8 h-8 rounded-[10px] bg-accent flex items-center justify-center font-bold text-lg text-white shadow-[0_0_15px_var(--color-accent)]">S</div>
         <div class="flex flex-col">

@@ -55,7 +55,10 @@ function TimelineView() {
   return (
     <>
       <div class="h-[60px] min-h-[60px] border-b border-white/10 flex items-center justify-between px-6 bg-black/40 backdrop-blur-md sticky top-0 z-50">
-        <button class="hidden lg:flex w-9 h-9 rounded-full bg-white/5 border-none text-white items-center justify-center cursor-pointer transition-colors hover:bg-white/20">
+        <button 
+          onClick={() => uiStore.toggleSidebar()}
+          class="flex w-9 h-9 rounded-full bg-white/5 border-none text-white items-center justify-center cursor-pointer transition-colors hover:bg-white/20"
+        >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
         </button>
         <div class="flex flex-col">

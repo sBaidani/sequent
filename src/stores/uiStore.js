@@ -12,6 +12,7 @@ const [uiState, setUiState] = createStore({
   hasSeenOnboarding: initialHasSeenOnboarding,
   isOnline: navigator.onLine,
   activeModal: null, // null, 'addEvent', 'addTask', 'addCalendar'
+  activeListId: '',
   clickCoords: { x: window.innerWidth / 2, y: window.innerHeight / 2 },
 });
 
@@ -51,6 +52,7 @@ export const uiStore = {
   setActiveDate: (dateStr) => setUiState('activeDate', dateStr),
   setSearchQuery: (query) => setUiState('searchQuery', query),
   setActiveModal: (modalName) => setUiState('activeModal', modalName),
+  setActiveListId: (listId) => setUiState('activeListId', listId),
   completeOnboarding: () => {
     localStorage.setItem('sequent_onboarding_seen', 'true');
     setUiState('hasSeenOnboarding', true);

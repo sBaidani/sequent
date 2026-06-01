@@ -8,6 +8,8 @@ import ArchiveView from './components/archive/ArchiveView';
 import SettingsView from './components/settings/SettingsView';
 import OnboardingModal from './components/onboarding/OnboardingModal';
 import AddItemModal from './components/shared/AddItemModal';
+import AddEventModal from './components/shared/AddEventModal';
+import AddTaskModal from './components/shared/AddTaskModal';
 import AddCalendarModal from './components/calendar/AddCalendarModal';
 import ToastProvider from './components/ui/ToastProvider';
 import { uiStore } from './stores/uiStore';
@@ -25,8 +27,16 @@ function App() {
   });
 
   return (
-    <div class={`w-full h-full flex ${uiState.theme} ${uiState.sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+    <div class={`w-full h-full flex ${uiState.theme}`}>
       <Sidebar />
+      
+      {/* Click overlay for closing sidebar on mobile viewports */}
+      <Show when={uiState.sidebarOpen}>
+        <div 
+          onClick={() => uiStore.toggleSidebar()} 
+          class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[90] lg:hidden"
+        />
+      </Show>
       
       <div id="main-content" class="flex-1 h-screen flex flex-col relative overflow-hidden bg-bg-theme text-text-primary">
         <div ref={viewContainerRef} class="flex-1 flex flex-col overflow-hidden h-full">
@@ -40,6 +50,8 @@ function App() {
       
       {!uiState.hasSeenOnboarding && <OnboardingModal />}
       <AddItemModal />
+      <AddEventModal />
+      <AddTaskModal />
       <AddCalendarModal />
       <ToastProvider />
     </div>

@@ -21,7 +21,15 @@ function SettingsView() {
   return (
     <>
       <div class="h-[60px] min-h-[60px] border-b border-white/10 flex items-center justify-between px-6 bg-black/40 backdrop-blur-md sticky top-0 z-50">
-        <div class="text-xl font-bold text-white tracking-wide">Settings</div>
+        <div class="flex items-center gap-4">
+          <button 
+            onClick={() => uiStore.toggleSidebar()}
+            class="flex w-9 h-9 rounded-full bg-white/5 border-none text-white items-center justify-center cursor-pointer transition-colors hover:bg-white/20"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+          </button>
+          <div class="text-xl font-bold text-white tracking-wide">Settings</div>
+        </div>
       </div>
 
       <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-8 max-w-[800px] mx-auto w-full">

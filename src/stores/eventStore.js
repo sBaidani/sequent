@@ -14,7 +14,25 @@ export const eventStore = {
   setCalendars: (calendars) => setEventsState('calendars', calendars),
   
   addEvent: (title, startTime, endTime, calendarId = null) => {
-    const targetCalendarId = calendarId || (eventsState.calendars[0]?.id) || 'default-cal';
+    let targetCalendarId = calendarId;
+    if (!targetCalendarId) {
+      if (eventsState.calendars.length > 0) {
+        targetCalendarId = eventsState.calendars[0].id;
+      } else {
+        const defaultCalId = generateId();
+        const defaultCal = {
+          id: defaultCalId,
+          name: 'Personal',
+          color: '#E8942A',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        setEventsState('calendars', (prev) => [...prev, defaultCal]);
+        syncEngine.enqueue('calendars', 'INSERT', defaultCal);
+        targetCalendarId = defaultCalId;
+      }
+    }
+
     const newEvent = {
       id: generateId(),
       title,
