@@ -19,10 +19,10 @@ export function optionalUUID(value: unknown, field: string): string | null {
   return requireUUID(value, field)
 }
 
-export function optionalString(value: unknown, _field: string): string | null {
+export function optionalString(value: unknown, field: string): string | null {
   if (value === null || value === undefined) return null
   if (typeof value !== 'string') {
-    throw new ValidationError(`${_field} must be a string`)
+    throw new ValidationError(`${field} must be a string`)
   }
   return value.trim() || null
 }
