@@ -32,7 +32,7 @@ function AddItemModal() {
       const endObj = new Date(startObj.getTime() + 60 * 60 * 1000);
       eventStore.addEvent(title(), startObj.toISOString(), endObj.toISOString());
     } else {
-      taskStore.addTask(title(), new Date(date()).toISOString());
+      taskStore.addTask(title(), null, new Date(date()).toISOString());
     }
     
     setTitle('');

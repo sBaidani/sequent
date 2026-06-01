@@ -3,6 +3,53 @@ import { localDB } from '../lib/db';
 import { taskStore } from './taskStore';
 import { eventStore } from './eventStore';
 
+// Data Mapper Utilities for Store <-> Database conversions
+export function mapToDbFormat(table, item, userId) {
+  const dbItem = { ...item };
+  if (userId) {
+    dbItem.user_id = userId;
+  }
+  
+  if (table === 'tasks') {
+    dbItem.list_id = item.listId || null;
+    delete dbItem.listId;
+    
+    dbItem.status = item.completed ? 'completed' : 'pending';
+    delete dbItem.completed;
+    
+    dbItem.due_date = item.scheduled_date ? item.scheduled_date.split('T')[0] : null;
+    delete dbItem.scheduled_date;
+  } else if (table === 'events') {
+    dbItem.calendar_id = item.calendarId || null;
+    delete dbItem.calendarId;
+  } else if (table === 'calendars') {
+    dbItem.provider = item.provider || 'local';
+  }
+  
+  return dbItem;
+}
+
+export function mapFromDbFormat(table, dbItem) {
+  if (!dbItem) return null;
+  const item = { ...dbItem };
+  
+  if (table === 'tasks') {
+    item.listId = dbItem.list_id || null;
+    delete item.list_id;
+    
+    item.completed = dbItem.status === 'completed';
+    delete item.status;
+    
+    item.scheduled_date = dbItem.due_date ? new Date(dbItem.due_date).toISOString() : null;
+    delete item.due_date;
+  } else if (table === 'events') {
+    item.calendarId = dbItem.calendar_id || null;
+    delete item.calendar_id;
+  }
+  
+  return item;
+}
+
 class SyncEngine {
   constructor() {
     this.isSyncing = false;
@@ -18,7 +65,7 @@ class SyncEngine {
     const queueItem = { table, action, payload, timestamp: Date.now() };
     await localDB.put('syncQueue', queueItem);
     
-    // Also save to local DB directly for instant offline reads
+    // Also save to local DB directly for instant offline reads (in UI format)
     if (action === 'INSERT' || action === 'UPDATE') {
       await localDB.put(table, payload);
     } else if (action === 'DELETE') {
@@ -55,30 +102,53 @@ class SyncEngine {
   async _processItem(item) {
     const { table, action, payload } = item;
     
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
+    if (!userId) {
+      console.warn(`Sync skipped for ${table} ${action} because user is not authenticated`);
+      return;
+    }
+    
+    // Convert to DB format
+    const dbPayload = mapToDbFormat(table, payload, userId);
+    
     // Conflict resolution: Last-Write-Wins based on updated_at
     if (action === 'UPDATE') {
       const { data: serverRecord } = await supabase
         .from(table)
         .select('updated_at')
-        .eq('id', payload.id)
+        .eq('id', dbPayload.id)
         .single();
         
-      if (serverRecord && new Date(serverRecord.updated_at) > new Date(payload.updated_at)) {
-        console.log(`Conflict detected for ${table} ${payload.id}, server won`);
+      if (serverRecord && new Date(serverRecord.updated_at) > new Date(dbPayload.updated_at)) {
+        console.log(`Conflict detected for ${table} ${dbPayload.id}, server won`);
         return; // Server is newer, drop local update
       }
     }
 
     if (action === 'INSERT') {
-      const { error } = await supabase.from(table).insert(payload);
+      const { error } = await supabase.from(table).insert(dbPayload);
       if (error) throw error;
     } else if (action === 'UPDATE') {
-      const { error } = await supabase.from(table).update(payload).eq('id', payload.id);
+      const { error } = await supabase.from(table).update(dbPayload).eq('id', dbPayload.id);
       if (error) throw error;
     } else if (action === 'DELETE') {
-      const { error } = await supabase.from(table).delete().eq('id', payload.id);
+      const { error } = await supabase.from(table).delete().eq('id', dbPayload.id);
       if (error) throw error;
     }
+  }
+
+  async refreshLocalStores() {
+    const [localTasks, localEvents, localLists, localCals] = await Promise.all([
+      localDB.getAll('tasks'),
+      localDB.getAll('events'),
+      localDB.getAll('lists'),
+      localDB.getAll('calendars')
+    ]);
+    taskStore.setTasks(localTasks || []);
+    taskStore.setLists(localLists || []);
+    eventStore.setEvents(localEvents || []);
+    eventStore.setCalendars(localCals || []);
   }
 
   async hydrate() {
@@ -86,18 +156,7 @@ class SyncEngine {
     await localDB.clear('syncQueue');
 
     // 1. Load from IndexedDB for instant UI
-    const [localTasks, localEvents, localLists, localCals] = await Promise.all([
-      localDB.getAll('tasks'),
-      localDB.getAll('events'),
-      localDB.getAll('lists'),
-      localDB.getAll('calendars')
-    ]);
-    
-    // Hydrate stores immediately from local data
-    taskStore.setTasks(localTasks || []);
-    taskStore.setLists(localLists || []);
-    eventStore.setEvents(localEvents || []);
-    eventStore.setCalendars(localCals || []);
+    await this.refreshLocalStores();
 
     // 2. Fetch fresh data from Supabase if online
     const { data: { session } } = await supabase.auth.getSession();
@@ -112,25 +171,36 @@ class SyncEngine {
       ]);
 
       if (tasksRes.data) {
-        for (const t of tasksRes.data) await localDB.put('tasks', t);
-        taskStore.setTasks(tasksRes.data);
+        await localDB.clear('tasks');
+        const mappedTasks = tasksRes.data.map(t => mapFromDbFormat('tasks', t));
+        for (const t of mappedTasks) await localDB.put('tasks', t);
       }
       if (eventsRes.data) {
-        for (const e of eventsRes.data) await localDB.put('events', e);
-        eventStore.setEvents(eventsRes.data);
+        await localDB.clear('events');
+        const mappedEvents = eventsRes.data.map(e => mapFromDbFormat('events', e));
+        for (const e of mappedEvents) await localDB.put('events', e);
       }
       if (listsRes.data) {
-        for (const l of listsRes.data) await localDB.put('lists', l);
-        taskStore.setLists(listsRes.data);
+        await localDB.clear('lists');
+        const mappedLists = listsRes.data.map(l => mapFromDbFormat('lists', l));
+        for (const l of mappedLists) await localDB.put('lists', l);
       }
       if (calsRes.data) {
-        for (const c of calsRes.data) await localDB.put('calendars', c);
-        eventStore.setCalendars(calsRes.data);
+        await localDB.clear('calendars');
+        const mappedCals = calsRes.data.map(c => mapFromDbFormat('calendars', c));
+        for (const c of mappedCals) await localDB.put('calendars', c);
       }
       
+      // Update UI stores with clean mapped local DB data
+      await this.refreshLocalStores();
+      
       // Ensure defaults if missing
-      if (taskStore.state.lists.length === 0) taskStore.addList('My Tasks', '#6B5BDB');
-      if (eventStore.state.calendars.length === 0) eventStore.addCalendar('Personal', '#E8942A');
+      if (taskStore.state.lists.length === 0) {
+        await taskStore.addList('My Tasks', '#6B5BDB');
+      }
+      if (eventStore.state.calendars.length === 0) {
+        await eventStore.addCalendar('Personal', '#E8942A');
+      }
       
       console.log('Hydrated from Supabase & updated local cache');
     } catch (err) {
@@ -143,13 +213,21 @@ class SyncEngine {
       .channel('public-changes')
       .on('postgres_changes', { event: '*', schema: 'public' }, async payload => {
         console.log('Realtime change received!', payload);
+        
         // Save incoming server data directly to localDB to keep cache warm
         if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-          await localDB.put(payload.table, payload.new);
+          const uiItem = mapFromDbFormat(payload.table, payload.new);
+          if (uiItem) {
+            await localDB.put(payload.table, uiItem);
+          }
         } else if (payload.eventType === 'DELETE') {
-          await localDB.delete(payload.table, payload.old.id);
+          if (payload.old?.id) {
+            await localDB.delete(payload.table, payload.old.id);
+          }
         }
-        // Then dispatch to UI stores
+        
+        // Update stores in-memory
+        await this.refreshLocalStores();
       })
       .subscribe();
   }

@@ -13,9 +13,18 @@ export const taskStore = {
   setTasks: (tasks) => setTasksState('tasks', tasks),
   setLists: (lists) => setTasksState('lists', lists),
   
-  addTask: (title, listId = null, priority = 'normal') => {
+  addTask: (title, listId = null, scheduledDate = null, priority = 'normal') => {
+    let finalListId = listId;
+    let finalScheduledDate = scheduledDate;
+    
+    // Auto-detect legacy calls passing an ISO date string as the second parameter
+    if (typeof listId === 'string' && (listId.includes('-') || listId.includes('T')) && listId.length > 10) {
+      finalListId = null;
+      finalScheduledDate = listId;
+    }
+    
     // If no listId provided, default to the first available list, or generate a dummy one if empty
-    const targetListId = listId || (tasksState.lists[0]?.id) || 'default-list';
+    const targetListId = finalListId || (tasksState.lists[0]?.id) || 'default-list';
     
     const newTask = {
       id: generateId(),
@@ -23,6 +32,7 @@ export const taskStore = {
       listId: targetListId,
       completed: false,
       priority,
+      scheduled_date: finalScheduledDate || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };

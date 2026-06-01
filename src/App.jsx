@@ -21,6 +21,7 @@ function App() {
 
   onMount(() => {
     syncEngine.hydrate();
+    syncEngine.subscribe();
   });
 
   return (
