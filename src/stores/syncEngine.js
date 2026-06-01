@@ -1,73 +1,54 @@
 import { supabase } from '../lib/supabase';
+import { api, NetworkError } from '../lib/api';
 import { localDB } from '../lib/db';
 import { taskStore } from './taskStore';
 import { eventStore } from './eventStore';
 
-// Data Mapper Utilities for Store <-> Database conversions
-export function mapToDbFormat(table, item, userId) {
-  const dbItem = { ...item };
-  if (userId) {
-    dbItem.user_id = userId;
-  }
-  
-  if (table === 'tasks') {
-    dbItem.list_id = item.listId || null;
-    delete dbItem.listId;
-    
-    dbItem.status = item.completed ? 'completed' : 'pending';
-    delete dbItem.completed;
-    
-    dbItem.due_date = item.scheduled_date ? item.scheduled_date.split('T')[0] : null;
-    delete dbItem.scheduled_date;
-  } else if (table === 'events') {
-    dbItem.calendar_id = item.calendarId || null;
-    delete dbItem.calendarId;
-  } else if (table === 'calendars') {
-    dbItem.provider = item.provider || 'local';
-  }
-  
-  return dbItem;
-}
-
-export function mapFromDbFormat(table, dbItem) {
+/**
+ * Lightweight mapper for Supabase Realtime payloads (DB format → UI format).
+ * Realtime delivers raw DB column names, so we need a thin client-side transform.
+ */
+function mapRealtimePayload(table, dbItem) {
   if (!dbItem) return null;
   const item = { ...dbItem };
-  
+
+  // Remove server-internal fields
+  delete item.user_id;
+  delete item.sync_version;
+
   if (table === 'tasks') {
-    item.listId = dbItem.list_id || null;
+    item.listId = dbItem.list_id ?? null;
     delete item.list_id;
-    
     item.completed = dbItem.status === 'completed';
     delete item.status;
-    
     item.scheduled_date = dbItem.due_date ? new Date(dbItem.due_date).toISOString() : null;
     delete item.due_date;
   } else if (table === 'events') {
-    item.calendarId = dbItem.calendar_id || null;
+    item.calendarId = dbItem.calendar_id ?? null;
     delete item.calendar_id;
   }
-  
+
   return item;
 }
 
 class SyncEngine {
   constructor() {
     this.isSyncing = false;
-    
+
     // Listen for network reconnect
     if (typeof window !== 'undefined') {
       window.addEventListener('online', () => this.processQueue());
     }
   }
 
-  // Add mutation to local indexedDB queue
+  // Add mutation to local IndexedDB queue + optimistic local cache
   async enqueue(table, action, payload) {
-    // Strip SolidJS stores reactive proxies before storing in IndexedDB
+    // Strip SolidJS reactive proxies before storing in IndexedDB
     const cleanPayload = JSON.parse(JSON.stringify(payload));
     const queueItem = { table, action, payload: cleanPayload, timestamp: Date.now() };
     await localDB.put('syncQueue', queueItem);
-    
-    // Also save to local DB directly for instant offline reads (in UI format)
+
+    // Save to local DB for instant offline reads (UI format)
     if (action === 'INSERT' || action === 'UPDATE') {
       await localDB.put(table, cleanPayload);
     } else if (action === 'DELETE') {
@@ -80,83 +61,83 @@ class SyncEngine {
     }
   }
 
-  // Process pending mutations from IndexedDB
+  // Process pending mutations via the server-side sync API
   async processQueue() {
     if (this.isSyncing || !navigator.onLine) return;
     this.isSyncing = true;
 
     try {
       const queue = await localDB.getAll('syncQueue');
-      // Sort queue by timestamp ascending (oldest first)
+      if (!queue || queue.length === 0) return;
+
+      // Sort by timestamp ascending (oldest first)
       queue.sort((a, b) => a.timestamp - b.timestamp);
 
-      for (const item of queue) {
-        try {
-          await this._processItem(item);
-          await localDB.delete('syncQueue', item.queueId);
-        } catch (err) {
-          console.error(`Sync failed for item ${item.queueId} (${item.table} ${item.action}):`, err);
-          
-          // Network errors should stop queue processing to retry later when online
-          const isNetworkError = !navigator.onLine || 
-            err.message?.includes('Failed to fetch') || 
-            err.status === 0 || 
-            err.code === 'TypeError';
-            
-          if (isNetworkError) {
-            break;
-          } else {
-            // Permanent application/validation error: delete from queue to avoid blocking other syncs
-            await localDB.delete('syncQueue', item.queueId);
+      // Build mutations array for the batch sync endpoint
+      const mutations = queue.map(item => ({
+        table: item.table,
+        action: item.action,
+        payload: item.payload,
+      }));
 
-            // Check for stale session due to local db reset or user deletion on backend
-            if (err?.code === '23503' && (err.message?.includes('violates foreign key') || err.details?.includes('Key is not present in table "users"'))) {
-              console.warn('Session user does not exist in backend database. Logging out...');
-              import('./authStore').then(({ authStore }) => authStore.signOut());
-            }
+      let results;
+      try {
+        const response = await api.sync.push(mutations);
+        results = response.results;
+      } catch (err) {
+        if (err instanceof NetworkError) {
+          // Network error — stop, will retry when online
+          return;
+        }
+
+        // Auth error — check for stale session
+        if (err.status === 401) {
+          console.warn('Authentication expired during sync. Logging out...');
+          import('./authStore').then(({ authStore }) => authStore.signOut());
+          return;
+        }
+
+        throw err;
+      }
+
+      // Process results: clear successful items from queue, handle conflicts
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        const queueItem = queue[i];
+
+        if (result.status === 'success') {
+          await localDB.delete('syncQueue', queueItem.queueId);
+          // Update local cache with server-confirmed data
+          if (result.data) {
+            await localDB.put(result.table, result.data);
+          }
+        } else if (result.status === 'conflict') {
+          await localDB.delete('syncQueue', queueItem.queueId);
+          // Server won — update local cache with server version
+          if (result.data) {
+            await localDB.put(result.table, result.data);
+          }
+          console.log(`Conflict resolved for ${result.table} ${result.id}: server won`);
+        } else if (result.status === 'error') {
+          console.error(`Sync error for ${result.table} ${result.action} ${result.id}: ${result.error}`);
+          // Remove failed item from queue to prevent blocking
+          await localDB.delete('syncQueue', queueItem.queueId);
+
+          // Check for stale session (foreign key violation on user)
+          if (result.error?.includes('violates foreign key') || result.error?.includes('Key is not present in table "users"')) {
+            console.warn('Session user does not exist in backend database. Logging out...');
+            import('./authStore').then(({ authStore }) => authStore.signOut());
+            return;
           }
         }
       }
+
+      // Refresh UI stores from local cache after sync
+      await this.refreshLocalStores();
     } catch (err) {
       console.error('Queue processing failed:', err);
     } finally {
       this.isSyncing = false;
-    }
-  }
-
-  async _processItem(item) {
-    const { table, action, payload } = item;
-    
-    const { data: { session } } = await supabase.auth.getSession();
-    const userId = session?.user?.id;
-    if (!userId) {
-      console.warn(`Sync skipped for ${table} ${action} because user is not authenticated`);
-      return;
-    }
-    
-    // Convert to DB format
-    const dbPayload = mapToDbFormat(table, payload, userId);
-    
-    // Conflict resolution: Last-Write-Wins based on updated_at
-    if (action === 'UPDATE' || action === 'INSERT') {
-      const { data: serverRecord } = await supabase
-        .from(table)
-        .select('updated_at')
-        .eq('id', dbPayload.id)
-        .maybeSingle();
-        
-      if (serverRecord && new Date(serverRecord.updated_at) > new Date(dbPayload.updated_at)) {
-        console.log(`Conflict detected for ${table} ${dbPayload.id}, server won`);
-        return; // Server is newer, drop local update
-      }
-    }
-
-    if (action === 'INSERT' || action === 'UPDATE') {
-      const { error } = await supabase.from(table).upsert(dbPayload);
-      if (error) throw error;
-    } else if (action === 'DELETE') {
-      const { error } = await supabase.from(table).delete().eq('id', dbPayload.id);
-      if (error) throw error;
     }
   }
 
@@ -174,57 +155,46 @@ class SyncEngine {
   }
 
   async hydrate() {
-    // Clear syncQueue to wipe out any bad IDs from before the UUID fix
+    // Clear syncQueue to wipe out any stale entries
     await localDB.clear('syncQueue');
 
     // 1. Load from IndexedDB for instant UI
     await this.refreshLocalStores();
 
-    // 2. Fetch fresh data from Supabase if online
+    // 2. Fetch fresh data from server API if online
     const { data: { session } } = await supabase.auth.getSession();
     if (!session || !navigator.onLine) return;
 
     try {
-      const [tasksRes, eventsRes, listsRes, calsRes] = await Promise.all([
-        supabase.from('tasks').select('*'),
-        supabase.from('events').select('*'),
-        supabase.from('lists').select('*'),
-        supabase.from('calendars').select('*')
-      ]);
+      // Single API call returns all user data pre-mapped to UI format
+      const { tasks, lists, events, calendars } = await api.sync.hydrate();
 
-      if (tasksRes.data) {
-        await localDB.clear('tasks');
-        const mappedTasks = tasksRes.data.map(t => mapFromDbFormat('tasks', t));
-        for (const t of mappedTasks) await localDB.put('tasks', t);
-      }
-      if (eventsRes.data) {
-        await localDB.clear('events');
-        const mappedEvents = eventsRes.data.map(e => mapFromDbFormat('events', e));
-        for (const e of mappedEvents) await localDB.put('events', e);
-      }
-      if (listsRes.data) {
-        await localDB.clear('lists');
-        const mappedLists = listsRes.data.map(l => mapFromDbFormat('lists', l));
-        for (const l of mappedLists) await localDB.put('lists', l);
-      }
-      if (calsRes.data) {
-        await localDB.clear('calendars');
-        const mappedCals = calsRes.data.map(c => mapFromDbFormat('calendars', c));
-        for (const c of mappedCals) await localDB.put('calendars', c);
-      }
-      
-      // Update UI stores with clean mapped local DB data
+      // Replace local cache with server data
+      await localDB.clear('tasks');
+      for (const t of tasks) await localDB.put('tasks', t);
+
+      await localDB.clear('events');
+      for (const e of events) await localDB.put('events', e);
+
+      await localDB.clear('lists');
+      for (const l of lists) await localDB.put('lists', l);
+
+      await localDB.clear('calendars');
+      for (const c of calendars) await localDB.put('calendars', c);
+
+      // Update UI stores with fresh data
       await this.refreshLocalStores();
-      
-      // Ensure defaults if missing
+
+      // Ensure defaults if missing (server will auto-create on first task/event,
+      // but we want them visible in the UI immediately)
       if (taskStore.state.lists.length === 0) {
         await taskStore.addList('My Tasks', '#6B5BDB');
       }
       if (eventStore.state.calendars.length === 0) {
         await eventStore.addCalendar('Personal', '#E8942A');
       }
-      
-      console.log('Hydrated from Supabase & updated local cache');
+
+      console.log('Hydrated from API & updated local cache');
     } catch (err) {
       console.error('Hydration error:', err);
     }
@@ -235,10 +205,10 @@ class SyncEngine {
       .channel('public-changes')
       .on('postgres_changes', { event: '*', schema: 'public' }, async payload => {
         console.log('Realtime change received!', payload);
-        
-        // Save incoming server data directly to localDB to keep cache warm
+
+        // Map Realtime DB-format payload to UI format and update local cache
         if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-          const uiItem = mapFromDbFormat(payload.table, payload.new);
+          const uiItem = mapRealtimePayload(payload.table, payload.new);
           if (uiItem) {
             await localDB.put(payload.table, uiItem);
           }
@@ -247,7 +217,7 @@ class SyncEngine {
             await localDB.delete(payload.table, payload.old.id);
           }
         }
-        
+
         // Update stores in-memory
         await this.refreshLocalStores();
       })

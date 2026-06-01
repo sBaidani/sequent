@@ -14,23 +14,10 @@ export const eventStore = {
   setCalendars: (calendars) => setEventsState('calendars', calendars),
   
   addEvent: (title, startTime, endTime, calendarId = null) => {
+    // Resolve calendarId: use provided, or fall back to first available calendar
     let targetCalendarId = calendarId;
-    if (!targetCalendarId) {
-      if (eventsState.calendars.length > 0) {
-        targetCalendarId = eventsState.calendars[0].id;
-      } else {
-        const defaultCalId = generateId();
-        const defaultCal = {
-          id: defaultCalId,
-          name: 'Personal',
-          color: '#E8942A',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        setEventsState('calendars', (prev) => [...prev, defaultCal]);
-        syncEngine.enqueue('calendars', 'INSERT', defaultCal);
-        targetCalendarId = defaultCalId;
-      }
+    if (!targetCalendarId && eventsState.calendars.length > 0) {
+      targetCalendarId = eventsState.calendars[0].id;
     }
 
     const newEvent = {
@@ -46,7 +33,7 @@ export const eventStore = {
     // Optimistic UI
     setEventsState('events', (prev) => [...prev, newEvent]);
     
-    // Sync
+    // Enqueue for server sync (server handles default calendar auto-creation if needed)
     syncEngine.enqueue('events', 'INSERT', newEvent);
   },
   
@@ -93,7 +80,7 @@ export const eventStore = {
     const eventsToDelete = eventsState.events.filter(e => e.calendarId === id);
     setEventsState('events', (prev) => prev.filter(e => e.calendarId !== id));
     
-    // Sync
+    // Sync (cascade delete also handled by DB FK ON DELETE CASCADE)
     syncEngine.enqueue('calendars', 'DELETE', { id });
     eventsToDelete.forEach(e => {
       syncEngine.enqueue('events', 'DELETE', { id: e.id });

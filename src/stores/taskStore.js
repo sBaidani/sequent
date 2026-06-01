@@ -14,35 +14,10 @@ export const taskStore = {
   setLists: (lists) => setTasksState('lists', lists),
   
   addTask: (title, listId = null, scheduledDate = null, priority = 'normal') => {
-    let finalListId = listId;
-    let finalScheduledDate = scheduledDate;
-    
-    const isUuid = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
-    
-    // Auto-detect legacy calls passing an ISO date string as the second parameter
-    if (typeof listId === 'string' && !isUuid(listId) && (listId.includes('-') || listId.includes('T')) && listId.length > 10) {
-      finalListId = null;
-      finalScheduledDate = listId;
-    }
-    
-    // Ensure we have a valid list UUID (auto-create default list if empty)
-    let targetListId = finalListId;
-    if (!targetListId) {
-      if (tasksState.lists.length > 0) {
-        targetListId = tasksState.lists[0].id;
-      } else {
-        const defaultListId = generateId();
-        const defaultList = {
-          id: defaultListId,
-          name: 'My Tasks',
-          color: '#6B5BDB',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        setTasksState('lists', (prev) => [...prev, defaultList]);
-        syncEngine.enqueue('lists', 'INSERT', defaultList);
-        targetListId = defaultListId;
-      }
+    // Resolve listId: use provided, or fall back to first available list
+    let targetListId = listId;
+    if (!targetListId && tasksState.lists.length > 0) {
+      targetListId = tasksState.lists[0].id;
     }
     
     const newTask = {
@@ -51,7 +26,7 @@ export const taskStore = {
       listId: targetListId,
       completed: false,
       priority,
-      scheduled_date: finalScheduledDate || null,
+      scheduled_date: scheduledDate || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -59,7 +34,7 @@ export const taskStore = {
     // Optimistic UI update
     setTasksState('tasks', (prev) => [...prev, newTask]);
     
-    // Sync to IndexedDB and Cloud
+    // Enqueue for server sync (server handles default list auto-creation if needed)
     syncEngine.enqueue('tasks', 'INSERT', newTask);
   },
   
@@ -106,7 +81,7 @@ export const taskStore = {
     // Optimistic UI
     setTasksState('tasks', t => t.id === id, 'completed', c => !c);
     
-    // Sync to IndexedDB and Cloud
+    // Sync
     syncEngine.enqueue('tasks', 'UPDATE', updatedTask);
   },
   
