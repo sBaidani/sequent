@@ -25,9 +25,9 @@ function SidebarHeatmap() {
     
     const count = eventsOnDay.length;
     if (count === 0) return '';
-    if (count <= 2) return 'heatmap-1';
-    if (count <= 4) return 'heatmap-2';
-    return 'heatmap-3';
+    if (count <= 2) return 'bg-accent/30 text-white';
+    if (count <= 4) return 'bg-accent/60 text-white shadow-[0_0_8px_var(--color-accent)]';
+    return 'bg-accent text-white shadow-[0_0_12px_var(--color-accent)]';
   };
 
   const handleDayClick = (day) => {
@@ -48,20 +48,20 @@ function SidebarHeatmap() {
   const prevMonth = () => setCurrentMonth(prev => subMonths(prev, 1));
 
   return (
-    <div class="sidebar-heatmap">
-      <div class="heatmap-header">
-        <button onClick={prevMonth} class="heatmap-nav-btn">‹</button>
-        <span class="heatmap-month-title">{format(currentMonth(), 'MMMM yyyy')}</span>
-        <button onClick={nextMonth} class="heatmap-nav-btn">›</button>
+    <div class="px-5 pb-5 border-b border-white/10">
+      <div class="flex items-center justify-between mb-3">
+        <button onClick={prevMonth} class="text-white/40 hover:text-white bg-transparent border-none text-lg cursor-pointer px-1">‹</button>
+        <span class="text-xs font-bold text-white uppercase tracking-wider">{format(currentMonth(), 'MMMM yyyy')}</span>
+        <button onClick={nextMonth} class="text-white/40 hover:text-white bg-transparent border-none text-lg cursor-pointer px-1">›</button>
       </div>
       
-      <div class="heatmap-grid-header">
+      <div class="grid grid-cols-7 mb-2">
         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
-          <div class="heatmap-dow">{d}</div>
+          <div class="text-[9px] font-bold text-white/30 text-center uppercase">{d}</div>
         ))}
       </div>
 
-      <div class="heatmap-grid">
+      <div class="grid grid-cols-7 gap-1">
         <For each={daysInMonth()}>
           {(day) => {
             // Must be a function or directly evaluated in JSX to track reactivity for events
@@ -71,7 +71,7 @@ function SidebarHeatmap() {
 
             return (
               <button 
-                class={`heatmap-day ${isCurrentMonth ? '' : 'other-month'} ${isDayToday ? 'is-today' : ''} ${heatClass()}`}
+                class={`w-6 h-6 rounded-md border border-transparent bg-white/5 text-white/70 text-[10px] font-bold flex items-center justify-center cursor-pointer transition-colors hover:bg-white/20 hover:text-white ${isCurrentMonth ? '' : 'opacity-30'} ${isDayToday ? '!border-accent !text-accent' : ''} ${heatClass()}`}
                 onClick={() => handleDayClick(day)}
               >
                 {format(day, 'd')}

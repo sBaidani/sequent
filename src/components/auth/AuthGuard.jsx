@@ -12,7 +12,7 @@ function AuthGuard(props) {
     <Show 
       when={!authStore.state.loading} 
       fallback={
-        <div style={{ "height": "100vh", "display": "flex", "align-items": "center", "justify-content": "center", "background": "#0F0F0F", "color": "#E8942A" }}>
+        <div class="h-screen flex items-center justify-center bg-[#0F0F0F] text-accent">
           Loading...
         </div>
       }

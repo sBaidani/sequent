@@ -86,32 +86,51 @@ class SyncEngine {
     await localDB.clear('syncQueue');
 
     // 1. Load from IndexedDB for instant UI
-    const [localTasks, localEvents] = await Promise.all([
+    const [localTasks, localEvents, localLists, localCals] = await Promise.all([
       localDB.getAll('tasks'),
-      localDB.getAll('events')
+      localDB.getAll('events'),
+      localDB.getAll('lists'),
+      localDB.getAll('calendars')
     ]);
     
     // Hydrate stores immediately from local data
     taskStore.setTasks(localTasks || []);
+    taskStore.setLists(localLists || []);
     eventStore.setEvents(localEvents || []);
+    eventStore.setCalendars(localCals || []);
 
     // 2. Fetch fresh data from Supabase if online
     const { data: { session } } = await supabase.auth.getSession();
     if (!session || !navigator.onLine) return;
 
     try {
-      const [tasksRes, eventsRes] = await Promise.all([
+      const [tasksRes, eventsRes, listsRes, calsRes] = await Promise.all([
         supabase.from('tasks').select('*'),
-        supabase.from('events').select('*')
+        supabase.from('events').select('*'),
+        supabase.from('lists').select('*'),
+        supabase.from('calendars').select('*')
       ]);
 
       if (tasksRes.data) {
-        // Save fresh data to localDB and update stores
         for (const t of tasksRes.data) await localDB.put('tasks', t);
+        taskStore.setTasks(tasksRes.data);
       }
       if (eventsRes.data) {
         for (const e of eventsRes.data) await localDB.put('events', e);
+        eventStore.setEvents(eventsRes.data);
       }
+      if (listsRes.data) {
+        for (const l of listsRes.data) await localDB.put('lists', l);
+        taskStore.setLists(listsRes.data);
+      }
+      if (calsRes.data) {
+        for (const c of calsRes.data) await localDB.put('calendars', c);
+        eventStore.setCalendars(calsRes.data);
+      }
+      
+      // Ensure defaults if missing
+      if (taskStore.state.lists.length === 0) taskStore.addList('My Tasks', '#6B5BDB');
+      if (eventStore.state.calendars.length === 0) eventStore.addCalendar('Personal', '#E8942A');
       
       console.log('Hydrated from Supabase & updated local cache');
     } catch (err) {

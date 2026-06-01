@@ -20,36 +20,30 @@ function AddCalendarModal() {
 
   return (
     <Modal id="addCalendar" compact>
-      <h2 style={{ "font-size": "24px", "font-weight": "800", "margin-bottom": "20px", "color": "#fff" }}>New Calendar</h2>
-      <form onSubmit={handleSubmit} style={{ "display": "flex", "flex-direction": "column", "gap": "16px" }}>
+      <h2 class="text-2xl font-extrabold mb-5 text-white">New Calendar</h2>
+      <form onSubmit={handleSubmit} class="flex flex-col gap-4">
         
         <div>
-          <label style={{ "display": "block", "font-size": "12px", "color": "var(--text-muted)", "font-weight": "600", "margin-bottom": "6px", "text-transform": "uppercase", "letter-spacing": "0.05em" }}>Calendar Name</label>
+          <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">Calendar Name</label>
           <input 
             type="text" 
             placeholder="Work, Personal..."
             value={name()}
             onInput={(e) => setName(e.target.value)}
-            style={{ 
-              "width": "100%", "background": "rgba(255,255,255,0.06)", "border": "1px solid var(--border)", 
-              "border-radius": "10px", "padding": "12px 14px", "color": "#fff", "font-size": "15px", "outline": "none"
-            }}
+            class="w-full bg-white/5 border border-border rounded-xl px-3.5 py-3 text-white text-[15px] outline-none focus:border-accent transition-colors"
             autofocus
           />
         </div>
         
         <div>
-          <label style={{ "display": "block", "font-size": "12px", "color": "var(--text-muted)", "font-weight": "600", "margin-bottom": "8px", "text-transform": "uppercase", "letter-spacing": "0.05em" }}>Color</label>
-          <div style={{ "display": "flex", "gap": "12px" }}>
+          <label class="block text-xs text-text-muted font-semibold mb-2 uppercase tracking-wider">Color</label>
+          <div class="flex gap-3">
             {colors.map(c => (
               <button 
                 type="button"
                 onClick={() => setColor(c)}
-                style={{ 
-                  "width": "32px", "height": "32px", "border-radius": "50%", 
-                  "background": c, 
-                  "border": color() === c ? "3px solid #fff" : "3px solid transparent",
-                }}
+                class={`w-8 h-8 rounded-full border-4 cursor-pointer transition-transform hover:scale-110 ${color() === c ? 'border-white' : 'border-transparent'}`}
+                style={{ background: c }}
               />
             ))}
           </div>
@@ -57,10 +51,7 @@ function AddCalendarModal() {
 
         <button 
           type="submit"
-          style={{ 
-            "margin-top": "8px", "background": "var(--accent)", "color": "#fff", "border": "none", 
-            "padding": "14px", "border-radius": "10px", "font-size": "15px", "font-weight": "700", "cursor": "pointer"
-          }}
+          class="mt-2 bg-accent text-white border-none p-3.5 rounded-xl text-[15px] font-bold cursor-pointer hover:bg-accent/80 transition-colors shadow-lg shadow-accent/20"
         >
           Create Calendar
         </button>

@@ -4,32 +4,17 @@ function ErrorBoundary(props) {
   return (
     <SolidErrorBoundary
       fallback={(err, reset) => (
-        <div style={{
-          "display": "flex",
-          "flex-direction": "column",
-          "align-items": "center",
-          "justify-content": "center",
-          "height": "100vh",
-          "width": "100vw",
-          "background": "#0F0F0F",
-          "color": "#fff",
-          "text-align": "center",
-          "padding": "20px"
-        }}>
-          <div style={{ "font-size": "48px", "margin-bottom": "16px" }}>⚠️</div>
-          <h2 style={{ "margin-bottom": "12px", "color": "#E8942A" }}>Something went wrong.</h2>
-          <p style={{ "color": "#888", "margin-bottom": "24px", "max-width": "400px" }}>
+        <div class="flex flex-col items-center justify-center h-screen w-screen bg-[#0F0F0F] text-white text-center p-5">
+          <div class="text-5xl mb-4">⚠️</div>
+          <h2 class="mb-3 text-accent">Something went wrong.</h2>
+          <p class="text-[#888] mb-6 max-w-[400px]">
             The application encountered an unexpected error.
             <br/><br/>
             {err.toString()}
           </p>
           <button 
             onClick={reset}
-            style={{
-              "padding": "12px 24px", "border-radius": "8px",
-              "background": "#E8942A", "color": "#fff", "font-weight": "600",
-              "border": "none", "cursor": "pointer"
-            }}
+            class="px-6 py-3 rounded-lg bg-accent text-white font-semibold border-none cursor-pointer hover:bg-accent/80 transition-colors shadow-lg shadow-accent/20"
           >
             Try Again
           </button>

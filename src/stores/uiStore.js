@@ -12,7 +12,17 @@ const [uiState, setUiState] = createStore({
   hasSeenOnboarding: initialHasSeenOnboarding,
   isOnline: navigator.onLine,
   activeModal: null, // null, 'addEvent', 'addTask', 'addCalendar'
+  clickCoords: { x: window.innerWidth / 2, y: window.innerHeight / 2 },
 });
+
+// Initialize CSS variables to match default theme
+document.documentElement.style.setProperty('--accent', uiState.theme);
+document.documentElement.style.setProperty('--bg', uiState.theme);
+document.documentElement.style.setProperty('--accent-rgb', '232, 148, 42');
+
+window.addEventListener('click', (e) => {
+  setUiState('clickCoords', { x: e.clientX, y: e.clientY });
+}, true);
 
 window.addEventListener('online', () => setUiState('isOnline', true));
 window.addEventListener('offline', () => setUiState('isOnline', false));

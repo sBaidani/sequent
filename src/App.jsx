@@ -7,8 +7,7 @@ import TasksView from './components/tasks/TasksView';
 import ArchiveView from './components/archive/ArchiveView';
 import SettingsView from './components/settings/SettingsView';
 import OnboardingModal from './components/onboarding/OnboardingModal';
-import AddEventModal from './components/events/AddEventModal';
-import AddTaskModal from './components/tasks/AddTaskModal';
+import AddItemModal from './components/shared/AddItemModal';
 import AddCalendarModal from './components/calendar/AddCalendarModal';
 import ToastProvider from './components/ui/ToastProvider';
 import { uiStore } from './stores/uiStore';
@@ -25,11 +24,13 @@ function App() {
   });
 
   return (
-    <div id="app" class="theme-default" style={{ "--app-theme": uiState.theme, "display": "flex", "width": "100%", "height": "100%" }}>
-      <Sidebar />
+    <div class={`w-full h-full flex ${uiState.theme}`}>
+      <Show when={uiState.sidebarOpen}>
+        <Sidebar />
+      </Show>
       
-      <div id="main-content" class="main-content">
-        <div class="view active" ref={viewContainerRef} style={{ "flex": "1", "display": "flex", "flex-direction": "column" }}>
+      <div id="main-content" class="flex-1 h-screen flex flex-col relative overflow-hidden bg-bg-theme text-text-primary">
+        <div ref={viewContainerRef} class="flex-1 flex flex-col overflow-hidden h-full">
           {uiState.view === 'timeline' && <TimelineView />}
           {uiState.view === 'calendar' && <CalendarView />}
           {uiState.view === 'tasks' && <TasksView />}
@@ -39,8 +40,7 @@ function App() {
       </div>
       
       {!uiState.hasSeenOnboarding && <OnboardingModal />}
-      <AddEventModal />
-      <AddTaskModal />
+      <AddItemModal />
       <AddCalendarModal />
       <ToastProvider />
     </div>

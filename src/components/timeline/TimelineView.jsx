@@ -54,20 +54,20 @@ function TimelineView() {
 
   return (
     <>
-      <div class="timeline-topbar">
-        <button class="topbar-menu">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+      <div class="h-[60px] min-h-[60px] border-b border-white/10 flex items-center justify-between px-6 bg-black/40 backdrop-blur-md sticky top-0 z-50">
+        <button class="hidden lg:flex w-9 h-9 rounded-full bg-white/5 border-none text-white items-center justify-center cursor-pointer transition-colors hover:bg-white/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
         </button>
-        <div class="topbar-title-block">
-          <div class="topbar-today-label">Timeline</div>
-          <div class="topbar-week-label">Upcoming Schedule</div>
+        <div class="flex flex-col">
+          <div class="text-xl font-bold text-white tracking-wide leading-tight">Timeline</div>
+          <div class="text-[11px] font-bold text-text-muted uppercase tracking-widest leading-none mt-0.5">Upcoming Schedule</div>
         </div>
-        <button class="topbar-add" onClick={() => uiStore.setActiveModal('addEvent')}>
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+        <button class="w-9 h-9 rounded-full bg-white/5 border-none text-white flex items-center justify-center cursor-pointer transition-colors hover:bg-white/20" onClick={() => uiStore.setActiveModal('addItem')}>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
         </button>
       </div>
 
-      <div class="timeline-scroll" id="timelineScroll">
+      <div class="flex-1 overflow-y-auto overflow-x-hidden relative scroll-smooth" id="timelineScroll">
         <div ref={topSentinel} style={{ height: '1px' }}></div>
         <For each={days()}>
           {(day) => {
@@ -77,47 +77,52 @@ function TimelineView() {
             const tasksForDay = () => taskState.tasks.filter(t => t.scheduled_date && isSameDay(new Date(t.scheduled_date), day));
 
             return (
-              <div class={`day-section ${isDayToday ? 'is-today' : ''}`} data-date={dateStr}>
-                <div class="day-gutter">
+              <div class={`day-section flex border-b border-white/5 min-h-[250px] transition-colors relative ${isDayToday ? 'bg-accent/5 is-today' : ''}`} data-date={dateStr}>
+                <div class="w-20 min-w-20 border-r border-white/5 p-4 flex flex-col items-center sticky top-0">
                   {day.getDate() === 1 && (
-                    <div class="day-gutter-month">{format(day, 'MMMM')}</div>
+                    <div class="text-xs font-bold text-text-secondary uppercase mb-2">{format(day, 'MMMM')}</div>
                   )}
-                  <div class="day-gutter-dow">{format(day, 'EEE')}</div>
-                  <div class="day-gutter-num-wrap">
-                    <div class="day-gutter-num">{format(day, 'd')}</div>
+                  <div class="text-[10px] font-bold text-text-muted uppercase mb-1">{format(day, 'EEE')}</div>
+                  <div class={`flex items-center justify-center ${isDayToday ? 'w-9 h-9 rounded-full bg-accent text-white shadow-[0_0_15px_var(--color-accent)]' : ''}`}>
+                    <div class="text-2xl font-bold text-white">{format(day, 'd')}</div>
                   </div>
                 </div>
                 
-                <div class="day-content">
-                  <div class="day-col-events">
-                    <div class="section-label">Schedule</div>
-                    {eventsForDay().length === 0 && tasksForDay().length === 0 ? (
-                      <div class="day-empty">A clear day ahead.</div>
+                <div class="flex-1 flex flex-col md:flex-row p-4 gap-6 relative">
+                  <div class="flex-1 flex flex-col gap-3 min-w-0">
+                    <div class="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1">Schedule</div>
+                    {eventsForDay().length === 0 ? (
+                      <div class="text-sm font-semibold text-text-muted italic">A clear schedule.</div>
                     ) : (
-                      <>
-                        <For each={eventsForDay()}>
-                          {(ev) => (
-                            <div class="event-card" style={{ "--cal-color": "#E8942A" }}>
-                              <div class="event-card-body">
-                                <div class="event-card-title">{ev.title}</div>
-                                <div class="event-card-meta">
-                                  <span class="event-card-time">{format(new Date(ev.start_time), 'h:mm a')}</span> - {format(new Date(ev.end_time), 'h:mm a')}
-                                </div>
+                      <For each={eventsForDay()}>
+                        {(ev) => (
+                          <div class="relative pl-3 bg-card border border-border rounded-lg p-3.5 flex items-center justify-between transition-all overflow-hidden before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-[var(--cal-color)]" style={{ "--cal-color": "#E8942A" }}>
+                            <div class="flex flex-col gap-1 min-w-0">
+                              <div class="text-[15px] font-bold text-white/90 truncate">{ev.title}</div>
+                              <div class="text-xs font-semibold text-text-muted truncate">
+                                <span>{format(new Date(ev.start_time), 'h:mm a')}</span> - {format(new Date(ev.end_time), 'h:mm a')}
                               </div>
                             </div>
-                          )}
-                        </For>
-                        <For each={tasksForDay()}>
-                          {(task) => (
-                            <div class="event-card task-scheduled-card" style={{ "--cal-color": "#6B5BDB", opacity: task.completed ? 0.5 : 1 }}>
-                              <div class="event-card-body">
-                                <div class="event-card-title">{task.title}</div>
-                                <div class="event-card-meta">Scheduled Task</div>
-                              </div>
+                          </div>
+                        )}
+                      </For>
+                    )}
+                  </div>
+                  <div class="flex-1 flex flex-col gap-3 min-w-0">
+                    <div class="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1">Tasks</div>
+                    {tasksForDay().length === 0 ? (
+                      <div class="text-sm font-semibold text-text-muted italic">No tasks scheduled.</div>
+                    ) : (
+                      <For each={tasksForDay()}>
+                        {(task) => (
+                          <div class="relative pl-3 bg-card border border-border rounded-lg p-3.5 flex items-center justify-between transition-all overflow-hidden before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-[var(--cal-color)]" style={{ "--cal-color": "#6B5BDB", opacity: task.completed ? 0.5 : 1 }}>
+                            <div class="flex flex-col gap-1 min-w-0">
+                              <div class="text-[15px] font-bold text-white/90 truncate">{task.title}</div>
+                              <div class="text-xs font-semibold text-text-muted truncate">Scheduled Task</div>
                             </div>
-                          )}
-                        </For>
-                      </>
+                          </div>
+                        )}
+                      </For>
                     )}
                   </div>
                 </div>
@@ -128,11 +133,11 @@ function TimelineView() {
         <div ref={bottomSentinel} style={{ height: '1px' }}></div>
       </div>
       
-      <button class="scroll-to-today-fab" onClick={() => {
+      <button class="fixed bottom-8 right-8 w-12 h-12 rounded-full bg-white/10 text-white border-none backdrop-blur-md shadow-xl flex items-center justify-center cursor-pointer transition-transform hover:scale-105 active:scale-95 z-[100]" onClick={() => {
         const todayEl = document.querySelector('.day-section.is-today');
         if (todayEl) todayEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }}>
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
       </button>
     </>
   );

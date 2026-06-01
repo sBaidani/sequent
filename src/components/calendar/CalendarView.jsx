@@ -97,88 +97,85 @@ function CalendarView() {
   };
 
   return (
-    <div class="calendar-view-container" style={{"display":"flex", "flex-direction":"column", "height":"100%", "background":"var(--bg)"}}>
+    <div class="flex flex-col h-full bg-bg-theme">
       
       {/* Header */}
-      <div style={{"padding":"20px 24px", "display":"flex", "justify-content":"space-between", "align-items":"center", "border-bottom":"1px solid rgba(255,255,255,0.05)"}}>
-        <div style={{"display":"flex", "align-items":"center", "gap":"16px"}}>
-          <h2 style={{"font-size":"24px", "font-weight":"800", "color":"#fff", "min-width":"200px"}}>
+      <div class="px-6 py-5 flex justify-between items-center border-b border-white/5">
+        <div class="flex items-center gap-4">
+          <h2 class="text-2xl font-extrabold text-white min-w-[200px]">
             {format(currentDate(), viewMode() === 'month' ? 'MMMM yyyy' : 'MMM yyyy')}
           </h2>
-          <div style={{"display":"flex", "gap":"4px", "background":"rgba(255,255,255,0.1)", "border-radius":"8px", "padding":"4px"}}>
-            <button onClick={prev} style={{"background":"transparent", "border":"none", "color":"#fff", "cursor":"pointer", "padding":"4px 8px"}}>&lt;</button>
-            <button onClick={today} style={{"background":"transparent", "border":"none", "color":"#fff", "cursor":"pointer", "padding":"4px 12px", "font-size":"13px", "font-weight":"600"}}>Today</button>
-            <button onClick={next} style={{"background":"transparent", "border":"none", "color":"#fff", "cursor":"pointer", "padding":"4px 8px"}}>&gt;</button>
+          <div class="flex gap-1 bg-white/10 rounded-lg p-1">
+            <button onClick={prev} class="bg-transparent border-none text-white cursor-pointer px-2 py-1 rounded hover:bg-white/10 transition-colors">&lt;</button>
+            <button onClick={today} class="bg-transparent border-none text-white cursor-pointer px-3 py-1 text-[13px] font-semibold rounded hover:bg-white/10 transition-colors">Today</button>
+            <button onClick={next} class="bg-transparent border-none text-white cursor-pointer px-2 py-1 rounded hover:bg-white/10 transition-colors">&gt;</button>
           </div>
         </div>
 
-        <div style={{"display":"flex", "align-items":"center", "gap":"16px"}}>
+        <div class="flex items-center gap-4">
           <Show when={viewMode() === 'week'}>
-            <label style={{"display":"flex", "align-items":"center", "gap":"8px", "color":"var(--text-secondary)", "font-size":"13px", "cursor":"pointer"}}>
-              <input type="checkbox" checked={workWeekOnly()} onChange={(e) => setWorkWeekOnly(e.target.checked)} />
+            <label class="flex items-center gap-2 text-text-secondary text-[13px] cursor-pointer hover:text-white transition-colors">
+              <input type="checkbox" checked={workWeekOnly()} onChange={(e) => setWorkWeekOnly(e.target.checked)} class="cursor-pointer" />
               Work Week Only
             </label>
           </Show>
-          <div style={{"display":"flex", "background":"rgba(255,255,255,0.1)", "border-radius":"8px", "overflow":"hidden"}}>
+          <div class="flex bg-white/10 rounded-lg p-1">
             <button 
               onClick={() => setViewMode('month')} 
-              style={{"background":viewMode()==='month'?"var(--accent)":"transparent", "color":"#fff", "border":"none", "padding":"8px 16px", "font-size":"13px", "font-weight":"600", "cursor":"pointer"}}
+              class={`border-none px-4 py-1.5 text-[13px] font-semibold cursor-pointer rounded-md transition-colors ${viewMode() === 'month' ? 'bg-accent text-white shadow-sm' : 'bg-transparent text-text-secondary hover:text-white'}`}
             >Month</button>
             <button 
               onClick={() => setViewMode('week')} 
-              style={{"background":viewMode()==='week'?"var(--accent)":"transparent", "color":"#fff", "border":"none", "padding":"8px 16px", "font-size":"13px", "font-weight":"600", "cursor":"pointer"}}
+              class={`border-none px-4 py-1.5 text-[13px] font-semibold cursor-pointer rounded-md transition-colors ${viewMode() === 'week' ? 'bg-accent text-white shadow-sm' : 'bg-transparent text-text-secondary hover:text-white'}`}
             >Week</button>
           </div>
         </div>
       </div>
 
       {/* Main Area */}
-      <div style={{"flex":"1", "overflow":"hidden", "display":"flex", "flex-direction":"column"}}>
+      <div class="flex-1 overflow-hidden flex flex-col">
         <Show when={viewMode() === 'month'}>
           {/* Month View Headers */}
-          <div style={{"display":"grid", "grid-template-columns":"repeat(7, 1fr)", "border-bottom":"1px solid rgba(255,255,255,0.05)"}}>
+          <div class="grid grid-cols-7 border-b border-white/5">
             <For each={['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].slice(weekStartsOn()).concat(weekStartsOn() === 1 ? ['Sun'] : [])}>
-              {day => <div style={{"padding":"12px", "text-align":"center", "font-size":"12px", "font-weight":"700", "color":"var(--text-muted)", "text-transform":"uppercase"}}>{day}</div>}
+              {day => <div class="p-2 sm:p-3 text-center text-[10px] sm:text-xs font-bold text-text-muted uppercase tracking-wider truncate">{day}</div>}
             </For>
           </div>
           {/* Month Grid */}
-          <div style={{"display":"grid", "grid-template-columns":"repeat(7, 1fr)", "grid-auto-rows":"minmax(120px, 1fr)", "flex":"1", "overflow-y":"auto"}}>
+          <div class="grid grid-cols-7 auto-rows-[minmax(120px,1fr)] flex-1 overflow-y-auto bg-black/20">
             <For each={monthDays()}>
               {date => {
                 const items = getDayItems(date);
                 const isCurrentMonth = isSameMonth(date, currentDate());
                 const isToday = isSameDay(date, new Date());
+                const eventCount = items.filter(i => i.type === 'event').length;
+                
+                let dateBadgeClass = "";
+                if (isToday) {
+                  dateBadgeClass = "bg-accent text-white w-6 h-6 flex items-center justify-center rounded-full shadow-[0_0_10px_var(--color-accent)]";
+                } else if (eventCount > 0 && isCurrentMonth) {
+                  if (eventCount === 1) dateBadgeClass = "bg-white/10 text-white w-6 h-6 flex items-center justify-center rounded-full";
+                  else if (eventCount === 2) dateBadgeClass = "bg-white/20 text-white w-6 h-6 flex items-center justify-center rounded-full";
+                  else dateBadgeClass = "bg-white/30 text-white w-6 h-6 flex items-center justify-center rounded-full font-bold";
+                }
                 
                 return (
                   <div 
-                    style={{
-                      "border-right":"1px solid rgba(255,255,255,0.05)", 
-                      "border-bottom":"1px solid rgba(255,255,255,0.05)",
-                      "background": isCurrentMonth ? "transparent" : "rgba(0,0,0,0.2)",
-                      "padding":"8px",
-                      "display":"flex",
-                      "flex-direction":"column",
-                      "gap":"4px"
-                    }}
-                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-                    onDragLeave={(e) => { e.currentTarget.style.background = isCurrentMonth ? "transparent" : "rgba(0,0,0,0.2)"; }}
+                    class={`border-r border-b border-white/5 p-2 flex flex-col gap-1 transition-colors ${isCurrentMonth ? 'bg-transparent' : 'bg-black/20'}`}
+                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-white/10'); }}
+                    onDragLeave={(e) => { e.currentTarget.classList.remove('bg-white/10'); }}
                     onDrop={(e) => {
-                      e.currentTarget.style.background = isCurrentMonth ? "transparent" : "rgba(0,0,0,0.2)";
+                      e.currentTarget.classList.remove('bg-white/10');
                       handleDrop(e, date);
                     }}
                   >
-                    <div style={{
-                      "font-size":"12px", "font-weight":"700", 
-                      "color": isToday ? "var(--accent)" : (isCurrentMonth ? "#fff" : "var(--text-muted)"),
-                      "margin-bottom":"4px",
-                      "display":"flex", "justify-content":"flex-end"
-                    }}>
-                      <span style={isToday ? {"background":"var(--accent)", "color":"#fff", "width":"24px", "height":"24px", "display":"flex", "align-items":"center", "justify-content":"center", "border-radius":"50%"} : {}}>
+                    <div class={`text-xs font-bold mb-1 flex justify-end ${isToday || eventCount > 0 ? '' : (isCurrentMonth ? 'text-white/70' : 'text-text-muted')}`}>
+                      <span class={dateBadgeClass}>
                         {format(date, 'd')}
                       </span>
                     </div>
                     
-                    <div style={{"flex":"1", "overflow-y":"auto", "display":"flex", "flex-direction":"column", "gap":"2px"}}>
+                    <div class="flex-1 overflow-y-auto flex flex-col gap-0.5">
                       <For each={items}>
                         {item => (
                           <div 
@@ -187,16 +184,12 @@ function CalendarView() {
                               e.dataTransfer.setData('id', item.id);
                               e.dataTransfer.setData('type', item.type);
                             }}
-                            style={{
-                              "background":"rgba(255,255,255,0.1)", "padding":"4px 6px", "border-radius":"4px", 
-                              "font-size":"11px", "display":"flex", "align-items":"center", "gap":"6px", "cursor":"grab",
-                              "opacity": (item.type === 'task' && item.completed) ? "0.5" : "1"
-                            }}
+                            class={`py-1 px-1.5 rounded-r-md text-[11px] flex items-center gap-1.5 cursor-grab hover:bg-white/5 transition-colors ${(item.type === 'task' && item.completed) ? 'opacity-50' : 'opacity-100'}`}
+                            style={{ "border-left": `2px solid ${item.color}` }}
                           >
-                            <span style={{"width":"6px", "height":"6px", "border-radius":"50%", "background-color":item.color, "flex-shrink":"0"}}></span>
-                            <span style={{"white-space":"nowrap", "overflow":"hidden", "text-overflow":"ellipsis", "flex":"1", "color":"#fff"}}>{item.title}</span>
+                            <span class="whitespace-nowrap overflow-hidden text-ellipsis flex-1 text-white/90 font-medium">{item.title}</span>
                             {item.type === 'event' && (
-                              <span style={{"color":"var(--text-muted)", "font-size":"9px"}}>{format(parseISO(item.start_time), 'HH:mm')}</span>
+                              <span class="text-text-muted text-[9px]">{format(parseISO(item.start_time), 'HH:mm')}</span>
                             )}
                           </div>
                         )}
@@ -211,44 +204,44 @@ function CalendarView() {
 
         <Show when={viewMode() === 'week'}>
           {/* Week View */}
-          <div style={{"display":"flex", "flex":"1", "overflow":"hidden"}}>
+          <div class="flex flex-1 overflow-hidden">
             {/* Time column */}
-            <div style={{"width":"60px", "border-right":"1px solid rgba(255,255,255,0.05)", "overflow-y":"scroll", "display":"flex", "flex-direction":"column"}}>
-              <div style={{"height":"40px", "border-bottom":"1px solid rgba(255,255,255,0.05)"}}></div> {/* header spacer */}
+            <div class="w-[60px] border-r border-white/5 overflow-y-scroll flex flex-col bg-bg-theme">
+              <div class="h-[40px] border-b border-white/5 sticky top-0 bg-bg-theme z-20"></div> {/* header spacer */}
               <For each={Array.from({length: 24})}>
                 {(_, i) => (
-                  <div style={{"height":"60px", "border-bottom":"1px solid rgba(255,255,255,0.05)", "padding":"4px", "text-align":"right", "font-size":"10px", "color":"var(--text-muted)"}}>
-                    {i === 0 ? '' : `${i}:00`}
+                  <div class="h-[60px] border-b border-white/5 p-1 text-right text-[10px] text-text-muted">
+                    {i() === 0 ? '' : `${i()}:00`}
                   </div>
                 )}
               </For>
             </div>
             
             {/* Days columns */}
-            <div style={{"display":"flex", "flex":"1", "overflow-x":"auto", "overflow-y":"scroll"}}>
+            <div class="flex flex-1 overflow-x-auto overflow-y-scroll bg-bg-theme">
               <For each={weekDays()}>
                 {date => {
                   const isToday = isSameDay(date, new Date());
                   const items = getDayItems(date);
                   
                   return (
-                    <div style={{"flex":"1", "min-width":"120px", "border-right":"1px solid rgba(255,255,255,0.05)", "display":"flex", "flex-direction":"column"}}>
-                      <div style={{"height":"40px", "border-bottom":"1px solid rgba(255,255,255,0.05)", "display":"flex", "flex-direction":"column", "align-items":"center", "justify-content":"center", "position":"sticky", "top":0, "background":"var(--bg)", "z-index":10}}>
-                        <div style={{"font-size":"11px", "color":"var(--text-muted)", "text-transform":"uppercase", "font-weight":"700"}}>{format(date, 'EEE')}</div>
-                        <div style={{"font-size":"14px", "font-weight":"800", "color":isToday ? "var(--accent)" : "#fff"}}>{format(date, 'd')}</div>
+                    <div class="flex-1 min-w-[120px] border-r border-white/5 flex flex-col">
+                      <div class="h-[40px] border-b border-white/5 flex flex-col items-center justify-center sticky top-0 bg-bg-theme z-20">
+                        <div class="text-[10px] text-text-muted uppercase font-bold tracking-wider">{format(date, 'EEE')}</div>
+                        <div class={`text-sm font-extrabold ${isToday ? 'text-accent' : 'text-white'}`}>{format(date, 'd')}</div>
                       </div>
                       
-                      <div style={{"position":"relative", "height":"1440px" /* 24 * 60px */}}
+                      <div class="relative h-[1440px]"
                            onDragOver={(e) => { e.preventDefault(); }}
                            onDrop={(e) => handleDrop(e, date)}
                       >
                         {/* Shading for 9am-5pm (hours 9 to 17) */}
-                        <div style={{"position":"absolute", "top":"540px", "height":"480px", "width":"100%", "background":"rgba(255,255,255,0.03)", "pointer-events":"none"}}></div>
+                        <div class="absolute top-[540px] h-[480px] w-full bg-white/5 pointer-events-none"></div>
                         
                         {/* Grid lines */}
                         <For each={Array.from({length: 24})}>
                           {(_, i) => (
-                            <div style={{"position":"absolute", "top":`${i * 60}px`, "height":"60px", "width":"100%", "border-bottom":"1px solid rgba(255,255,255,0.02)", "pointer-events":"none"}}></div>
+                            <div class="absolute w-full h-[60px] border-b border-white/[0.02] pointer-events-none" style={{ top: `${i() * 60}px` }}></div>
                           )}
                         </For>
                         
@@ -272,25 +265,18 @@ function CalendarView() {
                                   e.dataTransfer.setData('id', item.id);
                                   e.dataTransfer.setData('type', item.type);
                                 }}
+                                class="absolute left-1 right-1 rounded p-1 text-[10px] text-white overflow-hidden cursor-grab flex flex-col shadow-sm"
                                 style={{
-                                  "position":"absolute", 
                                   "top":`${top}px`, 
-                                  "left":"4px", 
-                                  "right":"4px", 
                                   "height":`${height}px`,
-                                  "background": `color-mix(in srgb, ${item.color} 20%, transparent)`,
+                                  "background": `color-mix(in srgb, ${item.color} 30%, transparent)`,
                                   "border-left": `3px solid ${item.color}`,
-                                  "border-radius": "4px",
-                                  "padding":"4px",
-                                  "font-size":"10px",
-                                  "color":"#fff",
-                                  "overflow":"hidden",
-                                  "cursor":"grab"
+                                  "opacity": (item.type === 'task' && item.completed) ? 0.5 : 1
                                 }}
                               >
-                                <div style={{"font-weight":"700", "white-space":"nowrap", "text-overflow":"ellipsis", "overflow":"hidden"}}>{item.title}</div>
+                                <div class="font-bold whitespace-nowrap text-ellipsis overflow-hidden">{item.title}</div>
                                 {item.type === 'event' && (
-                                  <div style={{"color":"rgba(255,255,255,0.7)"}}>{format(parseISO(item.start_time), 'HH:mm')}</div>
+                                  <div class="text-white/70">{format(parseISO(item.start_time), 'HH:mm')}</div>
                                 )}
                               </div>
                             )

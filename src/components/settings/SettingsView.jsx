@@ -20,31 +20,25 @@ function SettingsView() {
 
   return (
     <>
-      <div class="lists-topbar">
-        <div class="lists-title">Settings</div>
+      <div class="h-[60px] min-h-[60px] border-b border-white/10 flex items-center justify-between px-6 bg-black/40 backdrop-blur-md sticky top-0 z-50">
+        <div class="text-xl font-bold text-white tracking-wide">Settings</div>
       </div>
 
-      <div class="lists-layout" style={{ "overflow-y": "auto", "padding": "24px", "display": "flex", "flex-direction": "column", "gap": "32px", "max-width": "800px", "margin": "0 auto" }}>
+      <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-8 max-w-[800px] mx-auto w-full">
         
         {/* Appearance */}
-        <section>
-          <h3 style={{ "font-size": "16px", "font-weight": "800", "margin-bottom": "16px", "color": "#fff" }}>Appearance</h3>
+        <section class="border-b border-white/10 pb-8">
+          <h3 class="text-base font-extrabold mb-4 text-white">Appearance</h3>
           
-          <div style={{ "background": "var(--card)", "border-radius": "var(--card-radius-lg)", "padding": "20px", "border": "1px solid var(--border)" }}>
-            <div style={{ "margin-bottom": "20px" }}>
-              <label style={{ "display": "block", "font-size": "13px", "font-weight": "600", "color": "var(--text-secondary)", "margin-bottom": "12px" }}>Theme Color</label>
-              <div style={{ "display": "flex", "gap": "12px", "flex-wrap": "wrap" }}>
+          <div class="bg-card rounded-[16px] p-5 border border-border">
+            <div class="mb-5">
+              <label class="block text-[13px] font-semibold text-text-secondary mb-3">Theme Color</label>
+              <div class="flex gap-3 flex-wrap">
                 {themes.map(t => (
                   <button 
                     onClick={() => setTheme(t.color)}
-                    style={{ 
-                      "width": "40px", "height": "40px", "border-radius": "50%", 
-                      "background": t.color, 
-                      "border": uiState.theme === t.color ? "3px solid #fff" : "3px solid transparent",
-                      "transition": "transform 0.2s"
-                    }}
-                    onMouseOver={(e) => e.target.style.transform = 'scale(1.1)'}
-                    onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+                    class={`w-10 h-10 rounded-full transition-transform hover:scale-110 border-4 cursor-pointer ${uiState.theme === t.color ? 'border-white' : 'border-transparent'}`}
+                    style={{ background: t.color }}
                     title={t.name}
                   />
                 ))}
@@ -54,37 +48,37 @@ function SettingsView() {
         </section>
 
         {/* Calendars */}
-        <section>
-          <div style={{"display":"flex", "justify-content":"space-between", "align-items":"center", "margin-bottom":"16px"}}>
-            <h3 style={{ "font-size": "16px", "font-weight": "800", "color": "#fff" }}>Local Calendars</h3>
+        <section class="border-b border-white/10 pb-8">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-base font-extrabold text-white">Local Calendars</h3>
             <button 
               onClick={() => uiStore.setActiveModal('addCalendar')}
-              style={{"background":"var(--accent)", "color":"#fff", "border":"none", "padding":"6px 12px", "border-radius":"8px", "font-size":"13px", "font-weight":"600", "cursor":"pointer"}}
+              class="bg-accent text-white border-none py-1.5 px-3 rounded-lg text-[13px] font-semibold cursor-pointer hover:bg-accent/80 transition-colors"
             >
               + New Calendar
             </button>
           </div>
           
-          <div style={{ "background": "var(--card)", "border-radius": "var(--card-radius-lg)", "border": "1px solid var(--border)", "overflow":"hidden" }}>
+          <div class="bg-card rounded-[16px] border border-border overflow-hidden">
             {eventState.calendars.map(cal => (
-              <div style={{ "padding": "16px 20px", "display": "flex", "align-items": "center", "justify-content": "space-between", "border-bottom": "1px solid var(--border)" }}>
-                <div style={{"display":"flex", "align-items":"center", "gap":"12px"}}>
+              <div class="p-4 flex items-center justify-between border-b border-border last:border-b-0">
+                <div class="flex items-center gap-3">
                   <input 
                     type="color" 
                     value={cal.color} 
                     onChange={(e) => eventStore.updateCalendar(cal.id, { color: e.target.value })}
-                    style={{"width":"24px", "height":"24px", "border":"none", "border-radius":"50%", "cursor":"pointer", "padding":"0", "background":"transparent"}} 
+                    class="w-6 h-6 border-none rounded-full cursor-pointer p-0 bg-transparent"
                   />
                   <input 
                     type="text" 
                     value={cal.name}
                     onChange={(e) => eventStore.updateCalendar(cal.id, { name: e.target.value })}
-                    style={{"background":"transparent", "border":"none", "color":"#fff", "font-size":"14px", "font-weight":"600", "outline":"none"}}
+                    class="bg-transparent border-none text-white text-sm font-semibold outline-none"
                   />
                 </div>
                 <button 
                   onClick={() => { if(confirm('Delete calendar and all its events?')) eventStore.deleteCalendar(cal.id); }}
-                  style={{"background":"transparent", "border":"none", "color":"#ff4d4f", "cursor":"pointer", "font-size":"18px"}}
+                  class="bg-transparent border-none text-[#ff4d4f] cursor-pointer text-lg opacity-70 hover:opacity-100"
                   title="Delete Calendar"
                 >
                   ×
@@ -92,46 +86,46 @@ function SettingsView() {
               </div>
             ))}
             {eventState.calendars.length === 0 && (
-              <div style={{"padding":"20px", "text-align":"center", "color":"var(--text-muted)", "font-size":"13px"}}>No calendars found.</div>
+              <div class="p-5 text-center text-text-muted text-[13px]">No calendars found.</div>
             )}
           </div>
         </section>
 
         {/* Task Lists */}
-        <section>
-          <div style={{"display":"flex", "justify-content":"space-between", "align-items":"center", "margin-bottom":"16px"}}>
-            <h3 style={{ "font-size": "16px", "font-weight": "800", "color": "#fff" }}>Task Lists</h3>
+        <section class="border-b border-white/10 pb-8">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-base font-extrabold text-white">Task Lists</h3>
             <button 
               onClick={() => {
                 const name = prompt('New list name:');
                 if (name) taskStore.addList(name, '#3B6ED6');
               }}
-              style={{"background":"var(--accent)", "color":"#fff", "border":"none", "padding":"6px 12px", "border-radius":"8px", "font-size":"13px", "font-weight":"600", "cursor":"pointer"}}
+              class="bg-accent text-white border-none py-1.5 px-3 rounded-lg text-[13px] font-semibold cursor-pointer hover:bg-accent/80 transition-colors"
             >
               + New List
             </button>
           </div>
           
-          <div style={{ "background": "var(--card)", "border-radius": "var(--card-radius-lg)", "border": "1px solid var(--border)", "overflow":"hidden" }}>
+          <div class="bg-card rounded-[16px] border border-border overflow-hidden">
             {taskState.lists.map(list => (
-              <div style={{ "padding": "16px 20px", "display": "flex", "align-items": "center", "justify-content": "space-between", "border-bottom": "1px solid var(--border)" }}>
-                <div style={{"display":"flex", "align-items":"center", "gap":"12px"}}>
+              <div class="p-4 flex items-center justify-between border-b border-border last:border-b-0">
+                <div class="flex items-center gap-3">
                   <input 
                     type="color" 
                     value={list.color} 
                     onChange={(e) => taskStore.updateList(list.id, { color: e.target.value })}
-                    style={{"width":"24px", "height":"24px", "border":"none", "border-radius":"50%", "cursor":"pointer", "padding":"0", "background":"transparent"}} 
+                    class="w-6 h-6 border-none rounded-full cursor-pointer p-0 bg-transparent"
                   />
                   <input 
                     type="text" 
                     value={list.name}
                     onChange={(e) => taskStore.updateList(list.id, { name: e.target.value })}
-                    style={{"background":"transparent", "border":"none", "color":"#fff", "font-size":"14px", "font-weight":"600", "outline":"none"}}
+                    class="bg-transparent border-none text-white text-sm font-semibold outline-none"
                   />
                 </div>
                 <button 
                   onClick={() => { if(confirm('Delete list and all its tasks?')) taskStore.deleteList(list.id); }}
-                  style={{"background":"transparent", "border":"none", "color":"#ff4d4f", "cursor":"pointer", "font-size":"18px"}}
+                  class="bg-transparent border-none text-[#ff4d4f] cursor-pointer text-lg opacity-70 hover:opacity-100"
                   title="Delete List"
                 >
                   ×
@@ -139,45 +133,45 @@ function SettingsView() {
               </div>
             ))}
             {taskState.lists.length === 0 && (
-              <div style={{"padding":"20px", "text-align":"center", "color":"var(--text-muted)", "font-size":"13px"}}>No task lists found.</div>
+              <div class="p-5 text-center text-text-muted text-[13px]">No task lists found.</div>
             )}
           </div>
         </section>
 
         {/* Preferences */}
-        <section>
-          <h3 style={{ "font-size": "16px", "font-weight": "800", "margin-bottom": "16px", "color": "#fff" }}>Preferences</h3>
+        <section class="border-b border-white/10 pb-8">
+          <h3 class="text-base font-extrabold mb-4 text-white">Preferences</h3>
           
-          <div style={{ "background": "var(--card)", "border-radius": "var(--card-radius-lg)", "border": "1px solid var(--border)" }}>
+          <div class="bg-card rounded-[16px] border border-border">
             
-            <div style={{ "padding": "16px 20px", "display": "flex", "align-items": "center", "justify-content": "space-between", "border-bottom": "1px solid var(--border)" }}>
+            <div class="p-4 flex items-center justify-between border-b border-border">
               <div>
-                <div style={{ "font-size": "14px", "font-weight": "600", "color": "#fff" }}>Start of Week</div>
-                <div style={{ "font-size": "12px", "color": "var(--text-muted)", "margin-top": "2px" }}>Which day should calendars start on?</div>
+                <div class="text-sm font-semibold text-white">Start of Week</div>
+                <div class="text-xs text-text-muted mt-0.5">Which day should calendars start on?</div>
               </div>
               <select 
                 value={settings.startOfWeek} 
                 onChange={(e) => setStartOfWeek(e.target.value)}
-                style={{ "background": "rgba(255,255,255,0.1)", "color": "#fff", "border": "none", "padding": "8px 12px", "border-radius": "8px", "outline": "none" }}
+                class="bg-white/10 text-white border-none py-2 px-3 rounded-lg outline-none"
               >
-                <option value="monday" style={{ "color": "#000" }}>Monday</option>
-                <option value="sunday" style={{ "color": "#000" }}>Sunday</option>
+                <option value="monday" class="text-black">Monday</option>
+                <option value="sunday" class="text-black">Sunday</option>
               </select>
             </div>
             
-            <div style={{ "padding": "16px 20px", "display": "flex", "align-items": "center", "justify-content": "space-between" }}>
+            <div class="p-4 flex items-center justify-between">
               <div>
-                <div style={{ "font-size": "14px", "font-weight": "600", "color": "#fff" }}>Default Event Duration</div>
-                <div style={{ "font-size": "12px", "color": "var(--text-muted)", "margin-top": "2px" }}>Used when adding new events</div>
+                <div class="text-sm font-semibold text-white">Default Event Duration</div>
+                <div class="text-xs text-text-muted mt-0.5">Used when adding new events</div>
               </div>
               <select 
                 value={settings.defaultDuration.toString()} 
                 onChange={(e) => setDefaultDuration(parseInt(e.target.value, 10))}
-                style={{ "background": "rgba(255,255,255,0.1)", "color": "#fff", "border": "none", "padding": "8px 12px", "border-radius": "8px", "outline": "none" }}
+                class="bg-white/10 text-white border-none py-2 px-3 rounded-lg outline-none"
               >
-                <option value="30" style={{ "color": "#000" }}>30 minutes</option>
-                <option value="60" style={{ "color": "#000" }}>1 hour</option>
-                <option value="120" style={{ "color": "#000" }}>2 hours</option>
+                <option value="30" class="text-black">30 minutes</option>
+                <option value="60" class="text-black">1 hour</option>
+                <option value="120" class="text-black">2 hours</option>
               </select>
             </div>
 
@@ -185,22 +179,22 @@ function SettingsView() {
         </section>
 
         {/* Sync Accounts */}
-        <section>
-          <h3 style={{ "font-size": "16px", "font-weight": "800", "margin-bottom": "16px", "color": "#fff" }}>Calendar Accounts</h3>
+        <section class="pb-8">
+          <h3 class="text-base font-extrabold mb-4 text-white">Calendar Accounts</h3>
           
-          <div style={{ "background": "var(--card)", "border-radius": "var(--card-radius-lg)", "padding": "20px", "border": "1px solid var(--border)" }}>
-            <div style={{ "font-size": "13px", "color": "var(--text-secondary)", "margin-bottom": "16px" }}>
+          <div class="bg-card rounded-[16px] p-5 border border-border">
+            <div class="text-[13px] text-text-secondary mb-4">
               Connect external calendars to view them in Sequent. Two-way sync allows you to add and edit events.
             </div>
             
-            <div style={{ "display": "flex", "flex-direction": "column", "gap": "12px" }}>
-              <button style={{ "background": "rgba(255,255,255,0.1)", "border": "1px solid rgba(255,255,255,0.1)", "border-radius": "10px", "padding": "12px 16px", "color": "#fff", "display": "flex", "align-items": "center", "gap": "12px", "font-weight": "600" }}>
-                <svg viewBox="0 0 24 24" style={{ "width": "20px", "height": "20px", "fill": "currentColor" }}><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+            <div class="flex flex-col gap-3">
+              <button class="bg-white/10 border border-white/10 rounded-xl py-3 px-4 text-white flex items-center gap-3 font-semibold cursor-pointer hover:bg-white/20 transition-colors">
+                <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
                 Connect Google Calendar
               </button>
               
-              <button style={{ "background": "rgba(255,255,255,0.1)", "border": "1px solid rgba(255,255,255,0.1)", "border-radius": "10px", "padding": "12px 16px", "color": "#fff", "display": "flex", "align-items": "center", "gap": "12px", "font-weight": "600" }}>
-                <svg viewBox="0 0 24 24" style={{ "width": "20px", "height": "20px", "fill": "#00a4ef" }}><path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zM24 11.4H12.6V0H24v11.4z"/></svg>
+              <button class="bg-white/10 border border-white/10 rounded-xl py-3 px-4 text-white flex items-center gap-3 font-semibold cursor-pointer hover:bg-white/20 transition-colors">
+                <svg viewBox="0 0 24 24" class="w-5 h-5 fill-[#00a4ef]"><path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zM24 11.4H12.6V0H24v11.4z"/></svg>
                 Connect Microsoft Outlook
               </button>
             </div>

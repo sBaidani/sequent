@@ -46,24 +46,24 @@ function ArchiveView() {
 
   return (
     <>
-      <div class="lists-topbar">
-        <div class="lists-title">Archive</div>
+      <div class="h-[60px] min-h-[60px] border-b border-white/10 flex items-center justify-between px-6 bg-black/40 backdrop-blur-md sticky top-0 z-50">
+        <div class="text-xl font-bold text-white tracking-wide">Archive</div>
       </div>
 
-      <div class="lists-layout" style={{ "overflow-y": "auto", "padding": "24px", "display": "flex", "flex-direction": "column", "gap": "24px", "max-width": "800px", "margin": "0 auto", "width": "100%" }}>
+      <div class="overflow-y-auto p-6 flex flex-col gap-6 max-w-[800px] mx-auto w-full">
         
-        <div style={{ "display": "flex", "gap": "8px", "background": "rgba(255,255,255,0.05)", "padding": "4px", "border-radius": "8px", "align-self": "flex-start" }}>
+        <div class="flex gap-2 bg-white/5 p-1 rounded-lg self-start">
           <button 
             onClick={() => setFilter('all')}
-            style={{"padding": "6px 12px", "border-radius": "6px", "border": "none", "background": filter() === 'all' ? "rgba(255,255,255,0.15)" : "transparent", "color": filter() === 'all' ? "#fff" : "var(--text-secondary)", "font-weight": "600", "cursor": "pointer"}}
+            class={`px-3 py-1.5 rounded-md border-none font-semibold cursor-pointer transition-colors ${filter() === 'all' ? 'bg-white/15 text-white' : 'bg-transparent text-text-secondary hover:text-white'}`}
           >All</button>
           <button 
             onClick={() => setFilter('events')}
-            style={{"padding": "6px 12px", "border-radius": "6px", "border": "none", "background": filter() === 'events' ? "rgba(255,255,255,0.15)" : "transparent", "color": filter() === 'events' ? "#fff" : "var(--text-secondary)", "font-weight": "600", "cursor": "pointer"}}
+            class={`px-3 py-1.5 rounded-md border-none font-semibold cursor-pointer transition-colors ${filter() === 'events' ? 'bg-white/15 text-white' : 'bg-transparent text-text-secondary hover:text-white'}`}
           >Events</button>
           <button 
             onClick={() => setFilter('tasks')}
-            style={{"padding": "6px 12px", "border-radius": "6px", "border": "none", "background": filter() === 'tasks' ? "rgba(255,255,255,0.15)" : "transparent", "color": filter() === 'tasks' ? "#fff" : "var(--text-secondary)", "font-weight": "600", "cursor": "pointer"}}
+            class={`px-3 py-1.5 rounded-md border-none font-semibold cursor-pointer transition-colors ${filter() === 'tasks' ? 'bg-white/15 text-white' : 'bg-transparent text-text-secondary hover:text-white'}`}
           >Tasks</button>
         </div>
 
@@ -72,15 +72,15 @@ function ArchiveView() {
         ) : (
           <For each={groupedArchive()}>
             {(group) => (
-              <div style={{"display": "flex", "flex-direction": "column", "gap": "12px"}}>
-                <div style={{"font-size": "18px", "font-weight": "800", "color": "#fff"}}>{group.header}</div>
-                <div style={{"display": "flex", "flex-direction": "column", "gap": "8px"}}>
+              <div class="flex flex-col gap-3">
+                <div class="text-lg font-extrabold text-white">{group.header}</div>
+                <div class="flex flex-col gap-2">
                   <For each={group.items}>
                     {(item) => (
-                      <div class="event-card" style={{ "--cal-color": item._type === 'event' ? '#E8942A' : '#6B5BDB', "opacity": "0.7", "background": "var(--card)", "border": "1px solid var(--border)", "cursor": "default" }}>
-                        <div class="event-card-body">
-                          <div class="event-card-title">{item.title}</div>
-                          <div class="event-card-meta">
+                      <div class="bg-card border border-border rounded-xl p-3.5 flex items-center justify-between transition-all opacity-70">
+                        <div class="flex flex-col gap-1">
+                          <div class="text-[15px] font-bold text-white/90">{item.title}</div>
+                          <div class="text-xs font-semibold text-text-muted flex items-center gap-1.5">
                             {item._type === 'event' ? (
                               <span>Event • {format(new Date(item.start_time), 'MMM d, h:mm a')}</span>
                             ) : (

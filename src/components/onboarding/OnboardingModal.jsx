@@ -13,27 +13,18 @@ function OnboardingModal() {
   };
 
   return (
-    <div style={{
-      "position": "fixed", "top": "0", "left": "0", "right": "0", "bottom": "0",
-      "background": "rgba(0,0,0,0.8)", "backdrop-filter": "blur(8px)",
-      "display": "flex", "align-items": "center", "justify-content": "center",
-      "z-index": "10000"
-    }}>
-      <div style={{
-        "background": "#1A1A1A", "width": "100%", "max-width": "480px",
-        "border-radius": "20px", "padding": "40px", "text-align": "center",
-        "border": "1px solid #333", "color": "#F3F3F3"
-      }}>
-        <div style={{ "display": "flex", "justify-content": "center", "gap": "8px", "margin-bottom": "32px" }}>
-          <div style={{ "width": "30px", "height": "4px", "border-radius": "2px", "background": step() >= 1 ? "#E8942A" : "#333" }}></div>
-          <div style={{ "width": "30px", "height": "4px", "border-radius": "2px", "background": step() >= 2 ? "#E8942A" : "#333" }}></div>
-          <div style={{ "width": "30px", "height": "4px", "border-radius": "2px", "background": step() >= 3 ? "#E8942A" : "#333" }}></div>
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10000]">
+      <div class="bg-[#1A1A1A] w-full max-w-[480px] rounded-[20px] p-10 text-center border border-[#333] text-[#F3F3F3] shadow-2xl">
+        <div class="flex justify-center gap-2 mb-8">
+          <div class={`w-8 h-1 rounded-full transition-colors ${step() >= 1 ? 'bg-accent' : 'bg-[#333]'}`}></div>
+          <div class={`w-8 h-1 rounded-full transition-colors ${step() >= 2 ? 'bg-accent' : 'bg-[#333]'}`}></div>
+          <div class={`w-8 h-1 rounded-full transition-colors ${step() >= 3 ? 'bg-accent' : 'bg-[#333]'}`}></div>
         </div>
 
         {step() === 1 && (
           <div>
-            <h2 style={{ "margin-bottom": "16px", "font-size": "24px" }}>Welcome to Sequent</h2>
-            <p style={{ "color": "#888", "line-height": "1.6", "margin-bottom": "32px" }}>
+            <h2 class="mb-4 text-2xl font-bold text-white">Welcome to Sequent</h2>
+            <p class="text-[#888] leading-relaxed mb-8">
               Sequent is your unified timeline for everything. We combine your tasks, calendar events, and reminders into one seamless flow.
             </p>
           </div>
@@ -41,8 +32,8 @@ function OnboardingModal() {
 
         {step() === 2 && (
           <div>
-            <h2 style={{ "margin-bottom": "16px", "font-size": "24px" }}>Offline First</h2>
-            <p style={{ "color": "#888", "line-height": "1.6", "margin-bottom": "32px" }}>
+            <h2 class="mb-4 text-2xl font-bold text-white">Offline First</h2>
+            <p class="text-[#888] leading-relaxed mb-8">
               Your data is instantly available, even without an internet connection. Make changes offline, and Sequent will sync them to the cloud automatically when you reconnect.
             </p>
           </div>
@@ -50,8 +41,8 @@ function OnboardingModal() {
 
         {step() === 3 && (
           <div>
-            <h2 style={{ "margin-bottom": "16px", "font-size": "24px" }}>Let's Get Started</h2>
-            <p style={{ "color": "#888", "line-height": "1.6", "margin-bottom": "32px" }}>
+            <h2 class="mb-4 text-2xl font-bold text-white">Let's Get Started</h2>
+            <p class="text-[#888] leading-relaxed mb-8">
               Ready to take control of your time? You can switch between Timeline, Calendar, and Lists views using the sidebar.
             </p>
           </div>
@@ -59,11 +50,7 @@ function OnboardingModal() {
 
         <button 
           onClick={handleNext}
-          style={{
-            "width": "100%", "padding": "14px", "border-radius": "12px",
-            "background": "#E8942A", "color": "#fff", "font-weight": "700",
-            "border": "none", "cursor": "pointer", "font-size": "16px"
-          }}
+          class="w-full p-3.5 rounded-xl bg-accent text-white font-bold border-none cursor-pointer text-base hover:bg-accent/80 transition-colors shadow-lg shadow-accent/20"
         >
           {step() === 3 ? "Dive In" : "Continue"}
         </button>
