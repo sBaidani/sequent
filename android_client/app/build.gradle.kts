@@ -93,4 +93,18 @@ dependencies {
   implementation(libs.supabase.postgrest)
   implementation(libs.supabase.auth)
   implementation(libs.ktor.client.android)
+  implementation(libs.ktor.client.content.negotiation)
+  implementation(libs.ktor.serialization.kotlinx.json)
+  implementation(libs.kotlinx.serialization.json)
+
+  // Room Database
+  implementation(libs.room.runtime)
+  implementation(libs.room.ktx)
+  ksp(libs.room.compiler)
+
+  // WorkManager & Hilt
+  implementation(libs.work.runtime.ktx)
+  implementation(libs.hilt.work)
+  implementation(libs.hilt.navigation.compose)
+  ksp(libs.androidx.hilt.compiler)
 }
