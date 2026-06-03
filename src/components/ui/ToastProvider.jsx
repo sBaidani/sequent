@@ -6,7 +6,7 @@ function ToastProvider() {
     <div class="fixed bottom-6 right-6 flex flex-col gap-3 z-[9999] pointer-events-none">
       <For each={toastStore.state.toasts}>
         {(toast) => (
-          <div class={`text-white px-5 py-3 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.3)] border border-white/10 text-sm font-semibold pointer-events-auto animate-[slideInRight_0.3s_cubic-bezier(0.175,0.885,0.32,1.275)] ${toast.type === 'error' ? 'bg-[#ff4d4f]' : 'bg-[#222]'}`}>
+          <div class={`text-text-primary px-5 py-3 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.3)] border border-border-theme text-sm font-semibold pointer-events-auto animate-[slideInRight_0.3s_cubic-bezier(0.175,0.885,0.32,1.275)] ${toast.type === 'error' ? 'bg-[#ff4d4f]' : 'bg-card'}`}>
             {toast.message}
           </div>
         )}

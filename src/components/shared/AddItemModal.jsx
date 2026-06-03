@@ -1,14 +1,57 @@
-import { createSignal } from 'solid-js';
+import { createSignal, createEffect, Show } from 'solid-js';
 import Modal from '../ui/Modal';
 import { eventStore } from '../../stores/eventStore';
 import { taskStore } from '../../stores/taskStore';
+import { settingsStore } from '../../stores/settingsStore';
 import { uiStore } from '../../stores/uiStore';
+import DatePicker from './DatePicker';
+import TimePicker from './TimePicker';
+import SelectPicker from './SelectPicker';
+import DaySchedulePreview from '../calendar/DaySchedulePreview';
+import DayTaskListPreview from '../tasks/DayTaskListPreview';
 
 function AddItemModal() {
   const [mode, setMode] = createSignal('event'); // 'event' or 'task'
   const [title, setTitle] = createSignal('');
-  const [date, setDate] = createSignal(new Date().toISOString().split('T')[0]);
+  const [description, setDescription] = createSignal('');
+  const [date, setDate] = createSignal('');
   const [time, setTime] = createSignal('12:00');
+  const [endDate, setEndDate] = createSignal('');
+  const [endTime, setEndTime] = createSignal('13:00');
+  const [allDay, setAllDay] = createSignal(true);
+  const [showRecurrence, setShowRecurrence] = createSignal(false);
+  const [recurrence, setRecurrence] = createSignal('NONE');
+  const [calendarId, setCalendarId] = createSignal('');
+  const [listId, setListId] = createSignal('');
+  const [priority, setPriority] = createSignal('normal');
+  const [hasTaskDate, setHasTaskDate] = createSignal(false);
+
+  const { state: eventState } = eventStore;
+  const { state: taskState } = taskStore;
+
+  createEffect(() => {
+    if (uiStore.state.activeModal === 'addItem') {
+      const activeStr = uiStore.state.activeDate || new Date().toISOString();
+      const st = new Date(activeStr);
+      setDate(st.toISOString().split('T')[0]);
+      setTime(st.getHours().toString().padStart(2, '0') + ':00');
+      
+      const defaultDur = settingsStore.state.defaultDuration || 60;
+      const en = new Date(st.getTime() + defaultDur * 60000);
+      setEndDate(en.toISOString().split('T')[0]);
+      setEndTime(en.getHours().toString().padStart(2, '0') + ':' + en.getMinutes().toString().padStart(2, '0'));
+      
+      setAllDay(true);
+      setHasTaskDate(false);
+      
+      if (eventState.calendars.length > 0) {
+        setCalendarId(eventState.calendars[0].id);
+      }
+      if (taskState.lists.length > 0) {
+        setListId(taskState.lists[0].id);
+      }
+    }
+  });
 
   let touchStartX = 0;
   let touchEndX = 0;
@@ -23,119 +66,316 @@ function AddItemModal() {
     if (touchEndX > touchStartX + 50) setMode('event');
   };
 
+  createEffect(() => {
+    // When start date/time changes, auto-update end date/time to maintain a 1-hour minimum if end is before start
+    if (date() && time()) {
+      const st = new Date(`${date()}T${time()}:00`);
+      if (endDate() && endTime()) {
+        const en = new Date(`${endDate()}T${endTime()}:00`);
+        if (en <= st) {
+          const newEn = new Date(st.getTime() + 60 * 60000);
+          setEndDate(newEn.toISOString().split('T')[0]);
+          setEndTime(newEn.getHours().toString().padStart(2, '0') + ':' + newEn.getMinutes().toString().padStart(2, '0'));
+        }
+      }
+    }
+  });
+
+  const setDurationPill = (mins) => {
+    if (!date() || !time()) return;
+    const st = new Date(`${date()}T${time()}:00`);
+    const en = new Date(st.getTime() + mins * 60000);
+    setEndDate(en.toISOString().split('T')[0]);
+    setEndTime(en.getHours().toString().padStart(2, '0') + ':' + en.getMinutes().toString().padStart(2, '0'));
+  };
+
+  const currentDurationMins = () => {
+    if (!date() || !time() || !endDate() || !endTime()) return null;
+    const st = new Date(`${date()}T${time()}:00`);
+    const en = new Date(`${endDate()}T${endTime()}:00`);
+    return Math.round((en - st) / 60000);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!title().trim()) return;
-    
+
+    let rruleStr = null;
+    if (showRecurrence() && recurrence() !== 'NONE') {
+      const dtStart = date() ? new Date(`${date()}T12:00:00`).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z' : '';
+      rruleStr = `DTSTART:${dtStart}\nRRULE:FREQ=${recurrence()}`;
+    }
+
     if (mode() === 'event') {
-      const dateStr = date() || new Date().toISOString().split('T')[0];
-      const timeStr = time() || '12:00';
-      const startObj = new Date(`${dateStr}T${timeStr}`);
+      const startObj = new Date(`${date() || new Date().toISOString().split('T')[0]}T${time()}:00`);
       const validStart = isNaN(startObj.getTime()) ? new Date() : startObj;
-      const endObj = new Date(validStart.getTime() + 60 * 60 * 1000);
-      eventStore.addEvent(title(), validStart.toISOString(), endObj.toISOString());
+      const endObj = new Date(`${endDate() || date() || new Date().toISOString().split('T')[0]}T${endTime()}:00`);
+      const validEnd = isNaN(endObj.getTime()) ? new Date(validStart.getTime() + 60*60000) : endObj;
+      
+      eventStore.addEvent(title(), validStart.toISOString(), validEnd.toISOString(), calendarId() || null, description(), rruleStr, allDay());
     } else {
-      const dateStr = date() ? new Date(date()) : null;
-      const isoDate = dateStr && !isNaN(dateStr.getTime()) ? dateStr.toISOString() : null;
-      taskStore.addTask(title(), null, isoDate);
+      let targetDateStr = null;
+      if (hasTaskDate() && date()) {
+        if (allDay()) {
+          targetDateStr = new Date(`${date()}T00:00:00`).toISOString();
+        } else {
+          const timeStr = time() || '12:00';
+          targetDateStr = new Date(`${date()}T${timeStr}`).toISOString();
+        }
+      }
+      
+      taskStore.addTask(title(), listId() || null, targetDateStr, priority(), description(), rruleStr, hasTaskDate() ? allDay() : false);
     }
     
     setTitle('');
+    setDescription('');
+    setRecurrence('NONE');
+    setShowRecurrence(false);
     uiStore.setActiveModal(null);
   };
 
   return (
-    <Modal id="addItem" compact>
-      <div 
-        onTouchStart={handleTouchStart} 
-        onTouchEnd={handleTouchEnd}
-        class="w-full flex flex-col gap-4 overflow-hidden"
-      >
-        <div class="flex bg-white/5 rounded-lg p-1 w-full relative mb-4">
-          <div class={`absolute h-[calc(100%-8px)] w-[calc(50%-4px)] top-1 rounded-md bg-accent transition-transform duration-300 ease-out ${mode() === 'event' ? 'translate-x-0' : 'translate-x-[calc(100%+4px)]'}`}></div>
-          <button 
-            type="button"
-            onClick={() => setMode('event')} 
-            class={`flex-1 relative z-10 border-none py-2 text-[13px] font-bold cursor-pointer rounded-md transition-colors ${mode() === 'event' ? 'text-white' : 'bg-transparent text-text-secondary hover:text-white'}`}
-          >Event</button>
-          <button 
+    <Modal id="addItem" wide={true} noPadding={true}>
+      <div class="flex flex-col sm:flex-row w-full bg-modal-bg rounded-2xl overflow-hidden">
+        
+        {/* Left Pane - Form */}
+        <div class="flex-1 p-6 flex flex-col gap-4">
+          <div 
+            onTouchStart={handleTouchStart} 
+            onTouchEnd={handleTouchEnd}
+            class="w-full flex flex-col gap-4"
+          >
+            <div class="flex bg-text-primary/5 rounded-lg p-1 w-full relative mb-1">
+              <div class={`absolute h-[calc(100%-8px)] w-[calc(50%-4px)] top-1 rounded-md bg-accent transition-transform duration-300 ease-out shadow-sm ${mode() === 'event' ? 'translate-x-0' : 'translate-x-[calc(100%+4px)]'}`}></div>
+              <button 
+                type="button"
+                onClick={() => setMode('event')} 
+                class={`flex-1 relative z-10 border-none py-2 text-[13px] font-bold cursor-pointer transition-colors bg-transparent ${mode() === 'event' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'}`}
+              >Event</button>
+              <button 
             type="button"
             onClick={() => setMode('task')} 
-            class={`flex-1 relative z-10 border-none py-2 text-[13px] font-bold cursor-pointer rounded-md transition-colors ${mode() === 'task' ? 'text-white' : 'bg-transparent text-text-secondary hover:text-white'}`}
+            class={`flex-1 relative z-10 border-none py-2 text-[13px] font-bold cursor-pointer transition-colors bg-transparent ${mode() === 'task' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'}`}
           >Task</button>
         </div>
+          </div>
 
-        <form onSubmit={handleSubmit} class="flex flex-col gap-4 relative">
-          <div class="flex flex-col gap-4 transition-transform duration-300 ease-out w-[200%] flex-row" style={{ transform: mode() === 'event' ? 'translateX(0)' : 'translateX(-50%)' }}>
-            {/* Event Form Area */}
-            <div class="w-1/2 shrink-0 flex flex-col gap-4 pr-2">
+        <form onSubmit={handleSubmit} class="flex flex-col gap-4">
+          <div>
+            <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">
+              {mode() === 'event' ? 'Event Title' : 'Task Title'}
+            </label>
+            <input 
+              ref={el => el && setTimeout(() => el.focus(), 50)}
+              type="text" 
+              placeholder={mode() === 'event' ? "Coffee with Sarah..." : "Buy groceries..."}
+              value={title()}
+              onInput={(e) => setTitle(e.target.value)}
+              class="w-full bg-text-primary/5 border border-border-theme rounded-xl px-3.5 py-3 text-text-primary text-[15px] outline-none focus:border-accent transition-colors"
+              required
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">Description</label>
+            <textarea 
+              placeholder="Add details..."
+              value={description()}
+              onInput={(e) => setDescription(e.target.value)}
+              class="w-full bg-text-primary/5 border border-border-theme rounded-xl px-3.5 py-3 text-text-primary text-[15px] outline-none focus:border-accent transition-colors resize-none h-16"
+            />
+          </div>
+
+          <Show when={mode() === 'event' || (mode() === 'task' && hasTaskDate())}>
+            <div class="flex flex-col sm:flex-row gap-4">
+              <div class="flex-1">
+                <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider flex justify-between">
+                  <span>{mode() === 'event' ? 'Date' : 'Due Date'}</span>
+                  <Show when={mode() === 'task'}>
+                    <span class="text-accent cursor-pointer hover:underline normal-case tracking-normal" onClick={() => setHasTaskDate(false)}>Remove</span>
+                  </Show>
+                </label>
+                <DatePicker value={date()} onChange={(v) => setDate(v)} />
+              </div>
+              <div class="flex-1 sm:min-w-[140px]">
+                <div class="flex items-center justify-between mb-1.5 h-[18px]">
+                  <label class="block text-xs text-text-muted font-semibold uppercase tracking-wider">Time</label>
+                  <Show when={true}>
+                    <div class="flex items-center gap-2">
+                      <span class="text-text-secondary text-[11px] font-bold uppercase tracking-wide">All-day</span>
+                      <button 
+                        type="button"
+                        onClick={() => setAllDay(!allDay())}
+                        class={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${allDay() ? 'bg-accent' : 'bg-text-primary/20 hover:bg-text-primary/30'}`}
+                      >
+                        <span class={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-card shadow ring-0 transition duration-200 ease-in-out ${allDay() ? 'translate-x-3' : 'translate-x-0'}`} />
+                      </button>
+                    </div>
+                  </Show>
+                </div>
+                {allDay() ? (
+                  <div class="w-full bg-text-primary/5 border border-border-theme rounded-xl px-3.5 py-2.5 text-text-muted text-sm font-medium flex items-center h-[46px]">--:--</div>
+                ) : (
+                  <TimePicker value={time()} onChange={(v) => setTime(v)} />
+                )}
+              </div>
+            </div>
+          </Show>
+
+          <Show when={mode() === 'task' && !hasTaskDate()}>
+            <button 
+              type="button" 
+              onClick={() => {
+                setHasTaskDate(true);
+                if (!date()) {
+                  setDate(new Date().toISOString().split('T')[0]);
+                }
+              }}
+              class="w-full bg-text-primary/5 border border-border-theme border-dashed rounded-xl py-3 text-text-primary text-[13px] font-semibold cursor-pointer hover:bg-text-primary/10 transition-colors flex items-center justify-center gap-2 shadow-sm"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 11v6m-3-3h6"></path></svg>
+              Add Due Date
+            </button>
+          </Show>
+
+          <Show when={mode() === 'event'}>
+            <div class="flex flex-col gap-4">
+              <div class="flex flex-col sm:flex-row gap-4">
+                <div class="flex-1">
+                  <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">End Date</label>
+                  <DatePicker value={endDate()} onChange={(v) => setEndDate(v)} />
+                </div>
+                <Show when={!allDay()}>
+                  <div class="flex-1 sm:min-w-[140px]">
+                    <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">End Time</label>
+                    <TimePicker value={endTime()} onChange={(v) => setEndTime(v)} />
+                  </div>
+                </Show>
+              </div>
+              
+              <Show when={!allDay()}>
+                <div class="flex items-center gap-2">
+                  <button type="button" onClick={() => setDurationPill(15)} class={`px-3 py-1.5 rounded-full text-xs font-semibold border ${currentDurationMins() === 15 ? 'bg-accent/20 border-accent text-accent' : 'bg-text-primary/5 border-border-theme text-text-secondary hover:bg-text-primary/10 transition-colors'}`}>15m</button>
+                  <button type="button" onClick={() => setDurationPill(30)} class={`px-3 py-1.5 rounded-full text-xs font-semibold border ${currentDurationMins() === 30 ? 'bg-accent/20 border-accent text-accent' : 'bg-text-primary/5 border-border-theme text-text-secondary hover:bg-text-primary/10 transition-colors'}`}>30m</button>
+                  <button type="button" onClick={() => setDurationPill(60)} class={`px-3 py-1.5 rounded-full text-xs font-semibold border ${currentDurationMins() === 60 ? 'bg-accent/20 border-accent text-accent' : 'bg-text-primary/5 border-border-theme text-text-secondary hover:bg-text-primary/10 transition-colors'}`}>1h</button>
+                  <button type="button" onClick={() => setDurationPill(120)} class={`px-3 py-1.5 rounded-full text-xs font-semibold border ${currentDurationMins() === 120 ? 'bg-accent/20 border-accent text-accent' : 'bg-text-primary/5 border-border-theme text-text-secondary hover:bg-text-primary/10 transition-colors'}`}>2h</button>
+                </div>
+              </Show>
+
               <div>
-                <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">Title</label>
-                <input 
-                  type="text" 
-                  placeholder="Coffee with Sarah..."
-                  value={title()}
-                  onInput={(e) => setTitle(e.target.value)}
-                  class="w-full bg-white/5 border border-border rounded-xl px-3.5 py-3 text-white text-[15px] outline-none focus:border-accent transition-colors"
+                <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">Calendar</label>
+                <SelectPicker 
+                  value={calendarId()} 
+                  onChange={setCalendarId}
+                  options={eventState.calendars.map(cal => ({ value: cal.id, label: cal.name, color: cal.color }))}
+                  placeholder="Select..."
                 />
               </div>
+            </div>
+          </Show>
 
-              <div class="flex gap-4">
-                <div class="flex-1">
-                  <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">Date</label>
-                  <input 
-                    type="date"
-                    value={date()}
-                    onInput={(e) => setDate(e.target.value)}
-                    class="w-full bg-white/5 border border-border rounded-xl px-3.5 py-3 text-white text-[15px] outline-none focus:border-accent transition-colors [color-scheme:dark]"
-                  />
-                </div>
-                <div class="flex-1">
-                  <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">Time</label>
-                  <input 
-                    type="time"
-                    value={time()}
-                    onInput={(e) => setTime(e.target.value)}
-                    class="w-full bg-white/5 border border-border rounded-xl px-3.5 py-3 text-white text-[15px] outline-none focus:border-accent transition-colors [color-scheme:dark]"
-                  />
+          <Show when={mode() === 'task'}>
+            <div class="flex flex-col gap-4">
+              <div>
+                <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">List</label>
+                <SelectPicker 
+                  value={listId()} 
+                  onChange={setListId}
+                  options={taskState.lists.map(list => ({ value: list.id, label: list.name, color: list.color }))}
+                  placeholder="Select..."
+                />
+              </div>
+              <div>
+                <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">Priority</label>
+                <div class="flex bg-text-primary/5 rounded-xl p-1 border border-border-theme w-full">
+                  <button 
+                    type="button"
+                    onClick={() => setPriority('low')}
+                    class={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${priority() === 'low' ? 'bg-[#1FA7A7] text-text-primary shadow-md scale-105 border border-border-theme' : 'text-text-secondary hover:text-text-primary hover:bg-text-primary/5'}`}
+                  >Low</button>
+                  <button 
+                    type="button"
+                    onClick={() => setPriority('normal')}
+                    class={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${priority() === 'normal' ? 'bg-text-primary/20 text-text-primary shadow-md scale-105 border border-border-theme' : 'text-text-secondary hover:text-text-primary hover:bg-text-primary/5'}`}
+                  >Normal</button>
+                  <button 
+                    type="button"
+                    onClick={() => setPriority('high')}
+                    class={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${priority() === 'high' ? 'bg-[#FF3B30] text-text-primary shadow-md scale-105 border border-border-theme' : 'text-text-secondary hover:text-text-primary hover:bg-text-primary/5'}`}
+                  >High</button>
                 </div>
               </div>
             </div>
+          </Show>
 
-            {/* Task Form Area */}
-            <div class="w-1/2 shrink-0 flex flex-col gap-4 pl-2">
+          <div class="pt-2">
+            {!showRecurrence() ? (
+              <button 
+                type="button" 
+                onClick={() => setShowRecurrence(true)}
+                class="bg-transparent border-none text-accent text-[13px] font-semibold cursor-pointer hover:underline"
+              >
+                + Add Repeat
+              </button>
+            ) : (
               <div>
-                <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">Task Title</label>
-                <input 
-                  type="text" 
-                  placeholder="Buy groceries..."
-                  value={title()}
-                  onInput={(e) => setTitle(e.target.value)}
-                  class="w-full bg-white/5 border border-border rounded-xl px-3.5 py-3 text-white text-[15px] outline-none focus:border-accent transition-colors"
+                <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider flex justify-between">
+                  <span>Repeat</span>
+                  <span class="text-accent cursor-pointer hover:underline normal-case tracking-normal" onClick={() => { setShowRecurrence(false); setRecurrence('NONE'); }}>Remove</span>
+                </label>
+                <SelectPicker 
+                  value={recurrence()} 
+                  onChange={setRecurrence}
+                  options={[
+                    { value: 'NONE', label: 'Does not repeat' },
+                    { value: 'DAILY', label: 'Daily' },
+                    { value: 'WEEKLY', label: 'Weekly' },
+                    { value: 'MONTHLY', label: 'Monthly' }
+                  ]}
                 />
               </div>
-
-              <div>
-                <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">Due Date</label>
-                <input 
-                  type="date"
-                  value={date()}
-                  onInput={(e) => setDate(e.target.value)}
-                  class="w-full bg-white/5 border border-border rounded-xl px-3.5 py-3 text-white text-[15px] outline-none focus:border-accent transition-colors [color-scheme:dark]"
-                />
-              </div>
-            </div>
+            )}
           </div>
 
           <button 
             type="submit"
-            class="mt-2 bg-accent text-white border-none p-3.5 rounded-xl text-[15px] font-bold cursor-pointer hover:bg-accent/80 transition-colors shadow-lg shadow-accent/20"
+            class="mt-2 bg-accent text-text-primary border-none p-3.5 rounded-xl text-[15px] font-bold cursor-pointer hover:bg-accent/80 transition-colors shadow-lg shadow-accent/20"
           >
             {mode() === 'event' ? 'Add Event' : 'Add Task'}
           </button>
         </form>
       </div>
-    </Modal>
+
+      {/* Right Pane - Schedule/Task Preview */}
+      <div class="hidden sm:block">
+        <Show 
+          when={mode() === 'event'}
+          fallback={
+            <DayTaskListPreview 
+              date={hasTaskDate() ? date() : new Date().toISOString().split('T')[0]}
+              ghostTask={{
+                title: title() || 'New Task',
+                color: taskState.lists.find(l => l.id === listId())?.color || '#6B5BDB'
+              }}
+            />
+          }
+        >
+          <DaySchedulePreview 
+            mode="event"
+            date={date() || new Date().toISOString().split('T')[0]}
+            ghostEvent={allDay() ? null : {
+              title: title() || 'New Event',
+              startTime: `${date()}T${time()}:00`,
+              endTime: `${endDate()}T${endTime()}:00`,
+              type: 'event',
+              color: eventState.calendars.find(c => c.id === calendarId())?.color || '#E8942A'
+            }}
+          />
+        </Show>
+      </div>
+
+    </div>
+  </Modal>
   );
 }
 

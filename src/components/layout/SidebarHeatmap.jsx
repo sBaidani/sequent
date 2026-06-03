@@ -6,6 +6,7 @@ import {
 } from 'date-fns';
 import { eventStore } from '../../stores/eventStore';
 import { uiStore } from '../../stores/uiStore';
+import { expandRecurringItems } from '../../lib/recurrenceEngine';
 
 function SidebarHeatmap() {
   const { state: eventState } = eventStore;
@@ -17,17 +18,23 @@ function SidebarHeatmap() {
     return eachDayOfInterval({ start, end });
   });
 
-  const getHeatmapClass = (day) => {
-    // SolidJS reactivity: we access eventState.events to trigger re-renders
-    const eventsOnDay = eventState.events.filter(e => 
+  const monthEvents = createMemo(() => {
+    const start = startOfWeek(startOfMonth(currentMonth()));
+    const end = endOfWeek(endOfMonth(currentMonth()));
+    return expandRecurringItems(eventStore.visibleEvents, start, end);
+  });
+
+  const getEventCount = (day) => {
+    return monthEvents().filter(e => 
       e.start_time && isSameDay(new Date(e.start_time), day)
-    );
-    
-    const count = eventsOnDay.length;
-    if (count === 0) return '';
-    if (count <= 2) return 'bg-accent/30 text-white';
-    if (count <= 4) return 'bg-accent/60 text-white shadow-[0_0_8px_var(--color-accent)]';
-    return 'bg-accent text-white shadow-[0_0_12px_var(--color-accent)]';
+    ).length;
+  };
+
+  const getHeatmapClass = (count) => {
+    if (count === 0) return 'bg-transparent text-white/70';
+    if (count <= 2) return 'bg-accent/40 text-white';
+    if (count <= 4) return 'bg-accent/70 text-white';
+    return 'bg-accent text-white shadow-[0_0_8px_var(--color-accent)]';
   };
 
   const handleDayClick = (day) => {
@@ -64,14 +71,14 @@ function SidebarHeatmap() {
       <div class="grid grid-cols-7 gap-1">
         <For each={daysInMonth()}>
           {(day) => {
-            // Must be a function or directly evaluated in JSX to track reactivity for events
-            const heatClass = () => getHeatmapClass(day);
+            const count = () => getEventCount(day);
+            const heatClass = () => getHeatmapClass(count());
             const isCurrentMonth = isSameMonth(day, currentMonth());
             const isDayToday = isToday(day);
 
             return (
               <button 
-                class={`w-6 h-6 rounded-md border border-transparent bg-white/5 text-white/70 text-[10px] font-bold flex items-center justify-center cursor-pointer transition-colors hover:bg-white/20 hover:text-white ${isCurrentMonth ? '' : 'opacity-30'} ${isDayToday ? '!border-accent !text-accent' : ''} ${heatClass()}`}
+                class={`w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center cursor-pointer transition-colors hover:bg-white/20 hover:text-white ${isCurrentMonth ? '' : 'opacity-30'} ${isDayToday && count() === 0 ? 'text-accent' : ''} ${heatClass()}`}
                 onClick={() => handleDayClick(day)}
               >
                 {format(day, 'd')}

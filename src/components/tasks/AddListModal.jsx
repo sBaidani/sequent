@@ -1,11 +1,11 @@
 import { createSignal } from 'solid-js';
 import Modal from '../ui/Modal';
-import { eventStore } from '../../stores/eventStore';
+import { taskStore } from '../../stores/taskStore';
 import { uiStore } from '../../stores/uiStore';
 
-function AddCalendarModal() {
+function AddListModal() {
   const [name, setName] = createSignal('');
-  const [color, setColor] = createSignal('#E8942A');
+  const [color, setColor] = createSignal('#1FA7A7');
   
   const colors = ['#E8942A', '#C0185A', '#1FA7A7', '#6B5BDB', '#3B6ED6', '#34A853'];
 
@@ -13,21 +13,21 @@ function AddCalendarModal() {
     e.preventDefault();
     if (!name().trim()) return;
     
-    eventStore.addCalendar(name(), color());
+    taskStore.addList(name(), color());
     setName('');
     uiStore.setActiveModal(null);
   };
 
   return (
-    <Modal id="addCalendar" compact>
-      <h2 class="text-2xl font-extrabold mb-5 text-text-primary">New Calendar</h2>
+    <Modal id="addList" compact>
+      <h2 class="text-2xl font-extrabold mb-5 text-text-primary">New List</h2>
       <form onSubmit={handleSubmit} class="flex flex-col gap-4">
         
         <div>
-          <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">Calendar Name</label>
+          <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">List Name</label>
           <input 
             type="text" 
-            placeholder="Work, Personal..."
+            placeholder="Work, Groceries..."
             value={name()}
             onInput={(e) => setName(e.target.value)}
             class="w-full bg-text-primary/5 border border-border rounded-xl px-3.5 py-3 text-text-primary text-[15px] outline-none focus:border-accent transition-colors"
@@ -53,11 +53,11 @@ function AddCalendarModal() {
           type="submit"
           class="mt-2 bg-accent text-text-primary border-none p-3.5 rounded-xl text-[15px] font-bold cursor-pointer hover:bg-accent/80 transition-colors shadow-lg shadow-accent/20"
         >
-          Create Calendar
+          Create List
         </button>
       </form>
     </Modal>
   );
 }
 
-export default AddCalendarModal;
+export default AddListModal;

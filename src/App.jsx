@@ -11,6 +11,8 @@ import AddItemModal from './components/shared/AddItemModal';
 import AddEventModal from './components/shared/AddEventModal';
 import AddTaskModal from './components/shared/AddTaskModal';
 import AddCalendarModal from './components/calendar/AddCalendarModal';
+import AddListModal from './components/tasks/AddListModal';
+import EventViewModal from './components/shared/EventViewModal';
 import ToastProvider from './components/ui/ToastProvider';
 import { uiStore } from './stores/uiStore';
 import { syncEngine } from './stores/syncEngine';
@@ -34,7 +36,7 @@ function App() {
       <Show when={uiState.sidebarOpen}>
         <div 
           onClick={() => uiStore.toggleSidebar()} 
-          class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[90] lg:hidden"
+          class="fixed inset-0 bg-bg-theme/40 backdrop-blur-sm z-[90] lg:hidden"
         />
       </Show>
       
@@ -46,13 +48,16 @@ function App() {
           {uiState.view === 'archive' && <div class="view-enter flex-1 flex flex-col overflow-hidden h-full"><ArchiveView /></div>}
           {uiState.view === 'settings' && <div class="view-enter flex-1 flex flex-col overflow-hidden h-full"><SettingsView /></div>}
         </div>
+        
+        {!uiState.hasSeenOnboarding && <OnboardingModal />}
+        <AddItemModal />
+        <AddEventModal />
+        <AddTaskModal />
+        <AddCalendarModal />
+        <AddListModal />
+        <EventViewModal />
       </div>
       
-      {!uiState.hasSeenOnboarding && <OnboardingModal />}
-      <AddItemModal />
-      <AddEventModal />
-      <AddTaskModal />
-      <AddCalendarModal />
       <ToastProvider />
     </div>
   );

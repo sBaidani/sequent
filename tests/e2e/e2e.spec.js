@@ -7,7 +7,7 @@ async function authenticateUser(page) {
   await page.click('button:has-text("Sign Up")');
   
   // Fill details
-  const randomEmail = `e2e_${Date.now()}@example.com`;
+  const randomEmail = `e2e_${Date.now()}_${Math.random().toString(36).substring(7)}@example.com`;
   await page.fill('input[placeholder="Full Name"]', 'E2E Test User');
   await page.fill('input[placeholder="Email address"]', randomEmail);
   await page.fill('input[placeholder="Password"]', 'secretpassword123');
@@ -108,8 +108,8 @@ test.describe('Timeline AddItem Modal', () => {
 
     // Modal should appear with Event tab active by default
     await expect(page.locator('#addItem')).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('#addItem >> button:has-text("Event")')).toBeVisible();
-    await expect(page.locator('#addItem >> button:has-text("Task")')).toBeVisible();
+    await expect(page.locator('#addItem').getByRole('button', { name: 'Event', exact: true })).toBeVisible();
+    await expect(page.locator('#addItem').getByRole('button', { name: 'Task', exact: true })).toBeVisible();
     // Submit button should say "Add Event" by default
     await expect(page.locator('#addItem >> button[type="submit"]:has-text("Add Event")')).toBeVisible();
   });
@@ -121,7 +121,7 @@ test.describe('Timeline AddItem Modal', () => {
     await expect(page.locator('#addItem')).toBeVisible({ timeout: 5000 });
 
     // Switch to task mode
-    await page.click('#addItem >> button:has-text("Task")');
+    await page.locator('#addItem').getByRole('button', { name: 'Task', exact: true }).click();
     await expect(page.locator('#addItem >> button[type="submit"]:has-text("Add Task")')).toBeVisible();
   });
 });
@@ -219,7 +219,7 @@ test.describe('Settings CRUD', () => {
   });
 
   test('should show Task Lists section', async ({ page }) => {
-    await expect(page.locator('text=Task Lists')).toBeVisible();
+    await expect(page.locator('h3:has-text("Task Lists")')).toBeVisible();
     await expect(page.locator('button:has-text("+ New List")')).toBeVisible();
   });
 

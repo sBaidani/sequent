@@ -1,20 +1,23 @@
-import { createSignal, createMemo, For, Show } from 'solid-js';
+import { createSignal, createMemo, For, Show, onMount, onCleanup } from 'solid-js';
+import { ChevronLeft, ChevronRight } from 'lucide-solid';
 import { uiStore } from '../../stores/uiStore';
 import { eventStore } from '../../stores/eventStore';
 import { taskStore } from '../../stores/taskStore';
 import { settingsStore } from '../../stores/settingsStore';
+import { expandRecurringItems } from '../../lib/recurrenceEngine';
+import autoAnimate from '@formkit/auto-animate';
 import { 
   format, addMonths, subMonths, addWeeks, subWeeks, 
   startOfMonth, endOfMonth, startOfWeek, endOfWeek, 
-  eachDayOfInterval, isSameMonth, isSameDay, parseISO,
-  getHours, addDays
+  eachDayOfInterval, isSameMonth, isSameDay, isSameWeek, parseISO
 } from 'date-fns';
 
 function CalendarView() {
   const [viewMode, setViewMode] = createSignal('month'); // 'month' or 'week'
-  const [workWeekOnly, setWorkWeekOnly] = createSignal(false);
+  const [workWeekOnly, setWorkWeekOnly] = createSignal(settingsStore.state.workWeekOnly || false);
   const [currentDate, setCurrentDate] = createSignal(new Date());
   const [animationClass, setAnimationClass] = createSignal('');
+  const [hoverBlock, setHoverBlock] = createSignal(null); // { date, hour, mins }
 
   const { state: eventState } = eventStore;
   const { state: taskState } = taskStore;
@@ -22,7 +25,19 @@ function CalendarView() {
 
   const weekStartsOn = () => settings.startOfWeek === 'monday' ? 1 : 0;
 
-  // Navigation
+  let weekDaysContainer;
+
+  onMount(() => {
+    if (weekDaysContainer) {
+      autoAnimate(weekDaysContainer, { duration: 300 });
+    }
+    // Auto scroll week view to 07:00 (420px)
+    const timeScroll = document.getElementById('weekViewScrollArea');
+    if (timeScroll && viewMode() === 'week') {
+      timeScroll.scrollTop = 7 * 60;
+    }
+  });
+
   const prev = () => {
     setAnimationClass("slide-right-anim");
     setTimeout(() => setAnimationClass(""), 300);
@@ -37,12 +52,20 @@ function CalendarView() {
   };
   const today = () => {
     const isFuture = new Date().getTime() > currentDate().getTime();
-    setAnimationClass(isFuture ? "slide-left-anim" : "slide-right-anim");
-    setTimeout(() => setAnimationClass(""), 300);
+    let shouldAnimate = false;
+    if (viewMode() === 'month') {
+      shouldAnimate = !isSameMonth(currentDate(), new Date());
+    } else {
+      shouldAnimate = !isSameWeek(currentDate(), new Date(), { weekStartsOn: weekStartsOn() });
+    }
+    
+    if (shouldAnimate) {
+      setAnimationClass(isFuture ? "slide-left-anim" : "slide-right-anim");
+      setTimeout(() => setAnimationClass(""), 300);
+    }
     setCurrentDate(new Date());
   };
 
-  // Month View Days
   const monthDays = createMemo(() => {
     const monthStart = startOfMonth(currentDate());
     const monthEnd = endOfMonth(monthStart);
@@ -51,58 +74,91 @@ function CalendarView() {
     return eachDayOfInterval({ start: startDate, end: endDate });
   });
 
-  // Week View Days
   const weekDays = createMemo(() => {
     const start = startOfWeek(currentDate(), { weekStartsOn: weekStartsOn() });
     const end = endOfWeek(currentDate(), { weekStartsOn: weekStartsOn() });
     let days = eachDayOfInterval({ start, end });
     if (workWeekOnly()) {
-      // Filter out weekends (0 = Sunday, 6 = Saturday)
       days = days.filter(d => d.getDay() !== 0 && d.getDay() !== 6);
     }
     return days;
   });
 
+  const visibleRange = createMemo(() => {
+    if (viewMode() === 'month') {
+      const days = monthDays();
+      return { start: days[0], end: days[days.length - 1] };
+    } else {
+      const days = weekDays();
+      if (!days.length) return { start: new Date(), end: new Date() };
+      return { start: days[0], end: days[days.length - 1] };
+    }
+  });
+
+  const expandedEvents = createMemo(() => expandRecurringItems(eventStore.visibleEvents, visibleRange().start, visibleRange().end));
+  const expandedTasks = createMemo(() => expandRecurringItems(taskState.tasks, visibleRange().start, visibleRange().end));
+
   const getDayItems = (date) => {
-    const events = eventState.events.filter(e => isSameDay(parseISO(e.start_time), date)).map(e => ({
+    const events = expandedEvents().filter(e => isSameDay(parseISO(e.start_time), date)).map(e => ({
       ...e, type: 'event', 
       color: eventState.calendars.find(c => c.id === e.calendarId)?.color || '#fff'
     }));
-    const tasks = taskState.tasks.filter(t => t.scheduled_date && isSameDay(parseISO(t.scheduled_date), date)).map(t => ({
+    const tasks = expandedTasks().filter(t => t.scheduled_date && isSameDay(parseISO(t.scheduled_date), date)).map(t => ({
       ...t, type: 'task',
       color: taskState.lists.find(l => l.id === t.listId)?.color || '#fff'
     }));
     return [...events, ...tasks].sort((a, b) => {
-      const timeA = a.type === 'event' ? new Date(a.start_time).getTime() : 0;
-      const timeB = b.type === 'event' ? new Date(b.start_time).getTime() : 0;
+      const timeA = a.type === 'event' ? new Date(a.start_time).getTime() : new Date(a.scheduled_date || 0).getTime();
+      const timeB = b.type === 'event' ? new Date(b.start_time).getTime() : new Date(b.scheduled_date || 0).getTime();
       return timeA - timeB;
     });
   };
 
-  const handleDrop = (e, targetDate) => {
+  const handleDrop = (e, targetDate, droppedTime = null) => {
     e.preventDefault();
     e.currentTarget.classList.remove('drag-over');
     
     const id = e.dataTransfer.getData('id');
     const type = e.dataTransfer.getData('type');
+    const isInstance = e.dataTransfer.getData('isInstance') === 'true';
+    const originalId = e.dataTransfer.getData('originalId');
     
+    // For simplicity, we only allow dragging the original item, not individual recurrences
+    // (A real recurrence engine would allow splitting the series)
+    if (isInstance) {
+      alert("Cannot move a single recurrence instance yet.");
+      return;
+    }
+
     if (type === 'event') {
       const event = eventState.events.find(ev => ev.id === id);
       if (event) {
-        // Just keep the same time, change the date
         const oldStart = parseISO(event.start_time);
         const newStart = new Date(targetDate);
-        newStart.setHours(oldStart.getHours(), oldStart.getMinutes());
         
-        const oldEnd = parseISO(event.end_time);
-        const newEnd = new Date(targetDate);
-        newEnd.setHours(oldEnd.getHours(), oldEnd.getMinutes());
+        if (droppedTime) {
+          newStart.setHours(droppedTime.hour, droppedTime.mins);
+        } else {
+          newStart.setHours(oldStart.getHours(), oldStart.getMinutes());
+        }
         
-        eventStore.deleteEvent(id);
-        eventStore.addEvent(event.title, newStart.toISOString(), newEnd.toISOString(), event.calendarId);
+        const duration = parseISO(event.end_time).getTime() - oldStart.getTime();
+        const newEnd = new Date(newStart.getTime() + duration);
+        
+        eventStore.updateEvent(id, { start_time: newStart.toISOString(), end_time: newEnd.toISOString() });
       }
     } else if (type === 'task') {
-      taskStore.updateTaskDate(id, targetDate.toISOString());
+      const task = taskState.tasks.find(t => t.id === id);
+      if (task) {
+        const newDate = new Date(targetDate);
+        if (droppedTime) {
+          newDate.setHours(droppedTime.hour, droppedTime.mins);
+          taskStore.updateTask(id, { scheduled_date: newDate.toISOString(), allDay: false });
+        } else {
+          newDate.setHours(new Date(task.scheduled_date || 0).getHours(), new Date(task.scheduled_date || 0).getMinutes());
+          taskStore.updateTask(id, { scheduled_date: newDate.toISOString() });
+        }
+      }
     }
   };
 
@@ -110,110 +166,132 @@ function CalendarView() {
     <div class="flex flex-col h-full bg-bg-theme">
       
       {/* Header */}
-      <div class="px-6 py-5 flex justify-between items-center border-b border-white/5">
+      <div class="px-6 py-5 flex justify-between items-center border-b border-border-theme">
         <div class="flex items-center gap-4">
           <button 
             onClick={() => uiStore.toggleSidebar()}
-            class="flex w-9 h-9 rounded-full bg-white/5 border-none text-white items-center justify-center cursor-pointer transition-colors hover:bg-white/20 mr-2"
+            class="flex w-9 h-9 rounded-full bg-text-primary/5 border-none text-text-primary items-center justify-center cursor-pointer transition-colors hover:bg-text-primary/20 mr-2"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
           </button>
-          <h2 class="text-2xl font-extrabold text-white min-w-[200px]">
+          <h2 class="text-2xl font-extrabold text-text-primary min-w-[200px]">
             {format(currentDate(), viewMode() === 'month' ? 'MMMM yyyy' : 'MMM yyyy')}
           </h2>
-          <div class="flex gap-1 bg-white/10 rounded-lg p-1">
-            <button onClick={prev} class="bg-transparent border-none text-white cursor-pointer px-2 py-1 rounded hover:bg-white/10 transition-colors">&lt;</button>
-            <button onClick={today} class="bg-transparent border-none text-white cursor-pointer px-3 py-1 text-[13px] font-semibold rounded hover:bg-white/10 transition-colors">Today</button>
-            <button onClick={next} class="bg-transparent border-none text-white cursor-pointer px-2 py-1 rounded hover:bg-white/10 transition-colors">&gt;</button>
+          <div class="flex gap-1 bg-text-primary/10 rounded-lg p-1">
+            <button onClick={prev} class="bg-transparent border-none text-text-primary cursor-pointer p-1.5 rounded hover:bg-text-primary/10 transition-colors flex items-center justify-center"><ChevronLeft class="w-4 h-4" /></button>
+            <button onClick={today} class="bg-transparent border-none text-text-primary cursor-pointer px-3 py-1 text-[13px] font-semibold rounded hover:bg-text-primary/10 transition-colors">Today</button>
+            <button onClick={next} class="bg-transparent border-none text-text-primary cursor-pointer p-1.5 rounded hover:bg-text-primary/10 transition-colors flex items-center justify-center"><ChevronRight class="w-4 h-4" /></button>
           </div>
         </div>
 
         <div class="flex items-center gap-4">
           <Show when={viewMode() === 'week'}>
-            <label class="flex items-center gap-2 text-text-secondary text-[13px] cursor-pointer hover:text-white transition-colors">
-              <input type="checkbox" checked={workWeekOnly()} onChange={(e) => setWorkWeekOnly(e.target.checked)} class="cursor-pointer" />
-              Work Week Only
-            </label>
+            <div class="flex items-center gap-2.5">
+              <span class="text-text-secondary text-[13px] font-medium">Work Week</span>
+              <button 
+                type="button"
+                onClick={() => {
+                  const newVal = !workWeekOnly();
+                  setWorkWeekOnly(newVal);
+                  settingsStore.setWorkWeekOnly(newVal);
+                }}
+                class={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${workWeekOnly() ? 'bg-accent' : 'bg-text-primary/20 hover:bg-text-primary/30'}`}
+              >
+                <span 
+                  class={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-card shadow ring-0 transition duration-200 ease-in-out ${workWeekOnly() ? 'translate-x-4' : 'translate-x-0'}`}
+                />
+              </button>
+            </div>
           </Show>
-          <div class="flex bg-white/10 rounded-lg p-1">
+          <div class="relative flex bg-text-primary/10 rounded-lg p-1 w-[124px]">
+            <div 
+              class="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-accent rounded-md transition-transform duration-300 ease-out shadow-sm pointer-events-none"
+              style={{ transform: viewMode() === 'month' ? 'translateX(0)' : 'translateX(100%)' }}
+            />
             <button 
-              onClick={() => setViewMode('month')} 
-              class={`border-none px-4 py-1.5 text-[13px] font-semibold cursor-pointer rounded-md transition-colors ${viewMode() === 'month' ? 'bg-accent text-white shadow-sm' : 'bg-transparent text-text-secondary hover:text-white'}`}
+              onClick={() => {
+                setViewMode('month');
+              }} 
+              class={`relative z-10 flex-1 border-none py-1.5 text-[13px] font-semibold cursor-pointer transition-colors bg-transparent ${viewMode() === 'month' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'}`}
             >Month</button>
             <button 
-              onClick={() => setViewMode('week')} 
-              class={`border-none px-4 py-1.5 text-[13px] font-semibold cursor-pointer rounded-md transition-colors ${viewMode() === 'week' ? 'bg-accent text-white shadow-sm' : 'bg-transparent text-text-secondary hover:text-white'}`}
+              onClick={() => {
+                setViewMode('week');
+                setTimeout(() => {
+                  const timeScroll = document.getElementById('weekViewScrollArea');
+                  if (timeScroll) timeScroll.scrollTop = 7 * 60;
+                }, 50);
+              }} 
+              class={`relative z-10 flex-1 border-none py-1.5 text-[13px] font-semibold cursor-pointer transition-colors bg-transparent ${viewMode() === 'week' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'}`}
             >Week</button>
           </div>
         </div>
       </div>
 
       {/* Main Area */}
-      <div class="flex-1 overflow-hidden flex flex-col">
+      <div class="flex-1 overflow-hidden flex flex-col relative">
         <Show when={viewMode() === 'month'}>
-          {/* Month View Headers */}
-          <div class="grid grid-cols-7 border-b border-white/5">
+          <div class="grid grid-cols-7 border-b border-border-theme">
             <For each={['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].slice(weekStartsOn()).concat(weekStartsOn() === 1 ? ['Sun'] : [])}>
               {day => <div class="p-2 sm:p-3 text-center text-[10px] sm:text-xs font-bold text-text-muted uppercase tracking-wider truncate">{day}</div>}
             </For>
           </div>
-          {/* Month Grid */}
-          <div class={`grid grid-cols-7 auto-rows-[minmax(120px,1fr)] flex-1 overflow-y-auto bg-black/20 ${animationClass()}`}>
+          <div class={`grid grid-cols-7 auto-rows-[minmax(120px,1fr)] flex-1 overflow-y-auto bg-text-primary/5 ${animationClass()}`}>
             <For each={monthDays()}>
               {date => {
-                const items = getDayItems(date);
+                const items = createMemo(() => getDayItems(date));
                 const isCurrentMonth = isSameMonth(date, currentDate());
                 const isToday = isSameDay(date, new Date());
-                const eventCount = items.filter(i => i.type === 'event').length;
-                
-                let dateBadgeClass = "";
-                if (isToday) {
-                  dateBadgeClass = "bg-accent text-white w-6 h-6 flex items-center justify-center rounded-full shadow-[0_0_10px_var(--color-accent)]";
-                } else if (eventCount > 0 && isCurrentMonth) {
-                  if (eventCount === 1) dateBadgeClass = "bg-white/10 text-white w-6 h-6 flex items-center justify-center rounded-full";
-                  else if (eventCount === 2) dateBadgeClass = "bg-white/20 text-white w-6 h-6 flex items-center justify-center rounded-full";
-                  else dateBadgeClass = "bg-white/30 text-white w-6 h-6 flex items-center justify-center rounded-full font-bold";
-                }
+                const eventCount = createMemo(() => items().filter(i => i.type === 'event').length);
+                const isPast = date.getTime() < new Date().setHours(0,0,0,0);
                 
                 return (
                   <div 
-                    class={`border-r border-b border-white/5 p-2 flex flex-col gap-1 transition-colors calendar-day-cell ${isCurrentMonth ? 'bg-transparent' : 'bg-black/20'}`}
+                    class={`border-r border-b border-border-theme p-2 flex flex-col gap-1 transition-colors calendar-day-cell cursor-pointer ${isToday ? 'bg-accent/10' : (isPast ? 'bg-black/20 opacity-70 hover:opacity-100' : (isCurrentMonth ? 'bg-transparent hover:bg-text-primary/5' : 'bg-text-primary/5'))}`}
                     onClick={() => {
-                      uiStore.setActiveDate(date.toISOString());
-                    }}
-                    onDblClick={() => {
                       uiStore.setActiveDate(date.toISOString());
                       uiStore.setActiveModal('addEvent');
                     }}
-                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-white/10'); }}
-                    onDragLeave={(e) => { e.currentTarget.classList.remove('bg-white/10'); }}
+                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-text-primary/10'); }}
+                    onDragLeave={(e) => { e.currentTarget.classList.remove('bg-text-primary/10'); }}
                     onDrop={(e) => {
-                      e.currentTarget.classList.remove('bg-white/10');
+                      e.currentTarget.classList.remove('bg-text-primary/10');
                       handleDrop(e, date);
                     }}
                   >
-                    <div class={`text-xs font-bold mb-1 flex justify-end ${isToday || eventCount > 0 ? '' : (isCurrentMonth ? 'text-white/70' : 'text-text-muted')}`}>
-                      <span class={dateBadgeClass}>
+                    <div class={`text-xs font-bold mb-1 flex justify-end ${isToday || eventCount() > 0 ? '' : (isCurrentMonth ? 'text-text-primary/70' : 'text-text-muted')}`}>
+                      <span class={
+                        isToday ? "bg-accent text-text-primary w-6 h-6 flex items-center justify-center rounded-full shadow-[0_0_10px_var(--color-accent)]" :
+                        (eventCount() > 0 && isCurrentMonth ? 
+                          (eventCount() === 1 ? "bg-text-primary/10 text-text-primary w-6 h-6 flex items-center justify-center rounded-full" :
+                           eventCount() === 2 ? "bg-text-primary/20 text-text-primary w-6 h-6 flex items-center justify-center rounded-full" :
+                           "bg-text-primary/30 text-text-primary w-6 h-6 flex items-center justify-center rounded-full font-bold")
+                        : "")
+                      }>
                         {format(date, 'd')}
                       </span>
                     </div>
                     
                     <div class="flex-1 overflow-y-auto flex flex-col gap-0.5">
-                      <For each={items}>
+                      <For each={items()}>
                         {item => (
                           <div 
                             draggable="true"
                             onDragStart={(e) => {
-                              e.dataTransfer.setData('id', item.id);
+                              e.dataTransfer.setData('id', item.originalId || item.id);
                               e.dataTransfer.setData('type', item.type);
+                              e.dataTransfer.setData('isInstance', item.isInstance ? 'true' : 'false');
                             }}
                             onClick={(e) => {
                               e.stopPropagation();
+                              // Could open edit modal here in future
                             }}
-                            class={`py-1 px-1.5 rounded-r-md text-[11px] flex items-center gap-1.5 cursor-grab hover:bg-white/5 transition-colors ${(item.type === 'task' && item.completed) ? 'opacity-50' : 'opacity-100'}`}
+                            class={`py-1 px-1.5 rounded-r-md text-[11px] flex items-center gap-1.5 cursor-grab hover:bg-text-primary/10 transition-colors ${(item.type === 'task' && item.completed) ? 'opacity-50' : 'opacity-100'}`}
                             style={{ "border-left": `2px solid ${item.color}` }}
                           >
-                            <span class="whitespace-nowrap overflow-hidden text-ellipsis flex-1 text-white/90 font-medium">{item.title}</span>
+                            <span class="whitespace-nowrap overflow-hidden text-ellipsis flex-1 text-text-primary/90 font-medium">
+                              {item.title} {item.rrule && '🔄'}
+                            </span>
                             {item.type === 'event' && (
                               <span class="text-text-muted text-[9px]">{format(parseISO(item.start_time), 'HH:mm')}</span>
                             )}
@@ -229,90 +307,174 @@ function CalendarView() {
         </Show>
 
         <Show when={viewMode() === 'week'}>
-          {/* Week View */}
-          <div class="flex flex-1 overflow-hidden">
-            {/* Time column */}
-            <div class="w-[60px] border-r border-white/5 overflow-y-scroll flex flex-col bg-bg-theme">
-              <div class="h-[40px] border-b border-white/5 sticky top-0 bg-bg-theme z-20"></div> {/* header spacer */}
+          <div class="flex flex-1 overflow-auto bg-bg-theme relative" id="weekViewScrollArea">
+            <div class="w-[60px] min-w-[60px] border-r border-border-theme flex flex-col bg-bg-theme sticky left-0 z-30">
+              <div class="h-[40px] min-h-[40px] shrink-0 border-b border-border-theme sticky top-0 bg-bg-theme z-40"></div>
               <For each={Array.from({length: 24})}>
                 {(_, i) => (
-                  <div class="h-[60px] border-b border-white/5 p-1 text-right text-[10px] text-text-muted">
+                  <div class="h-[60px] min-h-[60px] shrink-0 border-b border-border-theme p-1 text-right text-[10px] text-text-muted">
                     {i() === 0 ? '' : `${i()}:00`}
                   </div>
                 )}
               </For>
             </div>
             
-            {/* Days columns */}
-            <div class={`flex flex-1 overflow-x-auto overflow-y-scroll bg-bg-theme ${animationClass()}`}>
+            <div class={`flex flex-1 bg-bg-theme ${animationClass()}`} ref={weekDaysContainer}>
               <For each={weekDays()}>
                 {date => {
                   const isToday = isSameDay(date, new Date());
-                  const items = getDayItems(date);
+                  const isPast = date.getTime() < new Date().setHours(0,0,0,0);
+                  const allItems = createMemo(() => getDayItems(date));
+                  const allDayItems = createMemo(() => allItems().filter(i => i.type === 'task' && i.allDay));
+                  const timedItems = createMemo(() => allItems().filter(i => !(i.type === 'task' && i.allDay)));
                   
+                  // Simple overlapping logic: Group items by start time hour and minute
+                  // Then adjust left/width based on siblings
+                  const placedItems = createMemo(() => {
+                    const placed = [];
+                    timedItems().forEach((item) => {
+                      let startMin = 0;
+                      let endMin = 60;
+                      
+                      if (item.type === 'event') {
+                        const st = parseISO(item.start_time);
+                        const en = parseISO(item.end_time);
+                        startMin = st.getHours() * 60 + st.getMinutes();
+                        endMin = en.getHours() * 60 + en.getMinutes();
+                      } else if (item.type === 'task') {
+                        const st = new Date(item.scheduled_date || 0);
+                        startMin = st.getHours() * 60 + st.getMinutes();
+                        endMin = startMin + 30; // default task height
+                      }
+                      
+                      const overlaps = placed.filter(p => p.startMin < endMin && p.endMin > startMin);
+                      placed.push({ item, startMin, endMin, overlaps: overlaps.length });
+                    });
+                    return placed;
+                  });
+
                   return (
-                    <div class="flex-1 min-w-[120px] border-r border-white/5 flex flex-col">
-                      <div class="h-[40px] border-b border-white/5 flex flex-col items-center justify-center sticky top-0 bg-bg-theme z-20">
-                        <div class="text-[10px] text-text-muted uppercase font-bold tracking-wider">{format(date, 'EEE')}</div>
-                        <div class={`text-sm font-extrabold ${isToday ? 'text-accent' : 'text-white'}`}>{format(date, 'd')}</div>
+                    <div class={`flex-1 min-w-[120px] border-r border-border-theme flex flex-col ${isToday ? 'bg-accent/5' : (isPast ? 'bg-black/10 opacity-80' : '')}`}>
+                      <div class="border-b border-border-theme flex flex-col items-center justify-center sticky top-0 bg-bg-theme z-20 min-h-[40px] pb-1">
+                        <div class="h-[40px] flex flex-col items-center justify-center w-full">
+                          <div class={`text-[10px] uppercase font-bold tracking-wider ${isToday ? 'text-accent' : 'text-text-muted'}`}>{format(date, 'EEE')}</div>
+                          <div class={`text-sm font-extrabold ${isToday ? 'text-text-primary bg-accent/20 px-2 rounded-full' : 'text-text-primary'}`}>{format(date, 'd')}</div>
+                        </div>
+                        {/* All-Day Tasks Section */}
+                        <div class="w-full px-1 flex flex-col gap-0.5 max-h-[60px] overflow-y-auto">
+                          <For each={allDayItems()}>
+                            {task => (
+                              <div class="text-[10px] px-1.5 py-0.5 rounded text-text-primary truncate shadow-sm cursor-grab" style={{ background: `color-mix(in srgb, ${task.color} 30%, transparent)`, "border-left": `2px solid ${task.color}` }}>
+                                {task.title} {task.rrule && '🔄'}
+                              </div>
+                            )}
+                          </For>
+                        </div>
                       </div>
                       
-                      <div class="relative h-[1440px]"
-                           onDragOver={(e) => { e.preventDefault(); }}
-                           onDrop={(e) => handleDrop(e, date)}
-                           onDblClick={(e) => {
+                      <div class="relative h-[1440px] cursor-pointer"
+                           onMouseMove={(e) => {
                              const rect = e.currentTarget.getBoundingClientRect();
-                             const clickY = e.clientY - rect.top;
-                             const hour = Math.floor(clickY / 60);
-                             const targetDate = new Date(date);
-                             targetDate.setHours(hour, 0, 0, 0);
-                             uiStore.setActiveDate(targetDate.toISOString());
-                             uiStore.setActiveModal('addEvent');
+                             const y = e.clientY - rect.top;
+                             const hour = Math.floor(y / 60);
+                             const mins = Math.floor((y % 60) / 30) * 30;
+                             setHoverBlock({ dateStr: date.toISOString(), hour, mins });
+                           }}
+                           onMouseLeave={() => setHoverBlock(null)}
+                           onClick={(e) => {
+                             if (hoverBlock()) {
+                               const targetDate = new Date(date);
+                               targetDate.setHours(hoverBlock().hour, hoverBlock().mins, 0, 0);
+                               uiStore.setActiveDate(targetDate.toISOString());
+                               uiStore.setActiveModal('addEvent');
+                             }
+                           }}
+                           onDragOver={(e) => { 
+                             e.preventDefault(); 
+                             const rect = e.currentTarget.getBoundingClientRect();
+                             const y = e.clientY - rect.top;
+                             const hour = Math.floor(y / 60);
+                             const mins = Math.floor((y % 60) / 30) * 30;
+                             setHoverBlock({ dateStr: date.toISOString(), hour, mins, isDragging: true });
+                           }}
+                           onDragLeave={() => setHoverBlock(null)}
+                           onDrop={(e) => {
+                             setHoverBlock(null);
+                             const rect = e.currentTarget.getBoundingClientRect();
+                             const dropY = e.clientY - rect.top;
+                             const hour = Math.floor(dropY / 60);
+                             const mins = Math.floor((dropY % 60) / 30) * 30;
+                             handleDrop(e, date, { hour, mins });
                            }}
                       >
-                        {/* Shading for 9am-5pm (hours 9 to 17) */}
-                        <div class="absolute top-[540px] h-[480px] w-full bg-white/5 pointer-events-none"></div>
+                        <div class="absolute top-[540px] h-[480px] w-full bg-text-primary/5 pointer-events-none"></div>
                         
-                        {/* Grid lines */}
                         <For each={Array.from({length: 24})}>
                           {(_, i) => (
-                            <div class="absolute w-full h-[60px] border-b border-white/[0.02] pointer-events-none" style={{ top: `${i() * 60}px` }}></div>
+                            <div class="absolute w-full h-[60px] border-b border-border-theme pointer-events-none" style={{ top: `${i() * 60}px` }}>
+                              <div class="w-full h-[30px] border-b border-text-primary/[0.06]"></div>
+                            </div>
                           )}
                         </For>
+
+                        {/* Current Time Indicator for the Day Column */}
+                        <Show when={isSameDay(date, new Date())}>
+                          {(() => {
+                            const now = new Date();
+                            const mins = now.getHours() * 60 + now.getMinutes();
+                            return (
+                              <div class="absolute w-full flex items-center z-30 pointer-events-none" style={{ top: `${mins - 6}px`, left: '0px' }}>
+                                <div class="w-2 h-2 rounded-full bg-red-500 shadow-sm ml-[-4px]"></div>
+                              </div>
+                            );
+                          })()}
+                        </Show>
+
+                        <Show when={hoverBlock() && hoverBlock().dateStr === date.toISOString()}>
+                          <div class="absolute left-1 right-1 rounded bg-text-primary/10 border-2 border-dashed border-border-theme pointer-events-none z-10 transition-all duration-75"
+                               style={{ 
+                                 top: `${hoverBlock().hour * 60 + hoverBlock().mins}px`, 
+                                 height: `${settings.defaultDuration || 60}px`
+                               }}
+                          ></div>
+                        </Show>
                         
-                        {/* Items */}
-                        <For each={items}>
-                          {item => {
-                            let top = 0;
-                            let height = 30; // default for tasks
+                        <For each={placedItems()}>
+                          {(placed) => {
+                            const { item, startMin, endMin, overlaps } = placed;
+                            const height = Math.max(endMin - startMin, 15);
                             
-                            if (item.type === 'event') {
-                              const start = parseISO(item.start_time);
-                              const end = parseISO(item.end_time);
-                              top = (start.getHours() * 60) + start.getMinutes();
-                              height = ((end.getTime() - start.getTime()) / (1000 * 60));
+                            // Visual stacking logic max 2 wide, else metablock
+                            let width = 'calc(100% - 8px)';
+                            let left = '4px';
+                            if (overlaps === 1) {
+                              width = 'calc(50% - 6px)';
+                              left = '50%';
+                            } else if (overlaps >= 2) {
+                              // Too many items, render a metablock representation or squish
+                              width = 'calc(33% - 4px)';
+                              left = `${33 * (overlaps % 3)}%`;
                             }
-                            
+
                             return (
                               <div 
                                 draggable="true"
                                 onDragStart={(e) => {
-                                  e.dataTransfer.setData('id', item.id);
+                                  e.stopPropagation();
+                                  e.dataTransfer.setData('id', item.originalId || item.id);
                                   e.dataTransfer.setData('type', item.type);
+                                  e.dataTransfer.setData('isInstance', item.isInstance ? 'true' : 'false');
                                 }}
-                                class="absolute left-1 right-1 rounded p-1 text-[10px] text-white overflow-hidden cursor-grab flex flex-col shadow-sm"
-                                style={{
-                                  "top":`${top}px`, 
-                                  "height":`${height}px`,
-                                  "background": `color-mix(in srgb, ${item.color} 30%, transparent)`,
-                                  "border-left": `3px solid ${item.color}`,
-                                  "opacity": (item.type === 'task' && item.completed) ? 0.5 : 1
-                                }}
+                                class="absolute rounded p-1 text-[10px] text-text-primary overflow-hidden cursor-grab flex flex-col shadow-sm z-20 hover:z-30 hover:shadow-lg transition-shadow"
+                                style={`top: ${startMin}px; height: ${height}px; left: ${left}; width: ${width}; background: color-mix(in srgb, ${item.color} 30%, transparent); border-left: 3px solid ${item.color}; opacity: ${(item.type === 'task' && item.completed) ? 0.5 : 1}; backdrop-filter: blur(4px);`}
+                                onClick={(e) => e.stopPropagation()}
                               >
-                                <div class="font-bold whitespace-nowrap text-ellipsis overflow-hidden">{item.title}</div>
-                                {item.type === 'event' && (
-                                  <div class="text-white/70">{format(parseISO(item.start_time), 'HH:mm')}</div>
-                                )}
+                                <div class="font-bold whitespace-nowrap text-ellipsis overflow-hidden">
+                                  {item.title} {item.rrule && '🔄'}
+                                </div>
+                                <Show when={height >= 30 && item.type === 'event'}>
+                                  <div class="text-text-primary/70 text-[9px]">{format(parseISO(item.start_time), 'HH:mm')}</div>
+                                </Show>
                               </div>
                             )
                           }}
@@ -323,18 +485,37 @@ function CalendarView() {
                 }}
               </For>
             </div>
+            
+            {/* Extended Red Current-Time Indicator Across Whole Grid */}
+            <Show when={weekDays().some(d => isSameDay(d, new Date()))}>
+              {(() => {
+                const now = new Date();
+                const mins = now.getHours() * 60 + now.getMinutes();
+                return (
+                  <div class="absolute w-full flex items-center z-20 pointer-events-none" style={{ top: `${mins - 6 + 40}px`, left: '0px' }}>
+                    <div class="w-[60px] flex items-center justify-end pr-1">
+                      <span class="text-[10px] font-bold text-red-500 bg-bg-theme px-1 rounded">{format(now, 'HH:mm')}</span>
+                    </div>
+                    <div class="flex-1 h-[2px] border-b-2 border-dashed border-red-500/50"></div>
+                  </div>
+                );
+              })()}
+            </Show>
           </div>
         </Show>
       </div>
-
-      {/* Calendar View Floating Action Button */}
-      <button 
-        class="fixed bottom-8 right-8 w-14 h-14 rounded-full bg-accent text-white border-none shadow-xl flex items-center justify-center cursor-pointer transition-transform hover:scale-105 active:scale-95 z-[100]" 
-        onClick={() => uiStore.setActiveModal('addEvent')}
-      >
-        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
-      </button>
-
+      
+      <Show when={viewMode() === 'month'}>
+        <button 
+          class="fixed bottom-8 right-8 w-14 h-14 rounded-full bg-accent text-text-primary border-none shadow-xl flex items-center justify-center cursor-pointer transition-transform hover:scale-105 active:scale-95 z-[100]" 
+          onClick={() => {
+            uiStore.setActiveDate(currentDate().toISOString());
+            uiStore.setActiveModal('addEvent');
+          }}
+        >
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+        </button>
+      </Show>
     </div>
   );
 }

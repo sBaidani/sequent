@@ -9,6 +9,7 @@ const loadSetting = (key, defaultValue) => {
 const [state, setState] = createStore({
   startOfWeek: loadSetting('startOfWeek', 'monday'),
   defaultDuration: parseInt(loadSetting('defaultDuration', '60'), 10),
+  showTasksInTimeline: loadSetting('showTasksInTimeline', 'true') === 'true',
 });
 
 export const settingsStore = {
@@ -22,5 +23,10 @@ export const settingsStore = {
   setDefaultDuration: (mins) => {
     setState('defaultDuration', mins);
     localStorage.setItem('sequent_setting_defaultDuration', mins.toString());
+  },
+  
+  setShowTasksInTimeline: (show) => {
+    setState('showTasksInTimeline', show);
+    localStorage.setItem('sequent_setting_showTasksInTimeline', show ? 'true' : 'false');
   }
 };

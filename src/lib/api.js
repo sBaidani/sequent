@@ -22,7 +22,11 @@ class NetworkError extends Error {
  * Makes an authenticated request to a Supabase Edge Function.
  */
 async function request(functionName, method, body = null, params = null) {
+  console.log(`[API] request called: ${method} ${functionName}`);
+  console.log(`[API] calling supabase.auth.getSession()...`);
   const { data: { session } } = await supabase.auth.getSession();
+  console.log(`[API] session retrieved!`);
+  
   if (!session) {
     throw new ApiError('Not authenticated', 401, 'AUTH_REQUIRED');
   }
@@ -45,12 +49,17 @@ async function request(functionName, method, body = null, params = null) {
 
   let response;
   try {
+    console.log(`[API] calling fetch(${url})...`);
     response = await fetch(url, options);
+    console.log(`[API] fetch returned! status:`, response.status);
   } catch (err) {
+    console.error(`[API] fetch threw an error:`, err);
     throw new NetworkError(err.message);
   }
 
+  console.log(`[API] reading response.json()...`);
   const json = await response.json();
+  console.log(`[API] json read!`);
 
   if (!response.ok) {
     const error = new ApiError(
@@ -84,14 +93,6 @@ export const api = {
   lists: createResourceApi('lists'),
   events: createResourceApi('events'),
   calendars: createResourceApi('calendars'),
-
-  sync: {
-    /** Full hydrate — returns { tasks, lists, events, calendars } in UI format */
-    hydrate: () => request('sync', 'GET'),
-
-    /** Batch push offline mutations — returns { results: [...] } with per-item status */
-    push: (mutations) => request('sync', 'POST', { mutations }),
-  },
 };
 
 export { ApiError, NetworkError };

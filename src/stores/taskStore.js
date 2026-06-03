@@ -13,7 +13,7 @@ export const taskStore = {
   setTasks: (tasks) => setTasksState('tasks', tasks),
   setLists: (lists) => setTasksState('lists', lists),
   
-  addTask: (title, listId = null, scheduledDate = null, priority = 'normal') => {
+  addTask: (title, listId = null, scheduledDate = null, priority = 'normal', description = '', rrule = null, allDay = false) => {
     // Resolve listId: use provided, or fall back to first available list
     let targetListId = listId;
     if (!targetListId && tasksState.lists.length > 0) {
@@ -23,10 +23,13 @@ export const taskStore = {
     const newTask = {
       id: generateId(),
       title,
+      description,
       listId: targetListId,
       completed: false,
       priority,
+      allDay,
       scheduled_date: scheduledDate || null,
+      rrule,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -34,8 +37,16 @@ export const taskStore = {
     // Optimistic UI update
     setTasksState('tasks', (prev) => [...prev, newTask]);
     
-    // Enqueue for server sync (server handles default list auto-creation if needed)
+    // Enqueue for server sync
     syncEngine.enqueue('tasks', 'INSERT', newTask);
+  },
+  
+  updateTask: (id, updates) => {
+    setTasksState('tasks', (t) => t.id === id, { ...updates, updated_at: new Date().toISOString() });
+    const task = tasksState.tasks.find(t => t.id === id);
+    if (task) {
+      syncEngine.enqueue('tasks', 'UPDATE', task);
+    }
   },
   
   addList: (name, color, icon) => {

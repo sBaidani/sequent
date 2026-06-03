@@ -43,10 +43,13 @@ class SyncEngine {
 
   // Add mutation to local IndexedDB queue + optimistic local cache
   async enqueue(table, action, payload) {
+    console.log(`[SyncEngine] Enqueue called for ${table} ${action}`, payload);
     // Strip SolidJS reactive proxies before storing in IndexedDB
     const cleanPayload = JSON.parse(JSON.stringify(payload));
     const queueItem = { table, action, payload: cleanPayload, timestamp: Date.now() };
+    console.log(`[SyncEngine] Putting in syncQueue...`);
     await localDB.put('syncQueue', queueItem);
+    console.log(`[SyncEngine] syncQueue put successful.`);
 
     // Save to local DB for instant offline reads (UI format)
     if (action === 'INSERT' || action === 'UPDATE') {
@@ -56,87 +59,83 @@ class SyncEngine {
     }
 
     // Try to sync to cloud if online
+    console.log(`[SyncEngine] navigator.onLine is ${navigator.onLine}`);
     if (navigator.onLine) {
+      console.log(`[SyncEngine] Calling processQueue from enqueue...`);
       this.processQueue();
     }
   }
 
-  // Process pending mutations via the server-side sync API
+  // Process pending mutations via individual server-side REST APIs
   async processQueue() {
-    if (this.isSyncing || !navigator.onLine) return;
+    console.log(`[SyncEngine] processQueue started. isSyncing: ${this.isSyncing}, onLine: ${navigator.onLine}`);
+    if (this.isSyncing || !navigator.onLine) {
+      console.log(`[SyncEngine] Exiting early. isSyncing=${this.isSyncing}, onLine=${navigator.onLine}`);
+      return;
+    }
     this.isSyncing = true;
 
     try {
       const queue = await localDB.getAll('syncQueue');
-      if (!queue || queue.length === 0) return;
+      console.log(`[SyncEngine] Retrieved queue length: ${queue?.length}`);
+      if (!queue || queue.length === 0) {
+        console.log(`[SyncEngine] Queue is empty, returning.`);
+        return;
+      }
 
       // Sort by timestamp ascending (oldest first)
       queue.sort((a, b) => a.timestamp - b.timestamp);
 
-      // Build mutations array for the batch sync endpoint
-      const mutations = queue.map(item => ({
-        table: item.table,
-        action: item.action,
-        payload: item.payload,
-      }));
-
-      let results;
-      try {
-        const response = await api.sync.push(mutations);
-        results = response.results;
-      } catch (err) {
-        if (err instanceof NetworkError) {
-          // Network error — stop, will retry when online
-          return;
-        }
-
-        // Auth error — check for stale session
-        if (err.status === 401) {
-          console.warn('Authentication expired during sync. Logging out...');
-          import('./authStore').then(({ authStore }) => authStore.signOut());
-          return;
-        }
-
-        throw err;
-      }
-
-      // Process results: clear successful items from queue, handle conflicts
-      for (let i = 0; i < results.length; i++) {
-        const result = results[i];
-        const queueItem = queue[i];
-
-        if (result.status === 'success') {
-          await localDB.delete('syncQueue', queueItem.queueId);
-          // Update local cache with server-confirmed data
-          if (result.data) {
-            await localDB.put(result.table, result.data);
+      for (const queueItem of queue) {
+        const { table, action, payload } = queueItem;
+        console.log(`[SyncEngine] Processing queueItem:`, queueItem);
+        try {
+          let resultData;
+          console.log(`[SyncEngine] Calling api[${table}].${action.toLowerCase()}`);
+          if (action === 'INSERT') {
+            resultData = await api[table].create(payload);
+          } else if (action === 'UPDATE') {
+            resultData = await api[table].update(payload);
+          } else if (action === 'DELETE') {
+            resultData = await api[table].delete(payload.id);
           }
-        } else if (result.status === 'conflict') {
-          await localDB.delete('syncQueue', queueItem.queueId);
-          // Server won — update local cache with server version
-          if (result.data) {
-            await localDB.put(result.table, result.data);
-          }
-          console.log(`Conflict resolved for ${result.table} ${result.id}: server won`);
-        } else if (result.status === 'error') {
-          console.error(`Sync error for ${result.table} ${result.action} ${result.id}: ${result.error}`);
-          // Remove failed item from queue to prevent blocking
-          await localDB.delete('syncQueue', queueItem.queueId);
+          console.log(`[SyncEngine] API call succeeded! resultData:`, resultData);
 
-          // Check for stale session (foreign key violation on user)
-          if (result.error?.includes('violates foreign key') || result.error?.includes('Key is not present in table "users"')) {
-            console.warn('Session user does not exist in backend database. Logging out...');
+          await localDB.delete('syncQueue', queueItem.queueId);
+          console.log(`[SyncEngine] Removed from syncQueue: ${queueItem.queueId}`);
+          
+          if (resultData && action !== 'DELETE') {
+            if (resultData._conflict === 'server_won') {
+              console.log(`Conflict resolved for ${table} ${payload.id}: server won`);
+              delete resultData._conflict;
+            }
+            await localDB.put(table, resultData);
+            console.log(`[SyncEngine] Updated localDB with server data for ${table}`);
+          }
+        } catch (err) {
+          console.error(`[SyncEngine] Error during API call for ${table} ${action}:`, err);
+          if (err instanceof NetworkError) {
+            console.log(`[SyncEngine] NetworkError detected, returning.`);
+            // Network error — stop, will retry when online
+            return;
+          }
+          if (err.status === 401 || err.message?.includes('violates foreign key') || err.message?.includes('Key is not present in table "users"')) {
+            console.warn('Authentication expired or invalid user. Logging out...');
             import('./authStore').then(({ authStore }) => authStore.signOut());
             return;
           }
+          console.error(`Sync error for ${table} ${action} ${payload.id}:`, err);
+          await localDB.delete('syncQueue', queueItem.queueId);
         }
       }
 
       // Refresh UI stores from local cache after sync
+      console.log(`[SyncEngine] Queue processed successfully. Refreshing local stores.`);
       await this.refreshLocalStores();
     } catch (err) {
       console.error('Queue processing failed:', err);
     } finally {
+      console.log(`[SyncEngine] finally block executed, setting isSyncing to false`);
       this.isSyncing = false;
     }
   }
@@ -155,19 +154,21 @@ class SyncEngine {
   }
 
   async hydrate() {
-    // Clear syncQueue to wipe out any stale entries
-    await localDB.clear('syncQueue');
-
     // 1. Load from IndexedDB for instant UI
     await this.refreshLocalStores();
 
-    // 2. Fetch fresh data from server API if online
+    // 2. Fetch fresh data from distinct APIs if online
     const { data: { session } } = await supabase.auth.getSession();
     if (!session || !navigator.onLine) return;
 
     try {
-      // Single API call returns all user data pre-mapped to UI format
-      const { tasks, lists, events, calendars } = await api.sync.hydrate();
+      // Fetch all user data concurrently from distinct endpoints
+      const [tasks, lists, events, calendars] = await Promise.all([
+        api.tasks.list(),
+        api.lists.list(),
+        api.events.list(),
+        api.calendars.list()
+      ]);
 
       // Replace local cache with server data
       await localDB.clear('tasks');
