@@ -1,7 +1,9 @@
+import { onMount } from 'solid-js';
 import { uiStore } from '../../stores/uiStore';
 import { settingsStore } from '../../stores/settingsStore';
 import { eventStore } from '../../stores/eventStore';
 import { taskStore } from '../../stores/taskStore';
+import { api } from '../../lib/api';
 import ColorPicker from '../shared/ColorPicker';
 import EditableItem from '../shared/EditableItem';
 import SelectPicker from '../shared/SelectPicker';
@@ -12,6 +14,30 @@ function SettingsView() {
   const { state: settings, setStartOfWeek, setDefaultDuration } = settingsStore;
   const { state: eventState } = eventStore;
   const { state: taskState } = taskStore;
+  
+  onMount(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    const provider = params.get('provider'); // Assuming Google/Microsoft redirects to ?code=...&provider=...
+    // Alternatively, if provider is missing, we could infer it if there's a state param or similar.
+    // For now, let's assume we pass `provider` back in the redirect URI
+    if (code) {
+      // Need a default or fallback provider if not specified, 
+      // but in our implementation we'll add provider to redirect URL
+      const actualProvider = provider || localStorage.getItem('oauth_provider_intent');
+      if (actualProvider) {
+        api.auth.finalizeConnection(actualProvider, code)
+          .then(() => {
+            alert(`Successfully connected ${actualProvider} calendar!`);
+            // Clean up URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+          })
+          .catch(err => {
+            alert('Failed to complete connection: ' + err.message);
+          });
+      }
+    }
+  });
   
   const themes = [
     { name: 'Amber', color: '#E8942A' },
@@ -203,12 +229,34 @@ function SettingsView() {
               </div>
               
               <div class="flex flex-col gap-3">
-                <button class="bg-text-primary/5 border border-border-theme rounded-xl py-3 px-4 text-text-primary flex items-center gap-3 font-semibold cursor-pointer hover:bg-text-primary/10 transition-colors">
+                <button 
+                  onClick={async () => {
+                    try {
+                      localStorage.setItem('oauth_provider_intent', 'google');
+                      const { url } = await api.auth.getAuthUrl('google');
+                      window.location.href = url;
+                    } catch (err) {
+                      alert('Failed to start Google Auth: ' + err.message);
+                    }
+                  }}
+                  class="bg-text-primary/5 border border-border-theme rounded-xl py-3 px-4 text-text-primary flex items-center gap-3 font-semibold cursor-pointer hover:bg-text-primary/10 transition-colors"
+                >
                   <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
                   Connect Google Calendar
                 </button>
                 
-                <button class="bg-text-primary/5 border border-border-theme rounded-xl py-3 px-4 text-text-primary flex items-center gap-3 font-semibold cursor-pointer hover:bg-text-primary/10 transition-colors">
+                <button 
+                  onClick={async () => {
+                    try {
+                      localStorage.setItem('oauth_provider_intent', 'microsoft');
+                      const { url } = await api.auth.getAuthUrl('microsoft');
+                      window.location.href = url;
+                    } catch (err) {
+                      alert('Failed to start Microsoft Auth: ' + err.message);
+                    }
+                  }}
+                  class="bg-text-primary/5 border border-border-theme rounded-xl py-3 px-4 text-text-primary flex items-center gap-3 font-semibold cursor-pointer hover:bg-text-primary/10 transition-colors"
+                >
                   <svg viewBox="0 0 24 24" class="w-5 h-5 fill-[#00a4ef]"><path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zM24 11.4H12.6V0H24v11.4z"/></svg>
                   Connect Microsoft Outlook
                 </button>

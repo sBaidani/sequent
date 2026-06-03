@@ -93,6 +93,16 @@ export const api = {
   lists: createResourceApi('lists'),
   events: createResourceApi('events'),
   calendars: createResourceApi('calendars'),
+  auth: {
+    getAuthUrl: async (provider) => {
+      const functionName = `auth-${provider}`;
+      return request(functionName, 'GET', null, { action: 'get_auth_url' });
+    },
+    finalizeConnection: async (provider, code) => {
+      const functionName = `auth-${provider}`;
+      return request(functionName, 'POST', { code });
+    }
+  }
 };
 
 export { ApiError, NetworkError };

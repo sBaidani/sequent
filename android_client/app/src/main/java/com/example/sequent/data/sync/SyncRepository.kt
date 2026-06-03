@@ -1,20 +1,28 @@
 package com.example.sequent.data.sync
 
+import android.content.Context
+import com.example.sequent.data.local.dao.EventDao
 import com.example.sequent.data.local.dao.TaskDao
+import com.example.sequent.data.local.entities.EventEntity
 import com.example.sequent.data.local.entities.TaskEntity
 import com.example.sequent.data.remote.SupabaseApiClient
 import com.example.sequent.data.remote.TaskDto
+import com.example.sequent.notifications.NotificationHelper
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class SyncRepository @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val taskDao: TaskDao,
+    private val eventDao: EventDao,
     private val apiClient: SupabaseApiClient
 ) {
     // Expose local flow for UI
     fun getAllTasks(): Flow<List<TaskEntity>> = taskDao.getAllTasks()
+    fun getAllEvents(): Flow<List<EventEntity>> = eventDao.getAllEvents()
 
     // Create or update locally and mark as pending sync
     suspend fun saveTask(task: TaskEntity) {
@@ -24,6 +32,11 @@ class SyncRepository @Inject constructor(
     // Delete locally and mark as pending sync
     suspend fun deleteTask(id: String, updatedAt: String) {
         taskDao.markAsDeleted(id, updatedAt)
+    }
+
+    suspend fun saveEvent(event: EventEntity) {
+        eventDao.insertEvent(event.copy(isPendingSync = true))
+        NotificationHelper.scheduleReminder(context, event.id, event.title, event.start_time)
     }
 
     // Perform a full sync with the remote server

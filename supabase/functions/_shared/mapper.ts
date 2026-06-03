@@ -64,6 +64,11 @@ export function eventToDb(item: Record<string, unknown>, userId: string): Record
   db.calendar_id = item.calendarId ?? null
   delete db.calendarId
 
+  if (item.allDay !== undefined) {
+    db.is_all_day = item.allDay
+    delete db.allDay
+  }
+
   return db
 }
 
@@ -74,6 +79,11 @@ export function eventFromDb(db: Record<string, unknown>): Record<string, unknown
   // calendar_id → calendarId
   item.calendarId = db.calendar_id ?? null
   delete item.calendar_id
+
+  if (db.is_all_day !== undefined) {
+    item.allDay = db.is_all_day
+    delete item.is_all_day
+  }
 
   // Remove internal fields
   delete item.user_id

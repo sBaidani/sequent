@@ -26,6 +26,10 @@ function mapRealtimePayload(table, dbItem) {
   } else if (table === 'events') {
     item.calendarId = dbItem.calendar_id ?? null;
     delete item.calendar_id;
+    if (dbItem.is_all_day !== undefined) {
+      item.allDay = dbItem.is_all_day;
+      delete item.is_all_day;
+    }
   }
 
   return item;

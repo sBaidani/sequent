@@ -109,4 +109,7 @@ dependencies {
   implementation(libs.hilt.work)
   implementation(libs.hilt.navigation.compose)
   ksp(libs.androidx.hilt.compiler)
+
+  // Glance
+  implementation(libs.androidx.glance.appwidget)
 }

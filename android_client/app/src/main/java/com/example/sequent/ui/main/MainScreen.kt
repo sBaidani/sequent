@@ -96,24 +96,30 @@ fun TimelineView(
                     Text(text = "Loading Tasks...", color = Color.White, modifier = Modifier.padding(16.dp))
                 }
                 is MainScreenUiState.Success -> {
-                    val tasks = state.data
+                    val events = state.events
                     
-                    // Dummy data grouping for UI demonstration based on screenshot
-                    val dummyTimeline = listOf(
-                        TimelineItem.DayStart("5", "MON", isToday = false),
-                        TimelineItem.Event("Book flights", "8:30 AM → 10:30 AM", Color(0xFFC0392B)),
-                        TimelineItem.DayStart("6", "TUE", isToday = true),
-                        TimelineItem.Event("Gym", "8:00 AM → 8:30 AM", Color(0xFFE67E22)),
-                        TimelineItem.Event("Football training", "5:00 PM → 6:00 PM", Color(0xFF2980B9)),
-                        TimelineItem.DayStart("7", "WED", isToday = false),
-                        TimelineItem.EmptyDay("8", "THU"),
-                        TimelineItem.DayStart("9", "FRI", isToday = false),
-                        TimelineItem.Event("Alex on holidays", "ALL DAY", Color(0xFF2980B9)),
-                        TimelineItem.Event("Lunch with Sam", "12:00 PM → 2:00 PM", Color(0xFF8E44AD)),
-                    )
+                    // Convert EventEntities to TimelineItems
+                    val timelineItems = mutableListOf<TimelineItem>()
+                    if (events.isEmpty()) {
+                        timelineItems.add(TimelineItem.EmptyDay("Today", "No events"))
+                    } else {
+                        // Very basic grouping by date (assuming start_time is ISO 8601 string)
+                        val groupedEvents = events.groupBy { it.start_time.substringBefore("T") }
+                        for ((dateStr, dayEvents) in groupedEvents) {
+                            val parts = dateStr.split("-")
+                            val day = if (parts.size >= 3) parts[2] else "??"
+                            val month = if (parts.size >= 2) parts[1] else "??"
+                            
+                            timelineItems.add(TimelineItem.DayStart(day, month, isToday = false)) // Simplified isToday
+                            for (event in dayEvents) {
+                                val timeStr = event.start_time.substringAfter("T").take(5) + " → " + event.end_time.substringAfter("T").take(5)
+                                timelineItems.add(TimelineItem.Event(event.title, timeStr, Color(0xFF2980B9)))
+                            }
+                        }
+                    }
 
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        itemsIndexed(dummyTimeline) { index, item ->
+                        itemsIndexed(timelineItems) { index, item ->
                             when (item) {
                                 is TimelineItem.DayStart -> {
                                     DayHeaderRow(item.day, item.month, item.isToday)
