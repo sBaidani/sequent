@@ -97,6 +97,7 @@ serve(async (req) => {
               if (!eventError) syncedEventsCount++
           }
         }
+      }
       // 4. Fetch Google Task Lists
       const taskListsRes = await fetch('https://tasks.googleapis.com/tasks/v1/users/@me/lists', {
         headers: { Authorization: `Bearer ${accessToken}` }

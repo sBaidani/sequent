@@ -106,6 +106,7 @@ serve(async (req) => {
               if (!eventError) syncedEventsCount++
           }
         }
+      }
       // 4. Fetch Microsoft To Do Lists
       const taskListsRes = await fetch('https://graph.microsoft.com/v1.0/me/todo/lists', {
         headers: { Authorization: `Bearer ${accessToken}` }
