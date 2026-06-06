@@ -74,9 +74,9 @@ function PomodoroWidget() {
         class={`absolute top-0 bottom-0 left-0 transition-all duration-1000 ease-linear ${mode() === 'focus' ? 'bg-accent/30' : 'bg-[#1FA7A7]/30'}`}
         style={{ width: `${progressPercentage()}%` }}
       >
-        <div class={`absolute inset-0 bg-gradient-to-r ${mode() === 'focus' ? 'from-accent/0 to-accent/40' : 'from-[#1FA7A7]/0 to-[#1FA7A7]/40'} opacity-50`}></div>
+        <div class={`absolute inset-0 bg-gradient-to-r ${mode() === 'focus' ? 'from-accent/0 to-accent/40' : 'from-[#1FA7A7]/0 to-[#1FA7A7]/40'} opacity-50`} />
         {/* Animated edge to simulate liquid */}
-        <div class="absolute right-0 top-0 bottom-0 w-1 bg-white/20 shadow-[0_0_8px_rgba(255,255,255,0.5)]"></div>
+        <div class="absolute right-0 top-0 bottom-0 w-1 bg-white/20 shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
       </div>
 
       {/* Content overlay */}
@@ -110,7 +110,7 @@ function PomodoroWidget() {
             class="w-6 h-6 flex items-center justify-center rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-colors cursor-pointer opacity-0 group-hover:opacity-100"
             title="Skip"
           >
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
           </button>
         </div>
       </div>

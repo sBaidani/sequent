@@ -1,4 +1,4 @@
-import { createSignal } from 'solid-js';
+import { createSignal, For } from 'solid-js';
 import Modal from '../ui/Modal';
 import { eventStore } from '../../stores/eventStore';
 import { uiStore } from '../../stores/uiStore';
@@ -38,14 +38,14 @@ function AddCalendarModal() {
         <div>
           <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-2 tracking-wider">Color</label>
           <div class="flex gap-3">
-            {colors.map(c => (
+            <For each={colors}>{c => (
               <button 
                 type="button"
                 onClick={() => setColor(c)}
                 class={`w-8 h-8 rounded-full border-4 cursor-pointer transition-transform hover:scale-110 ${color() === c ? 'border-text-primary' : 'border-transparent'}`}
                 style={{ background: c }}
               />
-            ))}
+            )}</For>
           </div>
         </div>
 

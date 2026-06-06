@@ -1,4 +1,4 @@
-import { onMount, createSignal } from 'solid-js';
+import { onMount, createSignal, For } from 'solid-js';
 import { uiStore } from '../../stores/uiStore';
 import { settingsStore } from '../../stores/settingsStore';
 import { eventStore } from '../../stores/eventStore';
@@ -58,7 +58,7 @@ function SettingsView() {
             onClick={() => uiStore.toggleSidebar()}
             class="flex w-9 h-9 rounded-full bg-text-primary/5 border-none text-text-primary items-center justify-center cursor-pointer transition-colors hover:bg-text-primary/10"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
           </button>
           <div class="font-display lowercase text-xl font-bold text-text-primary tracking-wide">Settings</div>
         </div>
@@ -75,14 +75,14 @@ function SettingsView() {
               <div class="mb-5">
                 <label class="block text-[13px] font-semibold text-text-secondary mb-3">Theme Color</label>
                 <div class="flex gap-3 flex-wrap">
-                  {themes.map(t => (
+                  <For each={themes}>{t => (
                     <button 
                       onClick={() => setTheme(t.color)}
                       class={`w-10 h-10 rounded-full transition-transform hover:scale-110 border-4 cursor-pointer ${uiState.theme === t.color ? 'border-text-primary' : 'border-transparent'}`}
                       style={{ background: t.color }}
                       title={t.name}
                     />
-                  ))}
+                  )}</For>
                 </div>
               </div>
 
@@ -284,7 +284,7 @@ function SettingsView() {
                 disabled={isSyncing()}
                 class={`bg-text-primary/10 text-text-primary border-none rounded-xl py-1.5 px-3 text-[13px] font-semibold cursor-pointer hover:bg-text-primary/20 transition-colors flex items-center gap-2 ${isSyncing() ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                <svg class={`w-4 h-4 ${isSyncing() ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                <svg class={`w-4 h-4 ${isSyncing() ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                 {isSyncing() ? 'Syncing...' : 'Sync Now'}
               </button>
             </div>
@@ -349,7 +349,7 @@ function SettingsView() {
                   </button>
                 </div>
                 <div class="bg-card rounded-[16px] ring-1 ring-border-theme shadow-sm overflow-hidden">
-                  {eventState.calendars.filter(c => !c.provider || c.provider === 'local').map(cal => (
+                  <For each={eventState.calendars.filter(c => !c.provider || c.provider === 'local')}>{cal => (
                     <div class="p-4 flex items-center justify-between border-b border-border-theme last:border-b-0">
                       <div class="flex items-center gap-3 w-full">
                         <ColorPicker 
@@ -369,7 +369,7 @@ function SettingsView() {
                         ×
                       </button>
                     </div>
-                  ))}
+                  )}</For>
                   {eventState.calendars.filter(c => !c.provider || c.provider === 'local').length === 0 && (
                     <div class="p-5 text-center text-text-muted text-[13px]">No local calendars found.</div>
                   )}
@@ -382,7 +382,7 @@ function SettingsView() {
                   <div class="font-display lowercase text-[13px] font-bold text-text-secondary tracking-wider">Cloud Synced</div>
                 </div>
                 <div class="bg-card rounded-[16px] ring-1 ring-border-theme shadow-sm overflow-hidden">
-                  {eventState.calendars.filter(c => c.provider && c.provider !== 'local').map(cal => (
+                  <For each={eventState.calendars.filter(c => c.provider && c.provider !== 'local')}>{cal => (
                     <div class="p-4 flex items-center justify-between border-b border-border-theme last:border-b-0">
                       <div class="flex items-center gap-3">
                         <div class="w-4 h-4 rounded-full" style={{ background: cal.color }} />
@@ -392,7 +392,7 @@ function SettingsView() {
                         {cal.provider}
                       </div>
                     </div>
-                  ))}
+                  )}</For>
                   {eventState.calendars.filter(c => c.provider && c.provider !== 'local').length === 0 && (
                     <div class="p-5 text-center text-text-muted text-[13px]">No cloud calendars synced. Connect an account above.</div>
                   )}
@@ -420,7 +420,7 @@ function SettingsView() {
                   </button>
                 </div>
                 <div class="bg-card rounded-[16px] ring-1 ring-border-theme shadow-sm overflow-hidden">
-                  {taskState.lists.filter(l => !l.provider || l.provider === 'local').map(list => (
+                  <For each={taskState.lists.filter(l => !l.provider || l.provider === 'local')}>{list => (
                     <div class="p-4 flex items-center justify-between border-b border-border-theme last:border-b-0">
                       <div class="flex items-center gap-3 w-full">
                         <ColorPicker 
@@ -440,7 +440,7 @@ function SettingsView() {
                         ×
                       </button>
                     </div>
-                  ))}
+                  )}</For>
                   {taskState.lists.filter(l => !l.provider || l.provider === 'local').length === 0 && (
                     <div class="p-5 text-center text-text-muted text-[13px]">No local lists found.</div>
                   )}
@@ -453,7 +453,7 @@ function SettingsView() {
                   <div class="font-display lowercase text-[13px] font-bold text-text-secondary tracking-wider">Cloud Synced</div>
                 </div>
                 <div class="bg-card rounded-[16px] ring-1 ring-border-theme shadow-sm overflow-hidden">
-                  {taskState.lists.filter(l => l.provider && l.provider !== 'local').map(list => (
+                  <For each={taskState.lists.filter(l => l.provider && l.provider !== 'local')}>{list => (
                     <div class="p-4 flex items-center justify-between border-b border-border-theme last:border-b-0">
                       <div class="flex items-center gap-3">
                         <div class="w-4 h-4 rounded-full" style={{ background: list.color }} />
@@ -463,7 +463,7 @@ function SettingsView() {
                         {list.provider}
                       </div>
                     </div>
-                  ))}
+                  )}</For>
                   {taskState.lists.filter(l => l.provider && l.provider !== 'local').length === 0 && (
                     <div class="p-5 text-center text-text-muted text-[13px]">No cloud lists synced. Connect an account above.</div>
                   )}

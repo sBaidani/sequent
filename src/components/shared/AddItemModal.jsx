@@ -147,7 +147,7 @@ function AddItemModal() {
               class="w-full flex flex-col gap-4"
             >
               <div class="flex bg-text-primary/5 rounded-lg p-1 w-full relative mb-1">
-                <div class={`absolute h-[calc(100%-8px)] w-[calc(50%-4px)] top-1 rounded-md bg-accent transition-transform duration-300 ease-out shadow-sm ${mode() === 'event' ? 'translate-x-0' : 'translate-x-[calc(100%+4px)]'}`}></div>
+                <div class={`absolute h-[calc(100%-8px)] w-[calc(50%-4px)] top-1 rounded-md bg-accent transition-transform duration-300 ease-out shadow-sm ${mode() === 'event' ? 'translate-x-0' : 'translate-x-[calc(100%+4px)]'}`} />
                 <button 
                   type="button"
                   onClick={() => setMode('event')} 
@@ -190,7 +190,7 @@ function AddItemModal() {
             <div class="flex items-center gap-2 mb-2">
               <label class="flex items-center gap-2 cursor-pointer group">
                 <div class="relative w-10 h-6 bg-text-primary/10 rounded-full transition-colors group-hover:bg-text-primary/20" classList={{ '!bg-accent': allDay() }}>
-                  <div class="absolute left-1 top-1 w-4 h-4 bg-text-primary rounded-full transition-transform shadow-sm" classList={{ 'translate-x-4 bg-bg-theme': allDay() }}></div>
+                  <div class="absolute left-1 top-1 w-4 h-4 bg-text-primary rounded-full transition-transform shadow-sm" classList={{ 'translate-x-4 bg-bg-theme': allDay() }} />
                 </div>
                 <input type="checkbox" class="hidden" checked={allDay()} onChange={(e) => setAllDay(e.target.checked)} />
                 <span class="text-[13px] font-bold text-text-primary">All-Day</span>
@@ -266,7 +266,7 @@ function AddItemModal() {
               }}
               class="w-full bg-text-primary/5 border border-border-theme border-dashed rounded-xl py-3 text-text-primary text-[13px] font-semibold cursor-pointer hover:bg-text-primary/10 transition-colors flex items-center justify-center gap-2 shadow-sm"
             >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 11v6m-3-3h6"></path></svg>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 11v6m-3-3h6" /></svg>
               Add Due Date
             </button>
           </Show>

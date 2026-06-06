@@ -166,7 +166,7 @@ function CalendarView() {
             onClick={() => uiStore.toggleSidebar()}
             class="flex w-9 h-9 rounded-full bg-text-primary/5 border-none text-text-primary items-center justify-center cursor-pointer transition-colors hover:bg-text-primary/20 mr-2"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
           </button>
           <h2 class="font-display lowercase text-2xl font-extrabold text-text-primary min-w-[200px]">
             {format(currentDate(), viewMode() === 'month' ? 'MMMM yyyy' : 'MMM yyyy')}
@@ -336,7 +336,7 @@ function CalendarView() {
             <div class="overflow-auto bg-bg-theme absolute inset-0" id="weekViewScrollArea">
               <div class="flex w-full min-h-max relative">
                 <div class="w-[60px] min-w-[60px] border-r border-border-theme flex flex-col bg-bg-theme sticky left-0 z-30">
-                  <div class="h-[72px] min-h-[72px] shrink-0 border-b border-border-theme sticky top-0 bg-bg-theme z-40"></div>
+                  <div class="h-[72px] min-h-[72px] shrink-0 border-b border-border-theme sticky top-0 bg-bg-theme z-40" />
                 <For each={Array.from({length: 24})}>
                   {(_, i) => (
                     <div class="h-[60px] min-h-[60px] shrink-0 border-b border-border-theme p-1 text-right text-[10px] text-text-muted">
@@ -511,12 +511,12 @@ function CalendarView() {
                                handleDrop(e, date, { hour, mins });
                              }}
                         >
-                          <div class="absolute top-[540px] h-[480px] w-full bg-text-primary/5 pointer-events-none"></div>
+                          <div class="absolute top-[540px] h-[480px] w-full bg-text-primary/5 pointer-events-none" />
                           
                           <For each={Array.from({length: 24})}>
                             {(_, i) => (
                               <div class="absolute w-full h-[60px] border-b border-border-theme pointer-events-none" style={{ top: `${i() * 60}px` }}>
-                                <div class="w-full h-[30px] border-b border-text-primary/[0.06]"></div>
+                                <div class="w-full h-[30px] border-b border-text-primary/[0.06]" />
                               </div>
                             )}
                           </For>
@@ -527,7 +527,7 @@ function CalendarView() {
                               const mins = now.getHours() * 60 + now.getMinutes();
                               return (
                                 <div class="absolute w-full flex items-center z-30 pointer-events-none" style={{ top: `${mins - 6}px`, left: '0px' }}>
-                                  <div class="w-2 h-2 rounded-full bg-red-500 shadow-sm ml-[-4px]"></div>
+                                  <div class="w-2 h-2 rounded-full bg-red-500 shadow-sm ml-[-4px]" />
                                 </div>
                               );
                             })()}
@@ -539,7 +539,7 @@ function CalendarView() {
                                    top: `${hoverBlock().hour * 60 + hoverBlock().mins}px`, 
                                    height: `${settings.defaultDuration || 60}px`
                                  }}
-                            ></div>
+                             />
                           </Show>
                           
                           <For each={placedItems()}>
@@ -590,7 +590,7 @@ function CalendarView() {
                       <div class="w-[60px] flex items-center justify-end pr-1">
                         <span class="text-[10px] font-bold text-red-500 bg-bg-theme px-1 rounded">{format(now, settings.use24HourClock ? 'H:mm' : 'h:mm a')}</span>
                       </div>
-                      <div class="flex-1 h-[2px] border-b-2 border-dashed border-red-500/50"></div>
+                      <div class="flex-1 h-[2px] border-b-2 border-dashed border-red-500/50" />
                     </div>
                   );
                 })()}
@@ -609,7 +609,7 @@ function CalendarView() {
             uiStore.setActiveModal('addEvent');
           }}
         >
-          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" /></svg>
         </button>
       </Show>
     </div>

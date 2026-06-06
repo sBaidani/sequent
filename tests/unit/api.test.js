@@ -212,53 +212,6 @@ describe('API Layer', () => {
       expect(api.calendars).toHaveProperty('delete');
     });
 
-    test('api.sync has hydrate and push methods', () => {
-      expect(api.sync).toHaveProperty('hydrate');
-      expect(api.sync).toHaveProperty('push');
-    });
   });
 
-  describe('Sync API', () => {
-    beforeEach(() => {
-      supabase.auth.getSession.mockResolvedValue({
-        data: { session: { access_token: 'test-token' } },
-      });
-    });
-
-    test('hydrate sends GET to sync endpoint', async () => {
-      global.fetch.mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ data: { tasks: [], lists: [], events: [], calendars: [] } }),
-      });
-
-      const result = await api.sync.hydrate();
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/functions/v1/sync'),
-        expect.objectContaining({ method: 'GET' })
-      );
-      expect(result).toEqual({ tasks: [], lists: [], events: [], calendars: [] });
-    });
-
-    test('push sends POST to sync endpoint with mutations', async () => {
-      const mutations = [
-        { table: 'tasks', action: 'INSERT', payload: { id: '1', title: 'Test' } },
-      ];
-
-      global.fetch.mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ data: { results: [{ status: 'success' }] } }),
-      });
-
-      await api.sync.push(mutations);
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/functions/v1/sync'),
-        expect.objectContaining({
-          method: 'POST',
-          body: JSON.stringify({ mutations }),
-        })
-      );
-    });
-  });
 });

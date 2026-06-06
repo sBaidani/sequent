@@ -138,7 +138,7 @@ function DaySchedulePreview(props) {
           class={`flex items-center justify-center w-6 h-6 rounded border-none bg-transparent cursor-pointer hover:bg-text-primary/10 text-text-muted hover:text-text-primary transition-colors ${collapsed() ? 'mx-auto' : ''} shrink-0`}
           title={collapsed() ? "Expand Preview" : "Collapse Preview"}
         >
-          <svg class={`w-4 h-4 transition-transform duration-300 ${collapsed() ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+          <svg class={`w-4 h-4 transition-transform duration-300 ${collapsed() ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
         </button>
         <Show when={!collapsed()}>
           <div class="flex items-center justify-between w-full min-w-0">
@@ -181,7 +181,7 @@ function DaySchedulePreview(props) {
                 <div class="w-12 h-full border-r border-border-theme flex justify-center py-1">
                   <span class="text-[10px] text-text-muted font-bold">{i() === 0 ? '12 AM' : i() < 12 ? `${i()} AM` : i() === 12 ? '12 PM' : `${i()-12} PM`}</span>
                 </div>
-                <div class="flex-1 h-[30px] border-b border-white/[0.03]"></div>
+                <div class="flex-1 h-[30px] border-b border-white/[0.03]" />
               </div>
             )}
           </For>
@@ -194,7 +194,7 @@ function DaySchedulePreview(props) {
               return (
                 <div class="absolute w-[calc(100%-48px)] flex items-center z-30 pointer-events-none" style={{ top: `${mins - 6}px`, left: '48px' }}>
                   <svg class="w-3 h-3 text-red-500 -ml-1.5 drop-shadow-md" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                  <div class="flex-1 h-[2px] bg-red-500 shadow-sm"></div>
+                  <div class="flex-1 h-[2px] bg-red-500 shadow-sm" />
                 </div>
               );
             })()}

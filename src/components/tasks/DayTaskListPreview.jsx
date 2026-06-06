@@ -44,7 +44,7 @@ function DayTaskListPreview(props) {
           class={`flex items-center justify-center w-6 h-6 rounded border-none bg-transparent cursor-pointer hover:bg-text-primary/10 text-text-muted hover:text-text-primary transition-colors ${collapsed() ? 'mx-auto' : ''} shrink-0`}
           title={collapsed() ? "Expand Preview" : "Collapse Preview"}
         >
-          <svg class={`w-4 h-4 transition-transform duration-300 ${collapsed() ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+          <svg class={`w-4 h-4 transition-transform duration-300 ${collapsed() ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
         </button>
         <Show when={!collapsed()}>
           <div class="flex items-center justify-between w-full min-w-0">

@@ -114,7 +114,7 @@ function TimePicker(props) {
                   )}
                 </For>
               </div>
-              <div class="w-px bg-text-primary/10"></div>
+              <div class="w-px bg-text-primary/10" />
               <div ref={minutesContainerRef} class="flex flex-col h-[200px] overflow-y-auto rounded-lg bg-text-primary/5 px-1 py-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <For each={minutes}>
                   {m => (
@@ -138,7 +138,7 @@ function TimePicker(props) {
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsOpen(false); }}
               class="w-full bg-accent text-text-primary font-bold py-2 rounded-lg text-sm hover:bg-accent/80 transition-colors flex items-center justify-center gap-1 shadow-sm"
             >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
               Done
             </button>
           </div>

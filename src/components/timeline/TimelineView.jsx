@@ -183,7 +183,7 @@ function TimelineView() {
           onClick={() => uiStore.toggleSidebar()}
           class="flex w-9 h-9 rounded-full bg-text-primary/5 border-none text-text-primary items-center justify-center cursor-pointer transition-colors hover:bg-text-primary/20"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
         </button>
         <div class="flex flex-col">
           <div class="font-display lowercase text-xl font-bold text-text-primary tracking-wide leading-tight">Timeline</div>
@@ -200,7 +200,7 @@ function TimelineView() {
             </svg>
           </button>
           <button class="w-9 h-9 rounded-full bg-text-primary/5 border-none text-text-primary flex items-center justify-center cursor-pointer transition-colors hover:bg-text-primary/20" onClick={() => uiStore.setActiveModal('addItem')}>
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" /></svg>
           </button>
         </div>
       </div>
@@ -212,7 +212,7 @@ function TimelineView() {
             id="timelineScroll" 
             class={`flex-1 overflow-y-auto overflow-x-hidden relative transition-opacity duration-300 ${isReady() ? 'opacity-100' : 'opacity-0'} ${smoothScroll() ? 'scroll-smooth' : ''}`}
           >
-            <div ref={topSentinel} style={{ height: '1px' }}></div>
+            <div ref={topSentinel} style={{ height: '1px' }} />
           <For each={days()}>
             {(day) => {
               const isDayToday = isSameDay(day, today);
@@ -301,9 +301,9 @@ function TimelineView() {
                             <Show 
                               when={!item.isRedLine}
                               fallback={
-                                <div class="w-full flex items-center gap-2 my-2 z-0 relative pointer-events-none opacity-90" style="margin-left: -12px; width: calc(100% + 24px);">
-                                  <div class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"></div>
-                                  <div class="flex-1 h-[2px] bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.4)]"></div>
+                                <div class="w-full flex items-center gap-2 my-2 z-0 relative pointer-events-none opacity-90" style={{"margin-left":"-12px","width":"calc(100% + 24px)"}}>
+                                  <div class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
+                                  <div class="flex-1 h-[2px] bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.4)]" />
                                 </div>
                               }
                             >
@@ -317,7 +317,7 @@ function TimelineView() {
                                       right: '-12px' 
                                     }}
                                   >
-                                    <div class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)] absolute left-0"></div>
+                                    <div class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)] absolute left-0" />
                                   </div>
                                 </Show>
                                 <div 
@@ -333,7 +333,7 @@ function TimelineView() {
                                         <div 
                                           class="w-1.5 rounded-full"
                                           style={{ "background-color": item.color, "min-height": "100%" }}
-                                        ></div>
+                                         />
                                       }
                                     >
                                       <button 
@@ -355,7 +355,7 @@ function TimelineView() {
                                     </div>
                                     <Show when={item.type === 'event' && item.location}>
                                       <div class="text-[12px] font-medium text-text-muted truncate flex items-center gap-1 mt-0.5">
-                                        <svg class="w-3.5 h-3.5 opacity-70 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                        <svg class="w-3.5 h-3.5 opacity-70 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                                         <span class="truncate">{item.location}</span>
                                       </div>
                                     </Show>
@@ -393,7 +393,7 @@ function TimelineView() {
               );
             }}
           </For>
-          <div ref={bottomSentinel} style={{ height: '1px' }}></div>
+          <div ref={bottomSentinel} style={{ height: '1px' }} />
         </div>
         
         {/* FAB for Today Scroll */}
@@ -406,8 +406,8 @@ function TimelineView() {
         }}>
           <div class="relative flex items-center justify-center">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2"></rect>
-              <path d="M16 2v4M8 2v4M3 10h18" stroke-width="2" stroke-linecap="round"></path>
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2" />
+              <path d="M16 2v4M8 2v4M3 10h18" stroke-width="2" stroke-linecap="round" />
             </svg>
             <div class="absolute inset-0 flex items-center justify-center">
               <span class="text-[12px] font-bold text-text-primary leading-none mt-[6px]">
@@ -439,7 +439,7 @@ function TimelineView() {
             }}
             class="w-8 h-8 rounded-full bg-accent/10 text-accent border-none flex items-center justify-center cursor-pointer hover:bg-accent hover:text-text-primary transition-colors mt-1 shrink-0"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" /></svg>
           </button>
         </div>
           
@@ -481,7 +481,7 @@ function TimelineView() {
               onClick={() => uiStore.setActiveModal('addTask')}
               class="mt-2 w-full bg-card hover:bg-text-primary/10 border-none rounded-xl p-3 flex items-center justify-center text-text-primary cursor-pointer transition-colors shadow-sm"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" /></svg>
             </button>
           </div>
         </div>
@@ -491,7 +491,7 @@ function TimelineView() {
           <div class="flex items-center justify-between mb-4">
             <span class="font-display lowercase text-[11px] font-extrabold text-text-muted tracking-widest">Agenda</span>
             <div class="flex bg-text-primary/10 rounded-lg p-0.5 relative">
-              <div class={`absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] bg-accent rounded shadow-sm transition-transform duration-300 pointer-events-none ${scheduleViewMode() === 'grid' ? 'translate-x-[calc(100%+2px)]' : 'translate-x-0'}`}></div>
+              <div class={`absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] bg-accent rounded shadow-sm transition-transform duration-300 pointer-events-none ${scheduleViewMode() === 'grid' ? 'translate-x-[calc(100%+2px)]' : 'translate-x-0'}`} />
               <button type="button" class={`relative z-10 px-2 py-1 text-[10px] font-bold uppercase tracking-wide cursor-pointer transition-colors rounded bg-transparent border-none ${scheduleViewMode() === 'list' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'}`} onClick={() => setScheduleViewMode('list')}>List</button>
               <button type="button" class={`relative z-10 px-2 py-1 text-[10px] font-bold uppercase tracking-wide cursor-pointer transition-colors rounded bg-transparent border-none ${scheduleViewMode() === 'grid' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'}`} onClick={() => {
                 setScheduleViewMode('grid');
@@ -533,7 +533,7 @@ function TimelineView() {
                             {timeStr.split(' - ')[0]}
                           </div>
                           <div class="flex-1 flex gap-3">
-                            <div class="w-1 rounded-full flex-shrink-0" style={{ "background-color": item.color }}></div>
+                            <div class="w-1 rounded-full flex-shrink-0" style={{ "background-color": item.color }} />
                             <div class="flex-1">
                               <div class="text-[13px] font-bold text-text-primary group-hover:text-accent transition-colors">{item.title} {item.rrule && '🔄'}</div>
                               <div class="text-[11px] font-semibold text-text-muted mt-0.5">{timeStr}</div>
@@ -597,7 +597,7 @@ function TimelineView() {
                                   </div>
                                 </Show>
                               </div>
-                              <div class="flex-1 h-[30px] border-b border-white/[0.03]"></div>
+                              <div class="flex-1 h-[30px] border-b border-white/[0.03]" />
                             </div>
                           );
                         }}
@@ -611,7 +611,7 @@ function TimelineView() {
                           return (
                             <div class="absolute w-[calc(100%-56px)] flex items-center z-30 pointer-events-none" style={{ top: `${mins - 6}px`, left: '56px' }}>
                               <svg class="w-3 h-3 text-red-500 -ml-1.5 drop-shadow-md" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                              <div class="flex-1 h-[2px] bg-red-500 shadow-sm"></div>
+                              <div class="flex-1 h-[2px] bg-red-500 shadow-sm" />
                             </div>
                           );
                         })()}
@@ -729,7 +729,7 @@ function TimelineView() {
                   onClick={() => setIsWeatherExpanded(!isWeatherExpanded())}
                   class={`bg-transparent border-none text-text-muted hover:text-text-primary cursor-pointer transition-transform ${isWeatherExpanded() ? 'rotate-180' : ''}`}
                 >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>
                 </button>
               </Show>
             </div>
@@ -738,10 +738,10 @@ function TimelineView() {
               when={weatherService.state} 
               fallback={
                 <div class="bg-card rounded-xl p-4 shadow-sm flex items-center gap-4 animate-pulse">
-                  <div class="w-12 h-12 rounded-full bg-white/5"></div>
+                  <div class="w-12 h-12 rounded-full bg-white/5" />
                   <div class="flex-1 flex flex-col gap-2">
-                    <div class="h-3 w-3/4 bg-white/5 rounded"></div>
-                    <div class="h-3 w-1/2 bg-white/5 rounded"></div>
+                    <div class="h-3 w-3/4 bg-white/5 rounded" />
+                    <div class="h-3 w-1/2 bg-white/5 rounded" />
                   </div>
                 </div>
               }

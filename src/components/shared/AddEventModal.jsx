@@ -149,7 +149,7 @@ function AddEventModal() {
             <div class="flex items-center gap-2 mb-2">
               <label class="flex items-center gap-2 cursor-pointer group">
                 <div class="relative w-10 h-6 bg-text-primary/10 rounded-full transition-colors group-hover:bg-text-primary/20" classList={{ '!bg-accent': allDay() }}>
-                  <div class="absolute left-1 top-1 w-4 h-4 bg-text-primary rounded-full transition-transform shadow-sm" classList={{ 'translate-x-4 bg-bg-theme': allDay() }}></div>
+                  <div class="absolute left-1 top-1 w-4 h-4 bg-text-primary rounded-full transition-transform shadow-sm" classList={{ 'translate-x-4 bg-bg-theme': allDay() }} />
                 </div>
                 <input type="checkbox" class="hidden" checked={allDay()} onChange={(e) => setAllDay(e.target.checked)} />
                 <span class="text-[13px] font-bold text-text-primary">All-Day</span>
@@ -215,7 +215,7 @@ function AddEventModal() {
             <div class="pt-2">
               {!showRecurrence() ? (
                 <button type="button" class="text-accent text-[13px] font-semibold cursor-pointer hover:underline border-none bg-transparent flex items-center gap-1.5 p-0" onClick={() => setShowRecurrence(true)}>
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                   Add Repeating Rule
                 </button>
               ) : (

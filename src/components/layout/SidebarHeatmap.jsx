@@ -64,9 +64,9 @@ function SidebarHeatmap() {
       </div>
       
       <div class="grid grid-cols-7 mb-3 gap-1">
-        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
+        <For each={['S', 'M', 'T', 'W', 'T', 'F', 'S']}>{d => (
           <div class="text-[9px] font-bold text-white/30 text-center uppercase">{d}</div>
-        ))}
+        )}</For>
       </div>
 
       <div class="grid grid-cols-7 gap-x-1 gap-y-1.5">

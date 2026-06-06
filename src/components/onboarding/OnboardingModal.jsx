@@ -16,9 +16,9 @@ function OnboardingModal() {
     <div class="fixed inset-0 bg-bg-theme/80 backdrop-blur-md flex items-center justify-center z-[10000]">
       <div class="bg-modal-bg w-full max-w-[480px] rounded-[20px] p-10 text-center border border-border-theme text-text-primary shadow-2xl">
         <div class="flex gap-2 justify-center mb-8">
-          <div class={`w-8 h-1 rounded-full transition-colors ${step() >= 1 ? 'bg-accent' : 'bg-text-primary/20'}`}></div>
-          <div class={`w-8 h-1 rounded-full transition-colors ${step() >= 2 ? 'bg-accent' : 'bg-text-primary/20'}`}></div>
-          <div class={`w-8 h-1 rounded-full transition-colors ${step() >= 3 ? 'bg-accent' : 'bg-text-primary/20'}`}></div>
+          <div class={`w-8 h-1 rounded-full transition-colors ${step() >= 1 ? 'bg-accent' : 'bg-text-primary/20'}`} />
+          <div class={`w-8 h-1 rounded-full transition-colors ${step() >= 2 ? 'bg-accent' : 'bg-text-primary/20'}`} />
+          <div class={`w-8 h-1 rounded-full transition-colors ${step() >= 3 ? 'bg-accent' : 'bg-text-primary/20'}`} />
         </div>
 
         {step() === 1 && (

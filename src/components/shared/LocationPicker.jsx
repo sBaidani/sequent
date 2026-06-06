@@ -136,7 +136,7 @@ function LocationPicker(props) {
           class="w-full bg-transparent border border-border-theme rounded-lg py-1.5 px-3 text-[13px] text-text-primary focus:outline-none focus:border-accent transition-colors placeholder:text-text-muted"
         />
         <Show when={isLoading()}>
-          <div class="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
+          <div class="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 border-2 border-accent border-t-transparent rounded-full animate-spin" />
         </Show>
         
         <Show when={isOpen() && (suggestions().length > 0 || error())}>
@@ -164,7 +164,7 @@ function LocationPicker(props) {
         class="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg bg-text-primary/5 hover:bg-accent/20 text-text-primary border border-border-theme cursor-pointer transition-colors"
         title="Use My Location"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
       </button>
     </div>
   );

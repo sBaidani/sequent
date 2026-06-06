@@ -52,7 +52,7 @@ function SelectPicker(props) {
       >
         <div class="flex items-center gap-2">
           <Show when={selectedOption()?.color}>
-            <div class="w-2.5 h-2.5 rounded-full" style={{ "background-color": selectedOption().color }}></div>
+            <div class="w-2.5 h-2.5 rounded-full" style={{ "background-color": selectedOption().color }} />
           </Show>
           <span class={selectedOption() ? "" : "text-text-muted"}>
             {selectedOption() ? selectedOption().label : (props.placeholder || 'Select...')}
@@ -77,7 +77,7 @@ function SelectPicker(props) {
                 >
                   <div class="flex items-center gap-2">
                     <Show when={option.color}>
-                      <div class="w-2.5 h-2.5 rounded-full shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)]" style={{ "background-color": option.color }}></div>
+                      <div class="w-2.5 h-2.5 rounded-full shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)]" style={{ "background-color": option.color }} />
                     </Show>
                     <span class={props.value === option.value ? 'text-text-primary' : 'text-text-secondary'}>
                       {option.label}

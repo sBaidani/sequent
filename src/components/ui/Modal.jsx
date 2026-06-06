@@ -99,9 +99,9 @@ function Modal(props) {
             onTouchEnd={handleTouchEnd}
           >
             <div class="flex items-center justify-between p-4 pb-0 mb-4 cursor-grab active:cursor-grabbing shrink-0">
-              <div class="w-12 h-1.5 bg-text-primary/20 rounded-full mx-auto sm:hidden mb-4"></div>
+              <div class="w-12 h-1.5 bg-text-primary/20 rounded-full mx-auto sm:hidden mb-4" />
               <button class="w-8 h-8 flex items-center justify-center rounded-full bg-text-primary/10 text-text-primary/50 hover:bg-text-primary/20 hover:text-text-primary transition-colors cursor-pointer border-none absolute right-4 top-4 z-50" onClick={() => uiStore.setActiveModal(null)}>
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
             

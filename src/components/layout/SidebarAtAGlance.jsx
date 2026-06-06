@@ -145,7 +145,7 @@ function SidebarAtAGlance() {
                   <div class="flex items-center gap-2 mt-0.5">
                     <span class="text-white/70 text-[11px] font-semibold">{data().timeStr}</span>
                     <Show when={data().event.location}>
-                      <span class="w-1 h-1 rounded-full bg-white/20"></span>
+                      <span class="w-1 h-1 rounded-full bg-white/20" />
                       <span class="text-white/50 text-[10px] truncate">{data().event.location}</span>
                     </Show>
                   </div>
@@ -160,7 +160,7 @@ function SidebarAtAGlance() {
             </Show>
           </div>
 
-          <Show when={!weatherService.loading} fallback={<div class="w-10 h-10 rounded-full bg-white/5 animate-pulse shrink-0"></div>}>
+          <Show when={!weatherService.loading} fallback={<div class="w-10 h-10 rounded-full bg-white/5 animate-pulse shrink-0" />}>
             <Show when={weatherService.state}>
               <div class="flex flex-col items-center justify-center shrink-0 pl-3 border-l border-white/5">
                 <span class="font-display lowercase text-2xl drop-shadow-md leading-none mb-1" title={weatherService.state.current.condition}>{weatherService.state.current.icon}</span>

@@ -1,4 +1,4 @@
-import { createSignal, onCleanup, onMount, Show } from 'solid-js';
+import { createSignal, onCleanup, onMount, Show, For } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { uiStore } from '../../stores/uiStore';
 
@@ -62,7 +62,7 @@ function ColorPicker(props) {
           >
           <div class="font-display lowercase text-[11px] font-bold text-text-muted mb-2 tracking-wider">Presets</div>
           <div class="grid grid-cols-4 gap-2 mb-3">
-            {themes.map(t => (
+            <For each={themes}>{t => (
               <button
                 onClick={() => {
                   props.onChange(t.color);
@@ -72,7 +72,7 @@ function ColorPicker(props) {
                 style={{ background: t.color }}
                 title={t.name}
               />
-            ))}
+            )}</For>
           </div>
           <div class="font-display lowercase text-[11px] font-bold text-text-muted mb-2 tracking-wider border-t border-border-theme pt-2 mt-1">Custom</div>
           <div class="flex gap-2">
