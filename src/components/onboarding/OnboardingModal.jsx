@@ -23,7 +23,7 @@ function OnboardingModal() {
 
         {step() === 1 && (
           <div>
-            <h2 class="mb-4 text-2xl font-bold text-text-primary">Welcome to Sequent</h2>
+            <h2 class="font-display lowercase mb-4 text-2xl font-bold text-text-primary">Welcome to Sequent</h2>
             <p class="text-[#888] leading-relaxed mb-8">
               Sequent is your unified timeline for everything. We combine your tasks, calendar events, and reminders into one seamless flow.
             </p>
@@ -32,7 +32,7 @@ function OnboardingModal() {
 
         {step() === 2 && (
           <div>
-            <h2 class="mb-4 text-2xl font-bold text-text-primary">Offline First</h2>
+            <h2 class="font-display lowercase mb-4 text-2xl font-bold text-text-primary">Offline First</h2>
             <p class="text-[#888] leading-relaxed mb-8">
               Your data is instantly available, even without an internet connection. Make changes offline, and Sequent will sync them to the cloud automatically when you reconnect.
             </p>
@@ -41,7 +41,7 @@ function OnboardingModal() {
 
         {step() === 3 && (
           <div>
-            <h2 class="mb-4 text-2xl font-bold text-text-primary">Let's Get Started</h2>
+            <h2 class="font-display lowercase mb-4 text-2xl font-bold text-text-primary">Let's Get Started</h2>
             <p class="text-[#888] leading-relaxed mb-8">
               Ready to take control of your time? You can switch between Timeline, Calendar, and Lists views using the sidebar.
             </p>

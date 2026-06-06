@@ -136,48 +136,48 @@ function AddItemModal() {
 
   return (
     <Modal id="addItem" wide={true} noPadding={true}>
-      <div class="flex flex-col sm:flex-row w-full bg-modal-bg rounded-2xl overflow-hidden">
+      <div class="flex flex-col sm:flex-row w-full bg-modal-bg rounded-2xl overflow-hidden h-full min-h-0 max-h-[90vh]">
         
         {/* Left Pane - Form */}
-        <div class="flex-1 p-6 flex flex-col gap-4">
-          <div 
-            onTouchStart={handleTouchStart} 
-            onTouchEnd={handleTouchEnd}
-            class="w-full flex flex-col gap-4"
-          >
-            <div class="flex bg-text-primary/5 rounded-lg p-1 w-full relative mb-1">
-              <div class={`absolute h-[calc(100%-8px)] w-[calc(50%-4px)] top-1 rounded-md bg-accent transition-transform duration-300 ease-out shadow-sm ${mode() === 'event' ? 'translate-x-0' : 'translate-x-[calc(100%+4px)]'}`}></div>
-              <button 
-                type="button"
-                onClick={() => setMode('event')} 
-                class={`flex-1 relative z-10 border-none py-2 text-[13px] font-bold cursor-pointer transition-colors bg-transparent ${mode() === 'event' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'}`}
-              >Event</button>
-              <button 
-            type="button"
-            onClick={() => setMode('task')} 
-            class={`flex-1 relative z-10 border-none py-2 text-[13px] font-bold cursor-pointer transition-colors bg-transparent ${mode() === 'task' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'}`}
-          >Task</button>
-        </div>
+        <div class="flex-1 flex flex-col min-h-0 border-r border-border-theme">
+          <div class="px-6 pt-6 flex-shrink-0">
+            <div 
+              onTouchStart={handleTouchStart} 
+              onTouchEnd={handleTouchEnd}
+              class="w-full flex flex-col gap-4"
+            >
+              <div class="flex bg-text-primary/5 rounded-lg p-1 w-full relative mb-1">
+                <div class={`absolute h-[calc(100%-8px)] w-[calc(50%-4px)] top-1 rounded-md bg-accent transition-transform duration-300 ease-out shadow-sm ${mode() === 'event' ? 'translate-x-0' : 'translate-x-[calc(100%+4px)]'}`}></div>
+                <button 
+                  type="button"
+                  onClick={() => setMode('event')} 
+                  class={`flex-1 relative z-10 border-none py-2 text-[13px] font-bold cursor-pointer transition-colors bg-transparent ${mode() === 'event' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'}`}
+                >Event</button>
+                <button 
+                  type="button"
+                  onClick={() => setMode('task')} 
+                  class={`flex-1 relative z-10 border-none py-2 text-[13px] font-bold cursor-pointer transition-colors bg-transparent ${mode() === 'task' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'}`}
+                >Task</button>
+              </div>
+            </div>
           </div>
 
-        <form onSubmit={handleSubmit} class="flex flex-col gap-4">
-          <div>
-            <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">
-              {mode() === 'event' ? 'Event Title' : 'Task Title'}
-            </label>
-            <input 
-              ref={el => el && setTimeout(() => el.focus(), 50)}
-              type="text" 
-              placeholder={mode() === 'event' ? "Coffee with Sarah..." : "Buy groceries..."}
-              value={title()}
-              onInput={(e) => setTitle(e.target.value)}
-              class="w-full bg-text-primary/5 border border-border-theme rounded-xl px-3.5 py-3 text-text-primary text-[15px] outline-none focus:border-accent transition-colors"
-              required
-            />
-          </div>
+        <form onSubmit={handleSubmit} class="flex flex-col flex-1 min-h-0 mt-4">
+          <div class="flex-1 overflow-y-auto px-6 pb-4 flex flex-col gap-4">
+            <div>
+              <input 
+                ref={el => el && setTimeout(() => el.focus(), 50)}
+                type="text" 
+                placeholder={mode() === 'event' ? "Event Title" : "Task Title"}
+                value={title()}
+                onInput={(e) => setTitle(e.target.value)}
+                class="w-full bg-transparent border-none px-0 py-2 text-text-primary text-3xl font-bold placeholder:text-text-muted outline-none"
+                required
+              />
+            </div>
 
           <div>
-            <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">Description</label>
+            <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Description</label>
             <textarea 
               placeholder="Add details..."
               value={description()}
@@ -187,39 +187,72 @@ function AddItemModal() {
           </div>
 
           <Show when={mode() === 'event' || (mode() === 'task' && hasTaskDate())}>
+            <div class="flex items-center gap-2 mb-2">
+              <label class="flex items-center gap-2 cursor-pointer group">
+                <div class="relative w-10 h-6 bg-text-primary/10 rounded-full transition-colors group-hover:bg-text-primary/20" classList={{ '!bg-accent': allDay() }}>
+                  <div class="absolute left-1 top-1 w-4 h-4 bg-text-primary rounded-full transition-transform shadow-sm" classList={{ 'translate-x-4 bg-bg-theme': allDay() }}></div>
+                </div>
+                <input type="checkbox" class="hidden" checked={allDay()} onChange={(e) => setAllDay(e.target.checked)} />
+                <span class="text-[13px] font-bold text-text-primary">All-Day</span>
+              </label>
+            </div>
+          </Show>
+
+          <Show when={mode() === 'task' && hasTaskDate()}>
             <div class="flex flex-col sm:flex-row gap-4">
               <div class="flex-1">
-                <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider flex justify-between">
-                  <span>{mode() === 'event' ? 'Date' : 'Due Date'}</span>
-                  <Show when={mode() === 'task'}>
-                    <span class="text-accent cursor-pointer hover:underline normal-case tracking-normal" onClick={() => setHasTaskDate(false)}>Remove</span>
-                  </Show>
+                <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider flex justify-between">
+                  <span>Due Date</span>
+                  <span class="text-accent cursor-pointer hover:underline normal-case tracking-normal" onClick={() => setHasTaskDate(false)}>Remove</span>
                 </label>
                 <DatePicker value={date()} onChange={(v) => setDate(v)} />
               </div>
-              <div class="flex-1 sm:min-w-[140px]">
-                <div class="flex items-center justify-between mb-1.5 h-[18px]">
-                  <label class="block text-xs text-text-muted font-semibold uppercase tracking-wider">Time</label>
-                  <Show when={true}>
-                    <div class="flex items-center gap-2">
-                      <span class="text-text-secondary text-[11px] font-bold uppercase tracking-wide">All-day</span>
-                      <button 
-                        type="button"
-                        onClick={() => setAllDay(!allDay())}
-                        class={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${allDay() ? 'bg-accent' : 'bg-text-primary/20 hover:bg-text-primary/30'}`}
-                      >
-                        <span class={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-card shadow ring-0 transition duration-200 ease-in-out ${allDay() ? 'translate-x-3' : 'translate-x-0'}`} />
-                      </button>
-                    </div>
-                  </Show>
-                </div>
-                {allDay() ? (
-                  <div class="w-full bg-text-primary/5 border border-border-theme rounded-xl px-3.5 py-2.5 text-text-muted text-sm font-medium flex items-center h-[46px]">--:--</div>
-                ) : (
+              <Show when={!allDay()}>
+                <div class="flex-1 sm:min-w-[140px]">
+                  <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Time</label>
                   <TimePicker value={time()} onChange={(v) => setTime(v)} />
-                )}
-              </div>
+                </div>
+              </Show>
             </div>
+          </Show>
+
+          <Show when={mode() === 'event'}>
+            <Show when={allDay()}>
+              <div class="flex flex-col sm:flex-row gap-4">
+                <div class="flex-1">
+                  <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Start Date</label>
+                  <DatePicker value={date()} onChange={(v) => setDate(v)} />
+                </div>
+                <div class="flex-1">
+                  <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">End Date</label>
+                  <DatePicker value={endDate()} onChange={(v) => setEndDate(v)} />
+                </div>
+              </div>
+            </Show>
+
+            <Show when={!allDay()}>
+              <div class="flex flex-col sm:flex-row gap-4">
+                <div class="flex-1">
+                  <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Start Date</label>
+                  <DatePicker value={date()} onChange={(v) => setDate(v)} />
+                </div>
+                <div class="flex-1 sm:min-w-[140px]">
+                  <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Start Time</label>
+                  <TimePicker value={time()} onChange={(v) => setTime(v)} />
+                </div>
+              </div>
+
+              <div class="flex flex-col sm:flex-row gap-4">
+                <div class="flex-1">
+                  <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">End Date</label>
+                  <DatePicker value={endDate()} onChange={(v) => setEndDate(v)} />
+                </div>
+                <div class="flex-1 sm:min-w-[140px]">
+                  <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">End Time</label>
+                  <TimePicker value={endTime()} onChange={(v) => setEndTime(v)} />
+                </div>
+              </div>
+            </Show>
           </Show>
 
           <Show when={mode() === 'task' && !hasTaskDate()}>
@@ -240,18 +273,6 @@ function AddItemModal() {
 
           <Show when={mode() === 'event'}>
             <div class="flex flex-col gap-4">
-              <div class="flex flex-col sm:flex-row gap-4">
-                <div class="flex-1">
-                  <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">End Date</label>
-                  <DatePicker value={endDate()} onChange={(v) => setEndDate(v)} />
-                </div>
-                <Show when={!allDay()}>
-                  <div class="flex-1 sm:min-w-[140px]">
-                    <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">End Time</label>
-                    <TimePicker value={endTime()} onChange={(v) => setEndTime(v)} />
-                  </div>
-                </Show>
-              </div>
               
               <Show when={!allDay()}>
                 <div class="flex items-center gap-2">
@@ -263,7 +284,7 @@ function AddItemModal() {
               </Show>
 
               <div>
-                <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">Calendar</label>
+                <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Calendar</label>
                 <SelectPicker 
                   value={calendarId()} 
                   onChange={setCalendarId}
@@ -277,7 +298,7 @@ function AddItemModal() {
           <Show when={mode() === 'task'}>
             <div class="flex flex-col gap-4">
               <div>
-                <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">List</label>
+                <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">List</label>
                 <SelectPicker 
                   value={listId()} 
                   onChange={setListId}
@@ -286,7 +307,7 @@ function AddItemModal() {
                 />
               </div>
               <div>
-                <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">Priority</label>
+                <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Priority</label>
                 <div class="flex bg-text-primary/5 rounded-xl p-1 border border-border-theme w-full">
                   <button 
                     type="button"
@@ -319,7 +340,7 @@ function AddItemModal() {
               </button>
             ) : (
               <div>
-                <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider flex justify-between">
+                <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider flex justify-between">
                   <span>Repeat</span>
                   <span class="text-accent cursor-pointer hover:underline normal-case tracking-normal" onClick={() => { setShowRecurrence(false); setRecurrence('NONE'); }}>Remove</span>
                 </label>
@@ -337,12 +358,15 @@ function AddItemModal() {
             )}
           </div>
 
-          <button 
-            type="submit"
-            class="mt-2 bg-accent text-text-primary border-none p-3.5 rounded-xl text-[15px] font-bold cursor-pointer hover:bg-accent/80 transition-colors shadow-lg shadow-accent/20"
-          >
-            {mode() === 'event' ? 'Add Event' : 'Add Task'}
-          </button>
+          </div>
+          <div class="p-6 pt-4 border-t border-border-theme bg-modal-bg flex-shrink-0">
+            <button 
+              type="submit"
+              class="w-full bg-accent text-text-primary border-none p-3.5 rounded-xl text-[15px] font-bold cursor-pointer hover:bg-accent/80 transition-colors shadow-lg shadow-accent/20"
+            >
+              {mode() === 'event' ? 'Add Event' : 'Add Task'}
+            </button>
+          </div>
         </form>
       </div>
 
@@ -363,11 +387,12 @@ function AddItemModal() {
           <DaySchedulePreview 
             mode="event"
             date={date() || new Date().toISOString().split('T')[0]}
-            ghostEvent={allDay() ? null : {
+            ghostEvent={{
               title: title() || 'New Event',
               startTime: `${date()}T${time()}:00`,
               endTime: `${endDate()}T${endTime()}:00`,
               type: 'event',
+              allDay: allDay(),
               color: eventState.calendars.find(c => c.id === calendarId())?.color || '#E8942A'
             }}
           />

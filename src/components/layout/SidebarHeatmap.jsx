@@ -45,8 +45,9 @@ function SidebarHeatmap() {
     setTimeout(() => {
       const dateStr = format(day, 'yyyy-MM-dd');
       const el = document.querySelector(`[data-date="${dateStr}"]`);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const scrollContainer = document.getElementById('timelineScroll');
+      if (el && scrollContainer) {
+        scrollContainer.scrollTo({ top: el.offsetTop, behavior: 'smooth' });
       }
     }, 50);
   };
@@ -55,20 +56,20 @@ function SidebarHeatmap() {
   const prevMonth = () => setCurrentMonth(prev => subMonths(prev, 1));
 
   return (
-    <div class="px-5 pb-5 border-b border-white/10">
-      <div class="flex items-center justify-between mb-3">
-        <button onClick={prevMonth} class="text-white/40 hover:text-white bg-transparent border-none text-lg cursor-pointer px-1">‹</button>
-        <span class="text-xs font-bold text-white uppercase tracking-wider">{format(currentMonth(), 'MMMM yyyy')}</span>
-        <button onClick={nextMonth} class="text-white/40 hover:text-white bg-transparent border-none text-lg cursor-pointer px-1">›</button>
+    <div class="px-5 pb-6 mb-4">
+      <div class="flex items-center justify-between mb-4">
+        <button onClick={prevMonth} class="font-display lowercase text-white/40 hover:text-white bg-transparent border-none text-xl cursor-pointer px-1 transition-colors">‹</button>
+        <span class="text-[11px] font-extrabold text-white/90 uppercase tracking-[0.15em]">{format(currentMonth(), 'MMMM yyyy')}</span>
+        <button onClick={nextMonth} class="font-display lowercase text-white/40 hover:text-white bg-transparent border-none text-xl cursor-pointer px-1 transition-colors">›</button>
       </div>
       
-      <div class="grid grid-cols-7 mb-2">
+      <div class="grid grid-cols-7 mb-3 gap-1">
         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
           <div class="text-[9px] font-bold text-white/30 text-center uppercase">{d}</div>
         ))}
       </div>
 
-      <div class="grid grid-cols-7 gap-1">
+      <div class="grid grid-cols-7 gap-x-1 gap-y-1.5">
         <For each={daysInMonth()}>
           {(day) => {
             const count = () => getEventCount(day);
@@ -77,12 +78,15 @@ function SidebarHeatmap() {
             const isDayToday = isToday(day);
 
             return (
-              <button 
-                class={`w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center cursor-pointer transition-colors hover:bg-white/20 hover:text-white ${isCurrentMonth ? '' : 'opacity-30'} ${isDayToday && count() === 0 ? 'text-accent' : ''} ${heatClass()}`}
-                onClick={() => handleDayClick(day)}
-              >
-                {format(day, 'd')}
-              </button>
+              <div class="flex items-center justify-center">
+                <button 
+                  class={`w-[26px] h-[26px] sm:w-[28px] sm:h-[28px] rounded-full text-[10px] font-bold flex items-center justify-center cursor-pointer transition-all hover:bg-white/20 hover:text-white hover:scale-110 ${isCurrentMonth ? '' : 'opacity-30'} ${isDayToday ? 'ring-2 ring-red-500/80 z-10' : ''} ${heatClass()}`}
+
+                  onClick={() => handleDayClick(day)}
+                >
+                  {format(day, 'd')}
+                </button>
+              </div>
             );
           }}
         </For>

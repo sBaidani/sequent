@@ -4,12 +4,14 @@ import Modal from '../ui/Modal';
 import { uiStore } from '../../stores/uiStore';
 import { eventStore } from '../../stores/eventStore';
 import { taskStore } from '../../stores/taskStore';
+import { settingsStore } from '../../stores/settingsStore';
 import { format, parseISO } from 'date-fns';
 
 function EventViewModal() {
   const { state: uiState } = uiStore;
   const { state: eventState } = eventStore;
   const { state: taskState } = taskStore;
+  const { state: settings } = settingsStore;
 
   const item = createMemo(() => {
     if (uiState.activeEventType === 'event') {
@@ -49,12 +51,12 @@ function EventViewModal() {
             <div class="flex flex-col p-2">
               <div class="flex items-center gap-3 mb-6">
                 <div class="w-4 h-4 rounded-full shadow-sm" style={{ background: i().color }} />
-                <span class="text-xs font-bold uppercase tracking-wider text-text-muted">
+                <span class="font-display lowercase text-xs font-bold tracking-wider text-text-muted">
                   {type === 'event' ? i().calName : i().listName}
                 </span>
               </div>
               
-              <h2 class="text-3xl font-extrabold text-text-primary leading-tight mb-6">
+              <h2 class="font-display lowercase text-3xl font-extrabold text-text-primary leading-tight mb-6">
                 {i().title} {i().rrule && '🔄'}
               </h2>
               
@@ -75,7 +77,7 @@ function EventViewModal() {
                             const start = parseISO(i().start_time);
                             const end = parseISO(i().end_time);
                             if (isNaN(start.getTime()) || isNaN(end.getTime())) return '';
-                            return `${format(start, 'h:mm a')} - ${format(end, 'h:mm a')}`;
+                            return `${format(start, settings.use24HourClock ? 'H:mm' : 'h:mm a')} - ${format(end, settings.use24HourClock ? 'H:mm' : 'h:mm a')}`;
                           })()}
                         </span>
                       </Show>
@@ -137,7 +139,7 @@ function EventViewModal() {
                           <span>
                             {(() => {
                               const d = parseISO(i().scheduled_date);
-                              return !isNaN(d.getTime()) ? format(d, 'h:mm a') : '';
+                              return !isNaN(d.getTime()) ? format(d, settings.use24HourClock ? 'H:mm' : 'h:mm a') : '';
                             })()}
                           </span>
                         </Show>

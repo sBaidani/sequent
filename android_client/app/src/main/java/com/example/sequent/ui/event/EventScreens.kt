@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.sequent.data.local.entities.EventEntity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,6 +76,7 @@ fun AddEventScreen(onBack: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ViewEventModal(
+    event: EventEntity,
     onDismissRequest: () -> Unit,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
 ) {
@@ -86,9 +88,14 @@ fun ViewEventModal(
         Column(
             modifier = Modifier.padding(24.dp).fillMaxWidth()
         ) {
-            Text("Football training", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(event.title, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
             Spacer(modifier = Modifier.height(8.dp))
-            Text("Today, 5:00 PM → 6:00 PM", fontSize = 16.sp, color = Color.Gray)
+            val timeStr = "${event.start_time.substringAfter("T").take(5)} → ${event.end_time.substringAfter("T").take(5)}"
+            Text(timeStr, fontSize = 16.sp, color = Color.Gray)
+            if (event.description?.isNotBlank() == true) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(event.description, fontSize = 14.sp, color = Color.LightGray)
+            }
             
             Spacer(modifier = Modifier.height(32.dp))
             

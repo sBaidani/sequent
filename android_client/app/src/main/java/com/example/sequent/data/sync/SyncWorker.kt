@@ -16,8 +16,7 @@ class SyncWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         return try {
-            syncRepository.syncTasks()
-            // In a full implementation, you would also sync events and lists here.
+            syncRepository.syncAll()
             Result.success()
         } catch (e: Exception) {
             e.printStackTrace()

@@ -6,9 +6,10 @@ import kotlinx.serialization.Serializable
 data class TaskDto(
     val id: String,
     val title: String,
-    val description: String? = null,
+    val notes: String? = null,
     val listId: String? = null,
     val completed: Boolean = false,
+    val priority: String = "normal",
     val scheduled_date: String? = null,
     val created_at: String? = null,
     val updated_at: String? = null
@@ -18,11 +19,12 @@ data class TaskDto(
 data class EventDto(
     val id: String,
     val title: String,
-    val description: String? = null,
+    val notes: String? = null,
     val calendarId: String? = null,
+    val location: String? = null,
     val start_time: String,
     val end_time: String,
-    val all_day: Boolean = false,
+    val allDay: Boolean = false,
     val created_at: String? = null,
     val updated_at: String? = null
 )

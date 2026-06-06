@@ -24,10 +24,9 @@ object AppModule {
     @Provides
     @Singleton
     fun provideSupabaseClient(): SupabaseClient {
-        // Replace with actual keys via BuildConfig or similar in production
         return createSupabaseClient(
-            supabaseUrl = "https://your-project.supabase.co",
-            supabaseKey = "your-anon-key"
+            supabaseUrl = com.example.sequent.BuildConfig.SUPABASE_URL,
+            supabaseKey = com.example.sequent.BuildConfig.SUPABASE_ANON_KEY
         ) {
             install(Auth)
         }
@@ -57,4 +56,8 @@ object AppModule {
 
     @Provides
     fun provideListDao(db: AppDatabase): ListDao = db.listDao()
+
+    @Provides
+    @Singleton
+    fun provideSyncRepository(impl: com.example.sequent.data.sync.SyncRepositoryImpl): com.example.sequent.data.sync.SyncRepository = impl
 }

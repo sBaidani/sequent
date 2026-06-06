@@ -87,10 +87,10 @@ function AddTaskModal() {
         {/* Left Pane - Form */}
         <div class="flex-1 p-6 flex flex-col gap-4">
           <form onSubmit={handleSubmit} class="flex flex-col gap-4">
-            <h2 class="text-xl font-extrabold text-text-primary mb-2">New Task</h2>
+            <h2 class="font-display lowercase text-xl font-extrabold text-text-primary mb-2">New Task</h2>
             
             <div>
-              <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">Title</label>
+              <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Title</label>
               <input 
                 ref={el => el && setTimeout(() => el.focus(), 50)}
                 type="text" 
@@ -103,7 +103,7 @@ function AddTaskModal() {
             </div>
 
             <div>
-              <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">Description</label>
+              <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Description</label>
               <textarea 
                 placeholder="Add details..."
                 value={description()}
@@ -114,14 +114,14 @@ function AddTaskModal() {
 
             <div class="flex flex-col sm:flex-row gap-4">
               <div class="flex-1">
-                <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">Due Date</label>
+                <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Due Date</label>
                 <DatePicker value={date()} onChange={(v) => setDate(v)} />
               </div>
               <div class="flex-1 sm:min-w-[140px]">
                 <div class="flex items-center justify-between mb-1.5 h-[18px]">
-                  <label class="block text-xs text-text-muted font-semibold uppercase tracking-wider">Time</label>
+                  <label class="font-display lowercase block text-xs text-text-muted font-semibold tracking-wider">Time</label>
                   <div class="flex items-center gap-2">
-                    <span class="text-text-secondary text-[11px] font-bold uppercase tracking-wide">All-day</span>
+                    <span class="font-display lowercase text-text-secondary text-[11px] font-bold tracking-wide">All-day</span>
                     <button 
                       type="button"
                       onClick={() => setAllDay(!allDay())}
@@ -141,7 +141,7 @@ function AddTaskModal() {
 
             <div class="flex flex-col gap-4">
               <div>
-                <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">List</label>
+                <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">List</label>
                 <SelectPicker 
                   value={listId()} 
                   onChange={setListId}
@@ -151,7 +151,7 @@ function AddTaskModal() {
               </div>
               
               <div>
-                <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">Priority</label>
+                <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Priority</label>
                 <div class="flex bg-text-primary/5 rounded-xl p-1 border border-border-theme w-full">
                   <button 
                     type="button"
@@ -183,7 +183,7 @@ function AddTaskModal() {
                 </button>
               ) : (
                 <div>
-                  <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider flex justify-between">
+                  <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider flex justify-between">
                     <span>Repeat</span>
                     <span class="text-accent cursor-pointer hover:underline normal-case tracking-normal" onClick={() => { setShowRecurrence(false); setRecurrence('NONE'); }}>Remove</span>
                   </label>

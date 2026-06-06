@@ -8,6 +8,7 @@ const [uiState, setUiState] = createStore({
   mode: initialMode,
   themeBase: initialThemeBase,
   view: 'timeline', // 'timeline', 'calendar', 'tasks', 'archive'
+  viewDirection: 'up', // 'up' or 'down' for slide animations
   theme: initialThemeBase,
   sidebarOpen: true,
   smartBarOpen: false,
@@ -66,7 +67,17 @@ export const uiStore = {
     }
     setUiState('theme', applyTheme(uiState.themeBase, mode));
   },
-  setView: (view) => setUiState('view', view),
+  setView: (view) => {
+    const viewOrder = ['timeline', 'calendar', 'tasks', 'archive', 'settings'];
+    const oldIdx = viewOrder.indexOf(uiState.view);
+    const newIdx = viewOrder.indexOf(view);
+    if (newIdx !== -1 && oldIdx !== -1 && newIdx !== oldIdx) {
+      // If moving to a view further down the list (e.g. timeline to calendar),
+      // they appear stacked, so the screen slides UP (views slide UP)
+      setUiState('viewDirection', newIdx > oldIdx ? 'up' : 'down');
+    }
+    setUiState('view', view);
+  },
   setTheme: (themeBase) => {
     localStorage.setItem('sequent_theme', themeBase);
     setUiState('themeBase', themeBase);

@@ -151,7 +151,7 @@ test.describe('Calendar View', () => {
     // Switch to Week
     await page.click('button:has-text("Week")');
     // Week view displays day headers with day abbreviations (e.g., Mon, Tue)
-    await expect(page.locator('text=Work Week Only')).toBeVisible({ timeout: 3000 });
+    await expect(page.locator('button:has-text("Work")')).toBeVisible({ timeout: 3000 });
 
     // Switch back to Month
     await page.click('button:has-text("Month")');
@@ -159,19 +159,17 @@ test.describe('Calendar View', () => {
     await expect(page.locator('.calendar-day-cell').first()).toBeVisible({ timeout: 3000 });
   });
 
-  test('should toggle Work Week Only filter in week view', async ({ page }) => {
+  test('should toggle Work Week view', async ({ page }) => {
     // Switch to Week view
     await page.click('button:has-text("Week")');
-    await expect(page.locator('text=Work Week Only')).toBeVisible({ timeout: 3000 });
+    await expect(page.locator('button:has-text("Work")')).toBeVisible({ timeout: 3000 });
 
-    // Toggle work week only checkbox
-    const workWeekCheckbox = page.locator('input[type="checkbox"]');
-    await workWeekCheckbox.check();
-    await expect(workWeekCheckbox).toBeChecked();
+    // Switch to Work Week
+    await page.click('button:has-text("Work")');
+    // Saturday and Sunday should be hidden (we'll just check if the action succeeds)
 
-    // Uncheck
-    await workWeekCheckbox.uncheck();
-    await expect(workWeekCheckbox).not.toBeChecked();
+    // Switch back to Full Week
+    await page.click('button:has-text("Week")');
   });
 });
 

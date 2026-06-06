@@ -60,7 +60,7 @@ function ColorPicker(props) {
             class="fixed z-[9999] p-3 bg-bg-theme/40 border border-border-theme rounded-xl shadow-2xl backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200 w-[200px]"
             style={{ top: `${coords().top}px`, left: `${coords().left}px` }}
           >
-          <div class="text-[11px] font-bold text-text-muted mb-2 uppercase tracking-wider">Presets</div>
+          <div class="font-display lowercase text-[11px] font-bold text-text-muted mb-2 tracking-wider">Presets</div>
           <div class="grid grid-cols-4 gap-2 mb-3">
             {themes.map(t => (
               <button
@@ -74,7 +74,7 @@ function ColorPicker(props) {
               />
             ))}
           </div>
-          <div class="text-[11px] font-bold text-text-muted mb-2 uppercase tracking-wider border-t border-border-theme pt-2 mt-1">Custom</div>
+          <div class="font-display lowercase text-[11px] font-bold text-text-muted mb-2 tracking-wider border-t border-border-theme pt-2 mt-1">Custom</div>
           <div class="flex gap-2">
             <input 
               type="color" 

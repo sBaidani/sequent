@@ -433,3 +433,29 @@ entrypoint = "./functions/sync-google/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/sync-google/*.html" ]
+
+[functions.auth-microsoft]
+enabled = true
+verify_jwt = false
+import_map = "./functions/auth-microsoft/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/auth-microsoft/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/auth-microsoft/*.html" ]
+
+[functions.sync-microsoft]
+enabled = true
+verify_jwt = false
+import_map = "./functions/sync-microsoft/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/sync-microsoft/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/sync-microsoft/*.html" ]
+
+[functions.weather-proxy]
+enabled = true
+verify_jwt = false

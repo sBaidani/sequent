@@ -2,8 +2,8 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createSupabaseClient, getAuthUserId } from '../_shared/supabase-client.ts'
 import { ok, badRequest, handleError, corsResponse } from '../_shared/response.ts'
 
-const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CALENDAR_CLIENT_ID') || ''
-const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CALENDAR_CLIENT_SECRET') || ''
+const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_OAUTH_CLIENT_ID') || ''
+const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_OAUTH_CLIENT_SECRET') || ''
 const REDIRECT_URI = Deno.env.get('GOOGLE_REDIRECT_URI') || 'http://localhost:5173/settings' // Assuming settings page handles redirect
 
 serve(async (req) => {
@@ -19,7 +19,8 @@ serve(async (req) => {
       
       if (action === 'get_auth_url') {
         const scopes = [
-          'https://www.googleapis.com/auth/calendar.readonly', // Phase 1: Read only
+          'https://www.googleapis.com/auth/calendar',
+          'https://www.googleapis.com/auth/tasks',
           'https://www.googleapis.com/auth/userinfo.email'
         ].join(' ')
         

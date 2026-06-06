@@ -1,6 +1,6 @@
 import { createSignal } from 'solid-js';
-
-const API_KEY = import.meta.env.VITE_TOMORROW_API_KEY;
+import { supabase } from '../lib/supabase';
+import { settingsStore } from '../stores/settingsStore';
 
 // Mock data if no API key
 const MOCK_WEATHER = {
@@ -13,7 +13,17 @@ const MOCK_WEATHER = {
     { time: new Date().toISOString(), temp: 72, condition: 'Sunny', icon: '☀️' },
     { time: new Date(Date.now() + 86400000).toISOString(), temp: 68, condition: 'Partly Cloudy', icon: '⛅' },
     { time: new Date(Date.now() + 86400000 * 2).toISOString(), temp: 65, condition: 'Rain', icon: '🌧️' },
-  ]
+  ],
+  hourly: Array.from({length: 48}).map((_, i) => {
+    const d = new Date();
+    d.setHours(d.getHours() + i - 24, 0, 0, 0);
+    return {
+      time: d.toISOString(),
+      temp: 72,
+      condition: 'Sunny',
+      icon: '☀️'
+    };
+  })
 };
 
 const [weather, setWeather] = createSignal(null);
@@ -29,8 +39,8 @@ export const weatherService = {
     setLoading(true);
     setError(null);
     
-    if (!API_KEY) {
-      console.warn("No Tomorrow.io API key found. Using mock weather data.");
+    if (!lat || !lon) {
+      console.warn("No location provided. Using mock weather data.");
       setTimeout(() => {
         setWeather(MOCK_WEATHER);
         setLoading(false);
@@ -39,45 +49,139 @@ export const weatherService = {
     }
 
     try {
-      // Tommorrow.io realtime + forecast API (timelines)
-      const res = await fetch(`https://api.tomorrow.io/v4/weather/forecast?location=${lat},${lon}&apikey=${API_KEY}&units=imperial&timesteps=1h,1d`);
+      const units = settingsStore.state.weatherUnits || 'metric';
+
+      // Call our Supabase Edge Function to get cached/rate-limited weather
+      const { data, error: functionError } = await supabase.functions.invoke('weather-proxy', {
+        body: { lat, lon, units }
+      });
       
-      if (!res.ok) {
-        throw new Error(`Weather API error: ${res.status}`);
+      if (functionError) {
+        throw new Error(`Weather API error: ${functionError.message}`);
+      }
+      if (data?.error) {
+        throw new Error(`Weather API error: ${data.error}`);
       }
       
-      const data = await res.json();
-      
-      // Parse tomorrow.io data
-      // This is a basic mapping, would need actual tomorrow.io weather codes
-      // https://docs.tomorrow.io/reference/data-layers-weather-codes
       const mapCodeToIcon = (code) => {
-        if (code === 1000) return '☀️'; // Clear
-        if (code === 1100 || code === 1101 || code === 1102) return '⛅'; // Partly Cloudy
-        if (code === 1001) return '☁️'; // Cloudy
-        if (code >= 4000 && code < 5000) return '🌧️'; // Rain
-        if (code >= 5000 && code < 6000) return '🌨️'; // Snow
-        if (code >= 8000) return '⛈️'; // Thunderstorm
-        return '☀️';
+        const mapping = {
+          1000: '☀️',
+          1100: '🌤️',
+          1101: '⛅',
+          1102: '🌥️',
+          1001: '☁️',
+          2000: '🌫️',
+          2100: '🌫️',
+          3000: '🌬️',
+          3001: '🌬️',
+          3002: '💨',
+          4000: '🌧️',
+          4001: '☔',
+          4200: '🌦️',
+          4201: '⛈️',
+          5000: '❄️',
+          5001: '❄️',
+          5100: '🌨️',
+          5101: '❄️',
+          6000: '🌧️❄️',
+          6001: '🌧️❄️',
+          6200: '🌧️❄️',
+          6201: '🌧️❄️',
+          7000: '🧊',
+          7101: '🧊',
+          7102: '🧊',
+          8000: '🌩️'
+        };
+        return mapping[code] || '☀️';
       };
 
       const mapCodeToDesc = (code) => {
-        if (code === 1000) return 'Clear';
-        if (code === 1100 || code === 1101 || code === 1102) return 'Partly Cloudy';
-        if (code === 1001) return 'Cloudy';
-        if (code >= 4000 && code < 5000) return 'Rain';
-        if (code >= 5000 && code < 6000) return 'Snow';
-        if (code >= 8000) return 'Thunderstorm';
-        return 'Clear';
+        const mapping = {
+          1000: 'Clear',
+          1100: 'Mostly Clear',
+          1101: 'Partly Cloudy',
+          1102: 'Mostly Cloudy',
+          1001: 'Cloudy',
+          2000: 'Fog',
+          2100: 'Light Fog',
+          3000: 'Light Wind',
+          3001: 'Wind',
+          3002: 'Strong Wind',
+          4000: 'Drizzle',
+          4001: 'Rain',
+          4200: 'Light Rain',
+          4201: 'Heavy Rain',
+          5000: 'Snow',
+          5001: 'Flurries',
+          5100: 'Light Snow',
+          5101: 'Heavy Snow',
+          6000: 'Freezing Drizzle',
+          6001: 'Freezing Rain',
+          6200: 'Light Freezing Rain',
+          6201: 'Heavy Freezing Rain',
+          7000: 'Ice Pellets',
+          7101: 'Heavy Ice Pellets',
+          7102: 'Light Ice Pellets',
+          8000: 'Thunderstorm'
+        };
+        return mapping[code] || 'Unknown';
+      };
+
+      const getWeatherInsight = (current, todayDaily) => {
+        if (!current || !todayDaily) return null;
+        
+        const currentVals = current.values || {};
+        const dailyVals = todayDaily.values || {};
+
+        if (dailyVals.precipitationProbabilityMax > 40) {
+          if (dailyVals.rainIntensityMax > 0.5) return "Heavy downpours expected later.";
+          return "High chance of rain today, don't forget an umbrella.";
+        }
+        
+        if (dailyVals.uvIndexMax >= 6) {
+          return "High UV today, sunscreen is a must if heading out.";
+        }
+        
+        if (currentVals.visibilityAvg < 3) {
+          return "Foggy conditions, drive safely.";
+        }
+        
+        if (dailyVals.windGustMax > 20) {
+          return "Quite breezy today—hold onto your hat!";
+        }
+        
+        const tempApparent = currentVals.temperatureApparent || currentVals.temperature;
+        const tempActual = currentVals.temperature;
+        const tempDiff = Math.abs(tempApparent - tempActual);
+        
+        if (tempDiff > 5) {
+          if (tempApparent > tempActual) {
+            return "It's humid—feels warmer than it looks.";
+          } else {
+            return "Wind chill makes it feel cooler than it is.";
+          }
+        }
+        
+        if (tempActual < (units === 'metric' ? 10 : 50)) {
+          return "Chilly out there, grab a jacket.";
+        }
+
+        if (tempActual > (units === 'metric' ? 27 : 80)) {
+          return "It's a hot one today, stay hydrated!";
+        }
+
+        return "It's looking like a beautiful day.";
       };
 
       const currentTimestep = data.timelines.hourly[0];
+      const todayDailyTimestep = data.timelines.daily[0];
       
       const parsed = {
         current: {
           temp: Math.round(currentTimestep.values.temperature),
           condition: mapCodeToDesc(currentTimestep.values.weatherCode),
           icon: mapCodeToIcon(currentTimestep.values.weatherCode),
+          insight: getWeatherInsight(currentTimestep, todayDailyTimestep),
         },
         forecast: data.timelines.daily.slice(0, 5).map(day => ({
           time: day.time,

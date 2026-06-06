@@ -1,4 +1,4 @@
-import { createMemo, For, Show, createSignal } from 'solid-js';
+import { createMemo, For, Show, createSignal, createEffect } from 'solid-js';
 import { format, parseISO, isSameDay } from 'date-fns';
 import { eventStore } from '../../stores/eventStore';
 import { taskStore } from '../../stores/taskStore';
@@ -13,13 +13,28 @@ function DaySchedulePreview(props) {
   let scrollRef;
 
   createEffect(() => {
-    if (scrollRef && props.ghostEvent && props.ghostEvent.startTime && !collapsed()) {
-      const st = new Date(props.ghostEvent.startTime);
-      if (!isNaN(st.getTime())) {
-        const min = st.getHours() * 60 + st.getMinutes();
-        scrollRef.scrollTop = Math.max(0, min - 60);
+    if (!scrollRef || collapsed()) return;
+    
+    let targetScrollTop = Math.max(0, (9 * 60) - 60);
+
+    if (props.ghostEvent) {
+      if (props.ghostEvent.allDay) {
+        targetScrollTop = 0;
+      } else if (props.ghostEvent.startTime) {
+        const st = new Date(props.ghostEvent.startTime);
+        if (!isNaN(st.getTime())) {
+          const min = st.getHours() * 60 + st.getMinutes();
+          if (min < 480) targetScrollTop = 0;
+          else if (min < 960) targetScrollTop = 480;
+          else targetScrollTop = 960;
+        }
       }
     }
+    
+    scrollRef.scrollTo({
+      top: targetScrollTop,
+      behavior: 'smooth'
+    });
   });
 
   const previewItems = createMemo(() => {
@@ -57,7 +72,7 @@ function DaySchedulePreview(props) {
 
     // Add ghost event if valid
     let ghost = null;
-    if (props.ghostEvent && props.ghostEvent.startTime && props.ghostEvent.endTime) {
+    if (props.ghostEvent && !props.ghostEvent.allDay && props.ghostEvent.startTime && props.ghostEvent.endTime) {
       const gst = new Date(props.ghostEvent.startTime);
       const gen = new Date(props.ghostEvent.endTime);
       
@@ -95,15 +110,21 @@ function DaySchedulePreview(props) {
     }));
 
     const expandedTasks = expandRecurringItems(taskState.tasks, d, d);
-    const tasks = expandedTasks.filter(t => t.scheduled_date && isSameDay(new Date(t.scheduled_date), d) && t.allDay).map(t => ({
+    let tasks = expandedTasks.filter(t => t.scheduled_date && isSameDay(new Date(t.scheduled_date), d) && t.allDay).map(t => ({
       ...t,
       type: 'task',
       color: taskState.lists.find(l => l.id === t.listId)?.color || '#6B5BDB'
     }));
 
-    // Ghost allDay item if props.ghostEvent isn't timed
-    // In our case ghostEvent always has startTime/endTime, but if it is mapped to allDay we wouldn't show it here right now since ghost event doesn't currently get an allDay flag from the parent component.
-    // That's fine for now.
+    if (props.ghostEvent && props.ghostEvent.allDay) {
+      events.push({
+        id: 'ghost-all-day',
+        title: props.ghostEvent.title || 'New Event',
+        type: props.ghostEvent.type || 'event',
+        color: props.ghostEvent.color || '#E8942A',
+        isGhost: true
+      });
+    }
 
     return [...events, ...tasks];
   });
@@ -136,12 +157,12 @@ function DaySchedulePreview(props) {
       <Show when={allDayItems().length > 0 && !collapsed()}>
         <div class="w-full border-b border-border-theme bg-bg-theme px-12 py-2 flex flex-col gap-1 max-h-[80px] overflow-y-auto relative">
           <div class="absolute left-0 top-0 bottom-0 w-12 border-r border-border-theme flex flex-col items-center justify-center pt-1">
-             <span class="text-[9px] font-bold text-text-muted uppercase tracking-wider -rotate-90 origin-center whitespace-nowrap">All Day</span>
+             <span class="font-display lowercase text-[9px] font-bold text-text-muted tracking-wider -rotate-90 origin-center whitespace-nowrap">All Day</span>
           </div>
           <For each={allDayItems()}>
             {(item) => (
               <div 
-                class="rounded px-2 py-1 text-[10px] font-bold text-white truncate shadow-sm cursor-pointer hover:brightness-110"
+                class={`rounded px-2 py-1 text-[10px] font-bold text-white truncate shadow-sm cursor-pointer hover:brightness-110 ${item.isGhost ? 'border-2 border-dashed border-white/50 animate-pulse' : ''}`}
                 style={{ background: item.color, opacity: (item.type === 'task' && item.completed) ? 0.5 : 1 }}
               >
                 {item.title} {item.rrule && '🔄'}
@@ -186,7 +207,7 @@ function DaySchedulePreview(props) {
                 const height = Math.max(item.endMin - item.startMin, 30);
                 return (
                   <div 
-                    class="absolute rounded-md p-2 overflow-hidden transition-all duration-300 shadow-sm z-10 border border-border-theme bg-bg-theme text-text-primary cursor-pointer hover:z-30 hover:shadow-lg group flex items-center justify-center backdrop-blur-md bg-opacity-90 hover:h-auto min-h-[30px]"
+                    class="absolute rounded-md overflow-hidden transition-all duration-300 shadow-sm z-10 border border-border-theme bg-bg-theme text-text-primary cursor-pointer hover:z-40 hover:shadow-2xl group flex flex-col justify-start backdrop-blur-md bg-opacity-90 hover:!h-max min-h-[30px]"
                     style={{ 
                       top: `${item.startMin}px`, 
                       height: `${height}px`,
@@ -194,19 +215,32 @@ function DaySchedulePreview(props) {
                       width: item.width
                     }}
                   >
-                    <div class="text-[11px] font-bold tracking-wide group-hover:hidden text-center truncate w-full px-2">
+                    <div class="text-[11px] font-bold tracking-wide group-hover:hidden text-center truncate w-full h-full flex items-center justify-center px-2">
                       {item.items.length} Events
                     </div>
-                    <div class="hidden group-hover:flex flex-col gap-1 w-full bg-bg-theme relative p-1 z-40 rounded">
+                    <div class="hidden group-hover:flex flex-col gap-1.5 w-full relative p-1.5 z-50 rounded-md">
                       <For each={item.items}>
-                        {(subItem) => (
-                          <div 
-                            class={`w-full text-left rounded p-1.5 hover:brightness-110 transition-colors cursor-pointer text-white truncate text-[10px] font-semibold ${subItem.isGhost ? 'border border-dashed border-white/50 animate-pulse' : ''}`}
-                            style={{ background: subItem.color }}
-                          >
-                            {subItem.title}
-                          </div>
-                        )}
+                        {(subItem) => {
+                          const subHeight = Math.max(subItem.endMin - subItem.startMin, 25);
+                          return (
+                            <div 
+                              class={`w-full text-left rounded-md p-1.5 hover:brightness-110 transition-colors cursor-pointer text-white flex flex-col justify-start overflow-hidden ${subItem.isGhost ? 'border-2 border-dashed border-white/50 animate-pulse' : 'border border-black/10 shadow-sm'}`}
+                              style={{ 
+                                background: subItem.color,
+                                height: `${subHeight}px`
+                              }}
+                            >
+                              <div class="text-[10px] font-bold leading-tight truncate">
+                                {subItem.title}
+                              </div>
+                              <Show when={subHeight >= 30}>
+                                <div class="text-[9px] font-semibold opacity-80 mt-auto">
+                                  {Math.floor(subItem.startMin / 60)}:{(subItem.startMin % 60).toString().padStart(2, '0')} - {Math.floor(subItem.endMin / 60)}:{(subItem.endMin % 60).toString().padStart(2, '0')}
+                                </div>
+                              </Show>
+                            </div>
+                          );
+                        }}
                       </For>
                     </div>
                   </div>

@@ -1,4 +1,4 @@
-import { createSignal, createEffect } from 'solid-js';
+import { createSignal, createEffect, Show } from 'solid-js';
 import Modal from '../ui/Modal';
 import { eventStore } from '../../stores/eventStore';
 import { uiStore } from '../../stores/uiStore';
@@ -118,28 +118,26 @@ function AddEventModal() {
 
   return (
     <Modal id="addEvent" wide={true} noPadding={true}>
-      <div class="flex flex-col sm:flex-row w-full bg-modal-bg rounded-2xl overflow-hidden">
+      <div class="flex flex-col sm:flex-row w-full bg-modal-bg rounded-2xl overflow-hidden h-full min-h-0 max-h-[90vh]">
         
         {/* Left Pane - Form */}
-        <div class="flex-1 p-6 flex flex-col gap-4">
-          <form onSubmit={handleSubmit} class="flex flex-col gap-4">
-            <h2 class="text-xl font-extrabold text-text-primary mb-2">New Event</h2>
-            
+        <div class="flex-1 flex flex-col min-h-0 border-r border-border-theme">
+          <form onSubmit={handleSubmit} class="flex flex-col flex-1 min-h-0">
+            <div class="flex-1 overflow-y-auto p-6 pb-4 flex flex-col gap-4">
             <div>
-              <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">Title</label>
               <input 
                 ref={el => el && setTimeout(() => el.focus(), 50)}
                 type="text" 
-                placeholder="Coffee with Sarah..."
+                placeholder="Event Title"
                 value={title()}
                 onInput={(e) => setTitle(e.target.value)}
-                class="w-full bg-text-primary/5 border border-border-theme rounded-xl px-3.5 py-3 text-text-primary text-[15px] outline-none focus:border-accent transition-colors"
+                class="w-full bg-transparent border-none px-0 py-2 text-text-primary text-3xl font-bold placeholder:text-text-muted outline-none"
                 required
               />
             </div>
 
             <div>
-              <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">Description</label>
+              <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Description</label>
               <textarea 
                 placeholder="Add details..."
                 value={description()}
@@ -158,31 +156,42 @@ function AddEventModal() {
               </label>
             </div>
 
-            <div class="flex flex-col sm:flex-row gap-4">
-              <div class="flex-1">
-                <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">Start Date</label>
-                <DatePicker value={date()} onChange={(v) => setDate(v)} />
+            <Show when={allDay()}>
+              <div class="flex flex-col sm:flex-row gap-4">
+                <div class="flex-1">
+                  <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Start Date</label>
+                  <DatePicker value={date()} onChange={(v) => setDate(v)} />
+                </div>
+                <div class="flex-1">
+                  <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">End Date</label>
+                  <DatePicker value={endDate()} onChange={(v) => setEndDate(v)} />
+                </div>
               </div>
-              <Show when={!allDay()}>
+            </Show>
+
+            <Show when={!allDay()}>
+              <div class="flex flex-col sm:flex-row gap-4">
+                <div class="flex-1">
+                  <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Start Date</label>
+                  <DatePicker value={date()} onChange={(v) => setDate(v)} />
+                </div>
                 <div class="flex-1 sm:min-w-[140px]">
-                  <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">Start Time</label>
+                  <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Start Time</label>
                   <TimePicker value={time()} onChange={(v) => setTime(v)} />
                 </div>
-              </Show>
-            </div>
-
-            <div class="flex flex-col sm:flex-row gap-4">
-              <div class="flex-1">
-                <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">End Date</label>
-                <DatePicker value={endDate()} onChange={(v) => setEndDate(v)} />
               </div>
-              <Show when={!allDay()}>
+
+              <div class="flex flex-col sm:flex-row gap-4">
+                <div class="flex-1">
+                  <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">End Date</label>
+                  <DatePicker value={endDate()} onChange={(v) => setEndDate(v)} />
+                </div>
                 <div class="flex-1 sm:min-w-[140px]">
-                  <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">End Time</label>
+                  <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">End Time</label>
                   <TimePicker value={endTime()} onChange={(v) => setEndTime(v)} />
                 </div>
-              </Show>
-            </div>
+              </div>
+            </Show>
             
             <Show when={!allDay()}>
               <div class="flex items-center gap-2">
@@ -194,7 +203,7 @@ function AddEventModal() {
             </Show>
 
             <div>
-              <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">Calendar</label>
+              <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Calendar</label>
               <SelectPicker 
                 value={calendarId()} 
                 onChange={setCalendarId}
@@ -211,7 +220,7 @@ function AddEventModal() {
                 </button>
               ) : (
                 <div class="flex flex-col gap-1.5">
-                  <label class="flex text-xs text-text-muted font-semibold uppercase tracking-wider justify-between items-center">
+                  <label class="font-display lowercase flex text-xs text-text-muted font-semibold tracking-wider justify-between items-center">
                     <span>Repeat</span>
                     <span class="text-accent cursor-pointer hover:underline normal-case tracking-normal" onClick={() => { setShowRecurrence(false); setRecurrence('NONE'); }}>Remove</span>
                   </label>
@@ -229,12 +238,15 @@ function AddEventModal() {
               )}
             </div>
 
-            <button 
-              type="submit"
-              class="mt-2 bg-accent text-text-primary border-none p-3.5 rounded-xl text-[15px] font-bold cursor-pointer hover:bg-accent/80 transition-colors shadow-lg shadow-accent/20"
-            >
-              Add Event
-            </button>
+            </div>
+            <div class="p-6 pt-4 border-t border-border-theme bg-modal-bg flex-shrink-0">
+              <button 
+                type="submit"
+                class="w-full bg-accent text-text-primary border-none p-3.5 rounded-xl text-[15px] font-bold cursor-pointer hover:bg-accent/80 transition-colors shadow-lg shadow-accent/20"
+              >
+                Add Event
+              </button>
+            </div>
           </form>
         </div>
 
@@ -243,11 +255,12 @@ function AddEventModal() {
           <DaySchedulePreview 
             mode="event"
             date={date() || new Date().toISOString().split('T')[0]}
-            ghostEvent={allDay() ? null : {
+            ghostEvent={{
               title: title() || 'New Event',
               startTime: `${date()}T${time()}:00`,
               endTime: `${endDate()}T${endTime()}:00`,
               type: 'event',
+              allDay: allDay(),
               color: eventState.calendars.find(c => c.id === calendarId())?.color || '#E8942A'
             }}
           />

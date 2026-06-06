@@ -206,6 +206,9 @@ class SyncEngine {
   }
 
   subscribe() {
+    const channel = supabase.channel('public-changes');
+    supabase.removeChannel(channel);
+
     this.subscription = supabase
       .channel('public-changes')
       .on('postgres_changes', { event: '*', schema: 'public' }, async payload => {
@@ -227,6 +230,28 @@ class SyncEngine {
         await this.refreshLocalStores();
       })
       .subscribe();
+  }
+
+  startPeriodicCloudSync() {
+    if (this._periodicSyncInterval) return;
+
+    const triggerSyncs = async () => {
+      if (!navigator.onLine) return;
+      try {
+        await Promise.allSettled([
+          api.auth.triggerSync('google').catch(() => {}), // Silently ignore if not connected
+          api.auth.triggerSync('microsoft').catch(() => {})
+        ]);
+      } catch (err) {
+        console.warn('Periodic cloud sync failed:', err);
+      }
+    };
+
+    // Pull immediately on setup
+    triggerSyncs();
+
+    // Pull every 15 minutes
+    this._periodicSyncInterval = setInterval(triggerSyncs, 15 * 60 * 1000);
   }
 }
 

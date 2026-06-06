@@ -2,11 +2,13 @@ import { createSignal, createMemo, For } from 'solid-js';
 import { eventStore } from '../../stores/eventStore';
 import { taskStore } from '../../stores/taskStore';
 import { format, isPast } from 'date-fns';
+import { settingsStore } from '../../stores/settingsStore';
 import EmptyState from '../ui/EmptyState';
 
 function ArchiveView() {
   const { state: eventState } = eventStore;
   const { state: taskState } = taskStore;
+  const { state: settings } = settingsStore;
   
   const [filter, setFilter] = createSignal('all'); // all, tasks, events
 
@@ -55,7 +57,7 @@ function ArchiveView() {
   return (
     <>
       <div class="h-[60px] min-h-[60px] border-b border-border-theme flex items-center justify-between px-6 bg-bg-theme/40 backdrop-blur-md sticky top-0 z-50">
-        <div class="text-xl font-bold text-text-primary tracking-wide">Archive</div>
+        <div class="font-display lowercase text-xl font-bold text-text-primary tracking-wide">Archive</div>
       </div>
 
       <div class="overflow-y-auto p-6 flex flex-col gap-6 max-w-[800px] mx-auto w-full">
@@ -92,7 +94,7 @@ function ArchiveView() {
                             {item._type === 'event' ? (
                               <span>Event • {(() => {
                                 const d = new Date(item.start_time);
-                                return isNaN(d.getTime()) ? 'No Date' : format(d, 'MMM d, h:mm a');
+                                return isNaN(d.getTime()) ? 'No Date' : format(d, settings.use24HourClock ? 'MMM d, H:mm' : 'MMM d, h:mm a');
                               })()}</span>
                             ) : (
                               <span>Completed Task • {(() => {

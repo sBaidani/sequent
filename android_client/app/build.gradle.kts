@@ -6,6 +6,19 @@ plugins {
   alias(libs.plugins.ksp)
 }
 
+import java.util.Properties
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
+
+val supabaseUrlDev = localProperties.getProperty("supabase.url.dev") ?: "\"http://10.0.2.2:54321\""
+val supabaseAnonKeyDev = localProperties.getProperty("supabase.anon.key.dev") ?: "\"\""
+val supabaseUrlProd = localProperties.getProperty("supabase.url.prod") ?: "\"\""
+val supabaseAnonKeyProd = localProperties.getProperty("supabase.anon.key.prod") ?: "\"\""
+
 android {
     namespace = "com.example.sequent"
     compileSdk = 36
@@ -21,6 +34,12 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            buildConfigField("String", "SUPABASE_URL", supabaseUrlProd)
+            buildConfigField("String", "SUPABASE_ANON_KEY", supabaseAnonKeyProd)
+        }
+        debug {
+            buildConfigField("String", "SUPABASE_URL", supabaseUrlDev)
+            buildConfigField("String", "SUPABASE_ANON_KEY", supabaseAnonKeyDev)
         }
     }
     compileOptions {
@@ -30,7 +49,7 @@ android {
     buildFeatures {
       compose = true
       aidl = false
-      buildConfig = false
+      buildConfig = true
       shaders = false
     }
 

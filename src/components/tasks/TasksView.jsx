@@ -36,7 +36,7 @@ function TasksView() {
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
           </button>
-          <div class="text-xl font-bold text-text-primary tracking-wide">Tasks</div>
+          <div class="font-display lowercase text-xl font-bold text-text-primary tracking-wide">Tasks</div>
         </div>
         <div class="flex items-center gap-3">
           <button class="w-9 h-9 rounded-full bg-text-primary/5 border-none text-text-primary flex items-center justify-center cursor-pointer transition-colors hover:bg-text-primary/20" onClick={() => { uiStore.setActiveListId(''); uiStore.setActiveModal('addTask'); }}>
@@ -56,7 +56,7 @@ function TasksView() {
               const textColor = getContrastText(list.color || '#333333');
               return (
                  <div class="break-inside-avoid rounded-xl p-4 shadow-lg" style={{ "background-color": list.color || '#333', "color": textColor }}>
-                  <div class="text-xl font-extrabold tracking-wide">{list.name}</div>
+                  <div class="font-display lowercase text-xl font-extrabold tracking-wide">{list.name}</div>
                   
                   <div class="mt-3">
                     {listTasks().length === 0 ? (
@@ -95,7 +95,7 @@ function TasksView() {
                               <button onClick={() => toggleTask(task.id)} class="bg-transparent border-none cursor-pointer p-0 transition-colors" style={{ color: "currentColor" }}>
                                 {task.completed ? <CheckCircle2 class="w-4 h-4 opacity-80" /> : <Circle class="w-4 h-4 opacity-80 hover:opacity-100" />}
                               </button>
-                              <button onClick={() => deleteTask(task.id)} class="text-xl font-bold bg-transparent border-none cursor-pointer opacity-30 hover:opacity-100 transition-opacity" style={{ color: "currentColor" }}>×</button>
+                              <button onClick={() => deleteTask(task.id)} class="font-display lowercase text-xl font-bold bg-transparent border-none cursor-pointer opacity-30 hover:opacity-100 transition-opacity" style={{ color: "currentColor" }}>×</button>
                             </div>
                           </div>
                         )}

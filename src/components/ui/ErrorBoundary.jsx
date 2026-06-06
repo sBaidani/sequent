@@ -5,8 +5,8 @@ function ErrorBoundary(props) {
     <SolidErrorBoundary
       fallback={(err, reset) => (
         <div class="flex flex-col items-center justify-center h-screen w-screen bg-bg-theme text-text-primary text-center p-5">
-          <div class="text-5xl mb-4">⚠️</div>
-          <h2 class="mb-3 text-accent">Something went wrong.</h2>
+          <div class="font-display lowercase text-5xl mb-4">⚠️</div>
+          <h2 class="font-display lowercase mb-3 text-accent">Something went wrong.</h2>
           <p class="text-[#888] mb-6 max-w-[400px]">
             The application encountered an unexpected error.
             <br/><br/>

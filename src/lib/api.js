@@ -101,6 +101,10 @@ export const api = {
     finalizeConnection: async (provider, code) => {
       const functionName = `auth-${provider}`;
       return request(functionName, 'POST', { code });
+    },
+    triggerSync: async (provider) => {
+      const functionName = `sync-${provider}`;
+      return request(functionName, 'POST');
     }
   }
 };

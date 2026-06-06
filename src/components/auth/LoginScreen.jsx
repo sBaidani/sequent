@@ -44,7 +44,7 @@ function LoginScreen() {
   return (
     <div class="w-full min-h-screen flex items-center justify-center bg-bg-theme text-text-primary">
       <div class="bg-card p-10 rounded-2xl w-full max-w-[400px] text-center shadow-2xl">
-        <h1 class="mb-6 font-semibold text-2xl">{isSignUp() ? 'Create an Account' : 'Welcome to Sequent'}</h1>
+        <h1 class="font-display lowercase mb-6 font-semibold text-2xl">{isSignUp() ? 'Create an Account' : 'Welcome to Sequent'}</h1>
         
         {error() && <div class="text-[#ff4d4f] mb-4 text-sm bg-[#ff4d4f]/10 p-3 rounded-lg border border-[#ff4d4f]/20">{error()}</div>}
         {message() && <div class="text-[#52c41a] mb-4 text-sm bg-[#52c41a]/10 p-3 rounded-lg border border-[#52c41a]/20">{message()}</div>}

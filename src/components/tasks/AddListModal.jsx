@@ -20,11 +20,11 @@ function AddListModal() {
 
   return (
     <Modal id="addList" compact>
-      <h2 class="text-2xl font-extrabold mb-5 text-text-primary">New List</h2>
+      <h2 class="font-display lowercase text-2xl font-extrabold mb-5 text-text-primary">New List</h2>
       <form onSubmit={handleSubmit} class="flex flex-col gap-4">
         
         <div>
-          <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">List Name</label>
+          <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">List Name</label>
           <input 
             type="text" 
             placeholder="Work, Groceries..."
@@ -36,7 +36,7 @@ function AddListModal() {
         </div>
         
         <div>
-          <label class="block text-xs text-text-muted font-semibold mb-2 uppercase tracking-wider">Color</label>
+          <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-2 tracking-wider">Color</label>
           <div class="flex gap-3">
             {colors.map(c => (
               <button 

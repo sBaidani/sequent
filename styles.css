@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 @theme {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-display: "Major Mono Display", monospace;
   --color-accent: var(--accent);
   --color-bg-theme: var(--bg);
   --color-card: var(--card);
@@ -9,11 +11,13 @@
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
   --color-modal-bg: var(--modal-bg);
+  --ease-spring-smooth: linear(0, 0.106 3.5%, 0.347 10.3%, 0.564 17.2%, 0.741 24.6%, 0.867 33.1%, 0.947 43%, 0.984 54%, 0.997 66%, 1);
+  --ease-spring-bouncy: linear(0, 0.155 3.3%, 0.493 9.6%, 0.771 16.3%, 0.929 23.8%, 0.985 32.3%, 0.998 42.1%, 1);
 }
 
 @layer base {
   body, button, input, select, textarea, a, .clickable {
-    transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: background-color 0.2s var(--ease-spring-smooth), border-color 0.2s var(--ease-spring-smooth), color 0.2s var(--ease-spring-smooth), opacity 0.2s var(--ease-spring-smooth), transform 0.2s var(--ease-spring-bouncy);
   }
   
   /* Tactile feedback scale-down on active clicks */
@@ -29,31 +33,65 @@
 @keyframes viewEnter {
   from {
     opacity: 0;
-    transform: translateY(12px) scale(0.99);
+    transform: translateY(16px) scale(0.98);
   }
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
 }
+@keyframes viewExit {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+}
 .view-enter {
-  animation: viewEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: viewEnter 0.6s var(--ease-spring-smooth) forwards;
+}
+.view-exit {
+  animation: viewExit 0.4s var(--ease-spring-smooth) forwards;
 }
 
 /* Sidebar sliding drawer configuration */
 .sidebar-transition {
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), margin-left 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.5s var(--ease-spring-smooth), margin-left 0.5s var(--ease-spring-smooth), width 0.5s var(--ease-spring-smooth), min-width 0.5s var(--ease-spring-smooth), max-width 0.5s var(--ease-spring-smooth), opacity 0.5s var(--ease-spring-smooth);
 }
 .sidebar-closed aside {
   transform: translateX(-100%);
   margin-left: -280px;
 }
 
+/* Pulsing Glow for Attention Elements */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(var(--accent-rgb), 0.4), 0 0 30px rgba(var(--accent-rgb), 0.1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(var(--accent-rgb), 0.8), 0 0 60px rgba(var(--accent-rgb), 0.4);
+  }
+}
+.animate-pulse-glow {
+  animation: pulseGlow 4s ease-in-out infinite;
+}
+
+/* Glassmorphic Sidebar */
+.glass-sidebar {
+  background-color: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 /* CSS Grid accordion dropdown for sidebar calendars */
 .accordion-menu {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+  transition: grid-template-rows 0.4s var(--ease-spring-smooth), opacity 0.4s ease;
   opacity: 0;
 }
 .accordion-menu.open {
@@ -80,7 +118,7 @@
   height: 2px;
   background: currentColor;
   opacity: 0.6;
-  animation: strikeThrough 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: strikeThrough 0.3s var(--ease-spring-smooth) forwards;
 }
 
 /* Custom checkbox spring drawing styles */
@@ -94,7 +132,7 @@
   outline: none;
   cursor: pointer;
   position: relative;
-  transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.4s var(--ease-spring-bouncy);
   background: transparent;
 }
 .task-checkbox-animate:checked {
@@ -121,15 +159,28 @@
 @keyframes modalPopIn {
   0% {
     opacity: 0;
-    transform: scale(0.92) translateY(30px);
+    transform: scale(0.4);
   }
   100% {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: scale(1);
+  }
+}
+@keyframes modalPopOut {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.4);
   }
 }
 .modal-pop-in {
-  animation: modalPopIn 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: modalPopIn 0.5s var(--ease-spring-bouncy) forwards;
+}
+.modal-pop-out {
+  animation: modalPopOut 0.4s var(--ease-spring-smooth) forwards;
 }
 
 /* Calendar month sliding transitions */
@@ -142,10 +193,10 @@
   to { transform: translateX(0); opacity: 1; }
 }
 .slide-left-anim {
-  animation: slideLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideLeft 0.5s var(--ease-spring-smooth) forwards;
 }
 .slide-right-anim {
-  animation: slideRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideRight 0.5s var(--ease-spring-smooth) forwards;
 }
 
 /* Timeline entrance and card micro-interactions */
@@ -160,11 +211,11 @@
   }
 }
 .timeline-row-enter {
-  animation: rowFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: rowFadeIn 0.5s var(--ease-spring-smooth) forwards;
 }
 
 .timeline-card {
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, background-color 0.2s ease;
+  transition: transform 0.4s var(--ease-spring-bouncy), box-shadow 0.4s var(--ease-spring-smooth), background-color 0.3s ease;
 }
 .timeline-card:hover {
   transform: translateY(-2px);
@@ -177,7 +228,7 @@
 
 .calendar-day-cell {
   cursor: pointer;
-  transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 0.3s var(--ease-spring-smooth), transform 0.3s var(--ease-spring-bouncy);
 }
 .calendar-day-cell:hover {
   background-color: rgba(255, 255, 255, 0.03) !important;
@@ -193,6 +244,8 @@
   --sidebar-width: 280px;
   --card-radius-lg: 16px;
   --card-radius-md: 12px;
+  --radius-xl: 32px;
+  --radius-pill: 999px;
   
   /* Core Colors */
   --text-primary: #fff;
@@ -205,6 +258,7 @@
   /* Current Theme Settings */
   --accent: #E8942A; /* Default Amber */
   --accent-rgb: 232, 148, 42;
+  --secondary-rgb: 175, 82, 222; /* Purple */
 }
 
 :root.light {
@@ -220,20 +274,22 @@
   --modal-bg: rgba(255, 255, 255, 0.85);
 }
 
-.theme-amber  { --accent: #E8942A; --accent-rgb: 232,148,42; }
-.theme-red    { --accent: #FF3B30; --accent-rgb: 255,59,48; }
-.theme-pink   { --accent: #FF2D55; --accent-rgb: 255,45,85; }
-.theme-purple { --accent: #AF52DE; --accent-rgb: 175,82,222; }
-.theme-blue   { --accent: #3B6ED6; --accent-rgb: 59,110,214; }
+.theme-amber  { --accent: #E8942A; --accent-rgb: 232,148,42; --secondary-rgb: 175,82,222; }
+.theme-red    { --accent: #FF3B30; --accent-rgb: 255,59,48; --secondary-rgb: 255,149,0; }
+.theme-pink   { --accent: #FF2D55; --accent-rgb: 255,45,85; --secondary-rgb: 90,200,250; }
+.theme-purple { --accent: #AF52DE; --accent-rgb: 175,82,222; --secondary-rgb: 255,45,85; }
+.theme-blue   { --accent: #3B6ED6; --accent-rgb: 59,110,214; --secondary-rgb: 48,209,88; }
+.theme-teal   { --accent: #1FA7A7; --accent-rgb: 31,167,167; --secondary-rgb: 255,214,10; }
 
 html, body { 
   width: 100%; 
   height: 100%; 
   margin: 0; 
   padding: 0; 
+  font-family: var(--font-sans);
   background-color: var(--bg-default);
   overflow: hidden;
-  transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 0.5s var(--ease-spring-smooth), color 0.5s var(--ease-spring-smooth);
 }
 #root { 
   width: 100vw; 
@@ -244,7 +300,7 @@ html, body {
 
 /* Global smoothing */
 *, *::before, *::after {
-  transition: background-color 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+  /* Removed to avoid interfering with fine-grained CSS transforms and springs */
 }
 
 ::-webkit-scrollbar { width: 8px; height: 8px; }

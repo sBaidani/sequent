@@ -52,7 +52,18 @@ serve(async (req) => {
             // proceed or handle
         }
 
-        const eventsRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(item.id)}/events?maxResults=100`, {
+        const now = new Date()
+        const timeMin = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate()).toISOString()
+        const timeMax = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate()).toISOString()
+        
+        const queryParams = new URLSearchParams({
+          timeMin,
+          timeMax,
+          singleEvents: 'true',
+          maxResults: '2500'
+        })
+
+        const eventsRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(item.id)}/events?${queryParams.toString()}`, {
           headers: { Authorization: `Bearer ${accessToken}` }
         })
         
@@ -86,9 +97,66 @@ serve(async (req) => {
               if (!eventError) syncedEventsCount++
           }
         }
+      // 4. Fetch Google Task Lists
+      const taskListsRes = await fetch('https://tasks.googleapis.com/tasks/v1/users/@me/lists', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      })
+      
+      let syncedTasksCount = 0
+      if (taskListsRes.ok) {
+        const taskListsData = await taskListsRes.json()
+        
+        for (const tlist of (taskListsData.items || [])) {
+          // Upsert the task list
+          const { data: listData, error: listUpsertError } = await supabase
+            .from('lists')
+            .upsert({
+              user_id: userId,
+              provider: 'google',
+              external_id: tlist.id,
+              name: tlist.title,
+              etag: tlist.etag,
+              updated_at: tlist.updated || new Date().toISOString()
+            }, { onConflict: 'user_id, external_id', ignoreDuplicates: false })
+            .select('id')
+            .maybeSingle()
+            
+          const localListId = listData?.id
+          
+          if (localListId) {
+            // Fetch tasks for this list
+            const tasksRes = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${encodeURIComponent(tlist.id)}/tasks?maxResults=100`, {
+              headers: { Authorization: `Bearer ${accessToken}` }
+            })
+            
+            if (tasksRes.ok) {
+              const tasksData = await tasksRes.json()
+              
+              for (const gtask of (tasksData.items || [])) {
+                // Upsert the task
+                const { error: taskError } = await supabase
+                  .from('tasks')
+                  .upsert({
+                    user_id: userId,
+                    list_id: localListId,
+                    provider: 'google',
+                    external_id: gtask.id,
+                    etag: gtask.etag,
+                    title: gtask.title || 'Untitled Task',
+                    notes: gtask.notes || '',
+                    status: gtask.status === 'completed' ? 'completed' : 'pending',
+                    due_date: gtask.due ? new Date(gtask.due).toISOString() : null,
+                    updated_at: gtask.updated || new Date().toISOString()
+                  }, { onConflict: 'user_id, external_id', ignoreDuplicates: false })
+                  
+                if (!taskError) syncedTasksCount++
+              }
+            }
+          }
+        }
       }
 
-      return ok({ success: true, message: `Successfully synced ${syncedEventsCount} events` })
+      return ok({ success: true, message: `Successfully synced ${syncedEventsCount} events and ${syncedTasksCount} tasks` })
     }
 
     return badRequest('Invalid method')
