@@ -38,13 +38,17 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@babel/eslint-parser": "^7.29.7",
     "@playwright/test": "^1.60.0",
     "@solidjs/testing-library": "^0.8.10",
     "@tailwindcss/vite": "^4.3.0",
     "@testing-library/jest-dom": "^6.9.1",
+    "@types/dompurify": "^3.0.5",
     "autoprefixer": "^10.5.0",
     "electron": "^31.7.7",
     "electron-builder": "^26.8.1",
+    "eslint": "^9.39.4",
+    "eslint-plugin-solid": "^0.14.5",
     "jsdom": "^29.1.1",
     "postcss": "^8.5.15",
     "tailwindcss": "^4.3.0",
@@ -62,6 +66,8 @@
     "dompurify": "^3.4.7",
     "idb": "^8.0.3",
     "lucide-solid": "^1.17.0",
-    "solid-js": "^1.9.13"
+    "rrule": "^2.8.1",
+    "solid-js": "^1.9.13",
+    "solid-transition-group": "^0.3.0"
   }
 }

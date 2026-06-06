@@ -2,7 +2,7 @@ import { Show } from 'solid-js';
 
 function EmptyState(props) {
   return (
-    <div class="flex flex-col items-center justify-center py-8 px-4 text-center text-white w-full opacity-90 drop-shadow-sm">
+    <div class="flex flex-col items-center justify-center py-8 px-4 text-center text-text-primary w-full opacity-90 drop-shadow-sm">
       <Show when={props.type === 'tasks'}>
         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-4 text-[#52c41a]">
           <path d="M9 11l3 3L22 4"></path>

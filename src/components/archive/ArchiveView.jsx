@@ -2,11 +2,13 @@ import { createSignal, createMemo, For } from 'solid-js';
 import { eventStore } from '../../stores/eventStore';
 import { taskStore } from '../../stores/taskStore';
 import { format, isPast } from 'date-fns';
+import { settingsStore } from '../../stores/settingsStore';
 import EmptyState from '../ui/EmptyState';
 
 function ArchiveView() {
   const { state: eventState } = eventStore;
   const { state: taskState } = taskStore;
+  const { state: settings } = settingsStore;
   
   const [filter, setFilter] = createSignal('all'); // all, tasks, events
 
@@ -54,24 +56,24 @@ function ArchiveView() {
 
   return (
     <>
-      <div class="h-[60px] min-h-[60px] border-b border-white/10 flex items-center justify-between px-6 bg-black/40 backdrop-blur-md sticky top-0 z-50">
-        <div class="text-xl font-bold text-white tracking-wide">Archive</div>
+      <div class="h-[60px] min-h-[60px] border-b border-border-theme flex items-center justify-between px-6 bg-bg-theme/40 backdrop-blur-md sticky top-0 z-50">
+        <div class="font-display lowercase text-xl font-bold text-text-primary tracking-wide">Archive</div>
       </div>
 
       <div class="overflow-y-auto p-6 flex flex-col gap-6 max-w-[800px] mx-auto w-full">
         
-        <div class="flex gap-2 bg-white/5 p-1 rounded-lg self-start">
+        <div class="flex gap-2 bg-text-primary/5 p-1 rounded-lg self-start">
           <button 
             onClick={() => setFilter('all')}
-            class={`px-3 py-1.5 rounded-md border-none font-semibold cursor-pointer transition-colors ${filter() === 'all' ? 'bg-white/15 text-white' : 'bg-transparent text-text-secondary hover:text-white'}`}
+            class={`px-3 py-1.5 rounded-md border-none font-semibold cursor-pointer transition-colors ${filter() === 'all' ? 'bg-text-primary/15 text-text-primary' : 'bg-transparent text-text-secondary hover:text-text-primary'}`}
           >All</button>
           <button 
             onClick={() => setFilter('events')}
-            class={`px-3 py-1.5 rounded-md border-none font-semibold cursor-pointer transition-colors ${filter() === 'events' ? 'bg-white/15 text-white' : 'bg-transparent text-text-secondary hover:text-white'}`}
+            class={`px-3 py-1.5 rounded-md border-none font-semibold cursor-pointer transition-colors ${filter() === 'events' ? 'bg-text-primary/15 text-text-primary' : 'bg-transparent text-text-secondary hover:text-text-primary'}`}
           >Events</button>
           <button 
             onClick={() => setFilter('tasks')}
-            class={`px-3 py-1.5 rounded-md border-none font-semibold cursor-pointer transition-colors ${filter() === 'tasks' ? 'bg-white/15 text-white' : 'bg-transparent text-text-secondary hover:text-white'}`}
+            class={`px-3 py-1.5 rounded-md border-none font-semibold cursor-pointer transition-colors ${filter() === 'tasks' ? 'bg-text-primary/15 text-text-primary' : 'bg-transparent text-text-secondary hover:text-text-primary'}`}
           >Tasks</button>
         </div>
 
@@ -81,18 +83,18 @@ function ArchiveView() {
           <For each={groupedArchive()}>
             {(group) => (
               <div class="flex flex-col gap-3">
-                <div class="text-lg font-extrabold text-white">{group.header}</div>
+                <div class="text-lg font-extrabold text-text-primary">{group.header}</div>
                 <div class="flex flex-col gap-2">
                   <For each={group.items}>
                     {(item) => (
                       <div class="bg-card border border-border rounded-xl p-3.5 flex items-center justify-between transition-all opacity-70">
                         <div class="flex flex-col gap-1">
-                          <div class="text-[15px] font-bold text-white/90">{item.title}</div>
+                          <div class="text-[15px] font-bold text-text-primary/90">{item.title}</div>
                           <div class="text-xs font-semibold text-text-muted flex items-center gap-1.5">
                             {item._type === 'event' ? (
                               <span>Event • {(() => {
                                 const d = new Date(item.start_time);
-                                return isNaN(d.getTime()) ? 'No Date' : format(d, 'MMM d, h:mm a');
+                                return isNaN(d.getTime()) ? 'No Date' : format(d, settings.use24HourClock ? 'MMM d, H:mm' : 'MMM d, h:mm a');
                               })()}</span>
                             ) : (
                               <span>Completed Task • {(() => {

@@ -20,29 +20,29 @@ function AddCalendarModal() {
 
   return (
     <Modal id="addCalendar" compact>
-      <h2 class="text-2xl font-extrabold mb-5 text-white">New Calendar</h2>
+      <h2 class="font-display lowercase text-2xl font-extrabold mb-5 text-text-primary">New Calendar</h2>
       <form onSubmit={handleSubmit} class="flex flex-col gap-4">
         
         <div>
-          <label class="block text-xs text-text-muted font-semibold mb-1.5 uppercase tracking-wider">Calendar Name</label>
+          <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Calendar Name</label>
           <input 
             type="text" 
             placeholder="Work, Personal..."
             value={name()}
             onInput={(e) => setName(e.target.value)}
-            class="w-full bg-white/5 border border-border rounded-xl px-3.5 py-3 text-white text-[15px] outline-none focus:border-accent transition-colors"
+            class="w-full bg-text-primary/5 border border-border rounded-xl px-3.5 py-3 text-text-primary text-[15px] outline-none focus:border-accent transition-colors"
             autofocus
           />
         </div>
         
         <div>
-          <label class="block text-xs text-text-muted font-semibold mb-2 uppercase tracking-wider">Color</label>
+          <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-2 tracking-wider">Color</label>
           <div class="flex gap-3">
             {colors.map(c => (
               <button 
                 type="button"
                 onClick={() => setColor(c)}
-                class={`w-8 h-8 rounded-full border-4 cursor-pointer transition-transform hover:scale-110 ${color() === c ? 'border-white' : 'border-transparent'}`}
+                class={`w-8 h-8 rounded-full border-4 cursor-pointer transition-transform hover:scale-110 ${color() === c ? 'border-text-primary' : 'border-transparent'}`}
                 style={{ background: c }}
               />
             ))}
@@ -51,7 +51,7 @@ function AddCalendarModal() {
 
         <button 
           type="submit"
-          class="mt-2 bg-accent text-white border-none p-3.5 rounded-xl text-[15px] font-bold cursor-pointer hover:bg-accent/80 transition-colors shadow-lg shadow-accent/20"
+          class="mt-2 bg-accent text-text-primary border-none p-3.5 rounded-xl text-[15px] font-bold cursor-pointer hover:bg-accent/80 transition-colors shadow-lg shadow-accent/20"
         >
           Create Calendar
         </button>

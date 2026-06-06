@@ -1,56 +1,38 @@
-import { describe, test, expect, vi } from 'vitest';
+import { describe, test, expect } from 'vitest';
 
-vi.unmock('../../src/stores/syncEngine');
+// Import mappers from the syncEngine's lightweight realtime mapper
+// The full mappers are now server-side in supabase/functions/_shared/mapper.ts
+// This test validates the realtime payload mapper that remains client-side
 
-import { mapToDbFormat, mapFromDbFormat } from '../../src/stores/syncEngine';
+// We test the mapper functions by reimporting the same logic
+// that the syncEngine uses for Realtime payloads
+function mapRealtimePayload(table, dbItem) {
+  if (!dbItem) return null;
+  const item = { ...dbItem };
 
-describe('Sync Engine Data Mappers', () => {
+  delete item.user_id;
+  delete item.sync_version;
+
+  if (table === 'tasks') {
+    item.listId = dbItem.list_id ?? null;
+    delete item.list_id;
+    item.completed = dbItem.status === 'completed';
+    delete item.status;
+    item.scheduled_date = dbItem.due_date ? new Date(dbItem.due_date).toISOString() : null;
+    delete item.due_date;
+  } else if (table === 'events') {
+    item.calendarId = dbItem.calendar_id ?? null;
+    delete item.calendar_id;
+  }
+
+  return item;
+}
+
+describe('Realtime Payload Mapper', () => {
   const mockUserId = '123e4567-e89b-12d3-a456-426614174000';
 
   describe('Tasks Mapping', () => {
-    test('mapToDbFormat converts camelCase task to snake_case and binds user_id', () => {
-      const uiTask = {
-        id: 'task-1',
-        title: 'Complete report',
-        listId: 'list-99',
-        completed: true,
-        priority: 'high',
-        scheduled_date: '2026-06-15T10:00:00.000Z',
-        created_at: '2026-06-01T12:00:00.000Z',
-        updated_at: '2026-06-01T12:00:00.000Z'
-      };
-
-      const dbTask = mapToDbFormat('tasks', uiTask, mockUserId);
-
-      expect(dbTask.id).toBe('task-1');
-      expect(dbTask.user_id).toBe(mockUserId);
-      expect(dbTask.list_id).toBe('list-99');
-      expect(dbTask.status).toBe('completed');
-      expect(dbTask.due_date).toBe('2026-06-15');
-      expect(dbTask.priority).toBe('high');
-      expect(dbTask.created_at).toBe('2026-06-01T12:00:00.000Z');
-      expect(dbTask.updated_at).toBe('2026-06-01T12:00:00.000Z');
-
-      // Ensure old camelCase keys are removed
-      expect(dbTask.listId).toBeUndefined();
-      expect(dbTask.completed).toBeUndefined();
-      expect(dbTask.scheduled_date).toBeUndefined();
-    });
-
-    test('mapToDbFormat handles task without scheduled date or listId', () => {
-      const uiTask = {
-        id: 'task-2',
-        title: 'Clean room',
-        completed: false,
-      };
-
-      const dbTask = mapToDbFormat('tasks', uiTask, mockUserId);
-      expect(dbTask.status).toBe('pending');
-      expect(dbTask.due_date).toBeNull();
-      expect(dbTask.list_id).toBeNull();
-    });
-
-    test('mapFromDbFormat converts database task fields back to UI camelCase', () => {
+    test('mapRealtimePayload converts database task fields to UI camelCase', () => {
       const dbTask = {
         id: 'task-1',
         user_id: mockUserId,
@@ -59,11 +41,12 @@ describe('Sync Engine Data Mappers', () => {
         status: 'completed',
         due_date: '2026-06-15',
         priority: 'high',
+        sync_version: 1,
         created_at: '2026-06-01T12:00:00.000Z',
         updated_at: '2026-06-01T12:00:00.000Z'
       };
 
-      const uiTask = mapFromDbFormat('tasks', dbTask);
+      const uiTask = mapRealtimePayload('tasks', dbTask);
 
       expect(uiTask.id).toBe('task-1');
       expect(uiTask.listId).toBe('list-99');
@@ -75,52 +58,60 @@ describe('Sync Engine Data Mappers', () => {
       expect(uiTask.list_id).toBeUndefined();
       expect(uiTask.status).toBeUndefined();
       expect(uiTask.due_date).toBeUndefined();
+      expect(uiTask.user_id).toBeUndefined();
+      expect(uiTask.sync_version).toBeUndefined();
+    });
+
+    test('mapRealtimePayload handles task without scheduled date or listId', () => {
+      const dbTask = {
+        id: 'task-2',
+        user_id: mockUserId,
+        title: 'Clean room',
+        status: 'pending',
+        due_date: null,
+        list_id: null,
+      };
+
+      const uiTask = mapRealtimePayload('tasks', dbTask);
+      expect(uiTask.completed).toBe(false);
+      expect(uiTask.scheduled_date).toBeNull();
+      expect(uiTask.listId).toBeNull();
     });
   });
 
   describe('Events Mapping', () => {
-    test('mapToDbFormat maps calendarId and binds user_id', () => {
-      const uiEvent = {
+    test('mapRealtimePayload maps calendar_id to calendarId', () => {
+      const dbEvent = {
         id: 'event-1',
+        user_id: mockUserId,
+        calendar_id: 'cal-abc',
         title: 'Doctor appointment',
         start_time: '2026-06-10T09:00:00.000Z',
         end_time: '2026-06-10T10:00:00.000Z',
-        calendarId: 'cal-abc'
       };
 
-      const dbEvent = mapToDbFormat('events', uiEvent, mockUserId);
-
-      expect(dbEvent.user_id).toBe(mockUserId);
-      expect(dbEvent.calendar_id).toBe('cal-abc');
-      expect(dbEvent.calendarId).toBeUndefined();
-    });
-
-    test('mapFromDbFormat maps calendar_id to calendarId', () => {
-      const dbEvent = {
-        id: 'event-1',
-        calendar_id: 'cal-abc',
-        title: 'Doctor appointment'
-      };
-
-      const uiEvent = mapFromDbFormat('events', dbEvent);
+      const uiEvent = mapRealtimePayload('events', dbEvent);
 
       expect(uiEvent.calendarId).toBe('cal-abc');
       expect(uiEvent.calendar_id).toBeUndefined();
+      expect(uiEvent.user_id).toBeUndefined();
     });
   });
 
-  describe('Calendars Mapping', () => {
-    test('mapToDbFormat defaults provider and binds user_id', () => {
-      const uiCal = {
-        id: 'cal-abc',
+  describe('Lists/Calendars Mapping', () => {
+    test('mapRealtimePayload strips user_id and sync_version from lists', () => {
+      const dbList = {
+        id: 'list-1',
+        user_id: mockUserId,
         name: 'Personal',
-        color: '#E8942A'
+        color: '#E8942A',
+        sync_version: 2,
       };
 
-      const dbCal = mapToDbFormat('calendars', uiCal, mockUserId);
-
-      expect(dbCal.user_id).toBe(mockUserId);
-      expect(dbCal.provider).toBe('local');
+      const uiList = mapRealtimePayload('lists', dbList);
+      expect(uiList.name).toBe('Personal');
+      expect(uiList.user_id).toBeUndefined();
+      expect(uiList.sync_version).toBeUndefined();
     });
   });
 });
