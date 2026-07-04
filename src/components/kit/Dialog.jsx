@@ -151,7 +151,7 @@ export function Dialog(props) {
     return (
       <div
         ref={overlayRef}
-        class="fixed inset-0 z-50 flex items-end justify-center bg-overlay backdrop-blur-[2px] p-0 sm:items-center sm:p-4"
+        class="fixed inset-0 z-[var(--z-dialog,70)] flex items-end justify-center bg-overlay backdrop-blur-[2px] p-0 sm:items-center sm:p-4"
         onClick={(e) => {
           // Backdrop only — clicks inside the panel never close.
           if (e.target === overlayRef) close();

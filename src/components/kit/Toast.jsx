@@ -211,8 +211,9 @@ export function ToastRegion(props) {
       class={cx(
         // Fixed stack: spacing-4 inset, spacing-3 gap between toasts. The
         // region itself ignores pointer events; each Toast re-enables them.
-        // z via token with the Astryx viewport z-index (500) as fallback.
-        'astryx-toast-region pointer-events-none fixed z-[var(--z-toast,500)] flex gap-3 p-4',
+        // z from the shell z-index scale (:root in styles.css); fallback
+        // keeps toasts topmost when the app stylesheet isn't loaded.
+        'astryx-toast-region pointer-events-none fixed z-[var(--z-toast,80)] flex gap-3 p-4',
         REGION_POSITION_CLASSES[local.position] ?? REGION_POSITION_CLASSES.bottomEnd,
         local.class,
       )}

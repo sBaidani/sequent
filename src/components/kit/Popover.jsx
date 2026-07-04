@@ -13,9 +13,10 @@
  * calls `onClose`, and the anchor is an external element via `anchorRef` —
  * the Astryx trigger-wrapping mode does not translate to Solid cleanly.
  *
- * Layering: the panel gets `z-index: var(--z-popover, 1000)` so apps can
- * re-stack every popover through one custom property instead of scattering
- * magic numbers.
+ * Layering: the panel gets `z-index: var(--z-popover)` from the shell
+ * z-index scale defined on :root in styles.css (scrim 40 < sidenav 50 <
+ * popover 60 < dialog 70 < toast 80); the 60 fallback keeps the ordering
+ * meaningful when the app stylesheet isn't loaded.
  *
  * @example
  * let anchor;
@@ -295,7 +296,7 @@ export function Popover(props) {
           left: `${pos()?.left ?? 0}px`,
           // Hidden until the first measure so there's no top-left flash.
           visibility: pos() ? 'visible' : 'hidden',
-          'z-index': 'var(--z-popover, 1000)',
+          'z-index': 'var(--z-popover, 60)',
           width: typeof props.width === 'number' ? `${props.width}px` : props.width,
           'min-width': anchorWidth() != null ? `${anchorWidth()}px` : undefined,
         }}

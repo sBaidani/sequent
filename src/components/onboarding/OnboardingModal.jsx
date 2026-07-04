@@ -13,7 +13,7 @@ function OnboardingModal() {
   };
 
   return (
-    <div class="fixed inset-0 bg-body/80 backdrop-blur-md flex items-center justify-center z-[10000]">
+    <div class="fixed inset-0 bg-body/80 backdrop-blur-md flex items-center justify-center z-[var(--z-dialog,70)]">
       <div class="bg-popover/85 w-full max-w-[480px] rounded-[20px] p-10 text-center border border-border text-primary shadow-2xl">
         <div class="flex gap-2 justify-center mb-8">
           <div class={`w-8 h-1 rounded-full transition-colors ${step() >= 1 ? 'bg-accent' : 'bg-primary/20'}`} />

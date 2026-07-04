@@ -1,5 +1,7 @@
 // Kit barrel — public components of the Sequent Solid kit (Astryx re-implementations).
 // Import from '.../components/kit' instead of reaching into individual files.
+export { AppShell } from './AppShell';
+export { SideNav, SideNavSection, SideNavHeading, SideNavItem, SideNavCollapseButton } from './SideNav';
 export { Button } from './Button';
 export { IconButton } from './IconButton';
 export { Dialog, DialogHeader, DialogBody, DialogFooter } from './Dialog';

@@ -72,7 +72,7 @@ function DatePicker(props) {
         <Portal>
           <div 
             ref={popoverRef}
-            class="fixed z-[9999] p-4 bg-body/40 border border-border rounded-xl shadow-2xl backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200 w-[280px]"
+            class="fixed z-[var(--z-dialog,70)] p-4 bg-body/40 border border-border rounded-xl shadow-2xl backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200 w-[280px]"
             style={{ top: `${coords().top}px`, left: `${coords().left}px` }}
           >
             <div class="flex justify-between items-center mb-4">

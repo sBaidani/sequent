@@ -83,7 +83,7 @@ function Modal(props) {
       <Show when={uiStore.state.activeModal === props.id}>
         <div 
           id={props.id}
-          class="absolute inset-0 bg-body/60 backdrop-blur-[2px] z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 opacity-100 transition-opacity" 
+          class="absolute inset-0 bg-body/60 backdrop-blur-[2px] z-[var(--z-dialog,70)] flex items-end sm:items-center justify-center p-0 sm:p-4 opacity-100 transition-opacity"
           ref={overlayRef} 
           onClick={handleOverlayClick}
         >

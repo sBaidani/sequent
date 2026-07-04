@@ -57,7 +57,7 @@ function ColorPicker(props) {
         <Portal>
           <div 
             ref={popoverRef}
-            class="fixed z-[9999] p-3 bg-body/40 border border-border rounded-xl shadow-2xl backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200 w-[200px]"
+            class="fixed z-[var(--z-dialog,70)] p-3 bg-body/40 border border-border rounded-xl shadow-2xl backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200 w-[200px]"
             style={{ top: `${coords().top}px`, left: `${coords().left}px` }}
           >
           <div class="font-display lowercase text-[11px] font-bold text-disabled mb-2 tracking-wider">Presets</div>

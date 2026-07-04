@@ -17,14 +17,29 @@
   --ease-spring-bouncy: linear(0, 0.155 3.3%, 0.493 9.6%, 0.771 16.3%, 0.929 23.8%, 0.985 32.3%, 0.998 42.1%, 1);
 }
 
-/* Legacy runtime accent vars — no CSS/JSX consumers remain after the Phase 1b
- * sweep (orbs/glow/pulseGlow now use var(--color-accent) via color-mix or
- * accent utilities). Kept because uiStore.js still writes the inline versions
- * (asserted by unit + e2e tests); remove both together in Phase 5. */
+/* Legacy runtime accent vars — no CSS/JSX consumers remain (the aurora orbs
+ * were retired in Phase 3; glow/pulseGlow use var(--color-accent) via
+ * color-mix or accent utilities). Kept because uiStore.js still writes the
+ * inline versions (asserted by unit + e2e tests); remove both together in
+ * Phase 5. */
 :root {
   --accent: #E8942A;
   --accent-rgb: 232, 148, 42;
   --secondary-rgb: 175, 82, 222;
+}
+
+/* Shell layering scale (Phase 3) — the ONLY z-index values shell layers may
+ * use. Kit AppShell/SideNav/Popover/Dialog/Toast consume these; app code must
+ * reference the vars (z-[var(--z-…)]), never ad-hoc z-[9999]-style numbers.
+ * View-internal stacking (timeline canvas z-1/z-2 etc.) is separate and fine.
+ * --sidenav-width is the side-nav region budget (Astryx budget: 256–280px). */
+:root {
+  --z-scrim: 40;
+  --z-sidenav: 50;
+  --z-popover: 60;
+  --z-dialog: 70;
+  --z-toast: 80;
+  --sidenav-width: 272px;
 }
 
 @layer base {
@@ -51,15 +66,6 @@
 }
 .animate-pulse-glow {
   animation: pulseGlow 4s ease-in-out infinite;
-}
-
-/* Glassmorphic Sidebar — kept raw on purpose (dark glass in both modes);
- * scheduled for retirement/redesign in Phase 3 with the SideNav swap. */
-.glass-sidebar {
-  background-color: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(40px);
-  -webkit-backdrop-filter: blur(40px);
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* Satifying Checkbox & Strike Animations */
@@ -158,8 +164,10 @@ html, body {
   transition: background-color 0.5s var(--ease-spring-smooth), color 0.5s var(--ease-spring-smooth);
 }
 #root {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  /* dvh, not vh: 100vh breaks under the Android WebView keyboard (audit §3).
+   * AppShell sizes itself with h-dvh; #root must not clip it. */
+  height: 100dvh;
   display: flex;
   flex-direction: column;
 }

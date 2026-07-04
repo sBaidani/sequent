@@ -65,7 +65,7 @@ function SelectPicker(props) {
         <Portal>
           <div 
             ref={popoverRef}
-            class="fixed z-[9999] py-1.5 bg-body/40 border border-border rounded-xl shadow-2xl backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200 max-h-[300px] overflow-y-auto"
+            class="fixed z-[var(--z-dialog,70)] py-1.5 bg-body/40 border border-border rounded-xl shadow-2xl backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200 max-h-[300px] overflow-y-auto"
             style={{ top: `${coords().top}px`, left: `${coords().left}px`, width: `${Math.max(coords().width, 200)}px` }}
           >
             <For each={props.options}>
