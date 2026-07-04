@@ -4,7 +4,7 @@ function ErrorBoundary(props) {
   return (
     <SolidErrorBoundary
       fallback={(err, reset) => (
-        <div class="flex flex-col items-center justify-center h-screen w-screen bg-bg-theme text-text-primary text-center p-5">
+        <div class="flex flex-col items-center justify-center h-screen w-screen bg-body text-primary text-center p-5">
           <div class="font-display lowercase text-5xl mb-4">⚠️</div>
           <h2 class="font-display lowercase mb-3 text-accent">Something went wrong.</h2>
           <p class="text-[#888] mb-6 max-w-[400px]">
@@ -14,7 +14,7 @@ function ErrorBoundary(props) {
           </p>
           <button 
             onClick={reset}
-            class="px-6 py-3 rounded-lg bg-accent text-text-primary font-semibold border-none cursor-pointer hover:bg-accent/80 transition-colors shadow-lg shadow-accent/20"
+            class="px-6 py-3 rounded-lg bg-accent text-primary font-semibold border-none cursor-pointer hover:bg-accent/80 transition-colors shadow-lg shadow-accent/20"
           >
             Try Again
           </button>

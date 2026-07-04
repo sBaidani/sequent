@@ -39,14 +39,14 @@ function DurationPicker(props) {
               min="1"
               value={customVal()}
               onInput={(e) => setCustomVal(e.target.value)}
-              class="flex-1 bg-text-primary/5 border border-border-theme text-text-primary rounded-xl px-4 py-2.5 outline-none focus:border-accent transition-colors text-sm font-medium"
+              class="flex-1 bg-primary/5 border border-border text-primary rounded-xl px-4 py-2.5 outline-none focus:border-accent transition-colors text-sm font-medium"
               placeholder="Minutes..."
               autoFocus
             />
-            <span class="text-text-muted text-sm font-medium">min</span>
+            <span class="text-disabled text-sm font-medium">min</span>
             <button
               type="submit"
-              class="bg-accent text-text-primary px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-accent/80 transition-colors shrink-0"
+              class="bg-accent text-primary px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-accent/80 transition-colors shrink-0"
             >
               Set
             </button>
@@ -57,7 +57,7 @@ function DurationPicker(props) {
                 // If the current actual prop value is custom, maybe we keep it selected?
                 // Actually, just go back to presets.
               }}
-              class="bg-text-primary/10 text-text-primary px-3 py-2.5 rounded-xl text-sm font-semibold hover:bg-text-primary/20 transition-colors shrink-0"
+              class="bg-primary/10 text-primary px-3 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary/20 transition-colors shrink-0"
             >
               ×
             </button>
@@ -72,8 +72,8 @@ function DurationPicker(props) {
                 onClick={() => props.onChange(preset.value)}
                 class={`shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 border ${
                   props.value === preset.value
-                    ? 'bg-accent text-text-primary border-accent shadow-md scale-105'
-                    : 'bg-text-primary/5 text-text-secondary border-border-theme hover:bg-text-primary/10 hover:text-text-primary'
+                    ? 'bg-accent text-primary border-accent shadow-md scale-105'
+                    : 'bg-primary/5 text-secondary border-border hover:bg-primary/10 hover:text-primary'
                 }`}
               >
                 {preset.label}
@@ -85,8 +85,8 @@ function DurationPicker(props) {
             onClick={() => setIsCustom(true)}
             class={`shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 border ${
               !presets.find(p => p.value === props.value) && props.value !== undefined
-                ? 'bg-accent text-text-primary border-accent shadow-md scale-105'
-                : 'bg-text-primary/5 text-text-secondary border-border-theme hover:bg-text-primary/10 hover:text-text-primary'
+                ? 'bg-accent text-primary border-accent shadow-md scale-105'
+                : 'bg-primary/5 text-secondary border-border hover:bg-primary/10 hover:text-primary'
             }`}
           >
             {!presets.find(p => p.value === props.value) && props.value !== undefined ? `${props.value}m` : 'Custom...'}

@@ -118,10 +118,10 @@ function AddEventModal() {
 
   return (
     <Modal id="addEvent" wide={true} noPadding={true}>
-      <div class="flex flex-col sm:flex-row w-full bg-modal-bg rounded-2xl overflow-hidden h-full min-h-0 max-h-[90vh]">
+      <div class="flex flex-col sm:flex-row w-full bg-popover/85 rounded-2xl overflow-hidden h-full min-h-0 max-h-[90vh]">
         
         {/* Left Pane - Form */}
-        <div class="flex-1 flex flex-col min-h-0 border-r border-border-theme">
+        <div class="flex-1 flex flex-col min-h-0 border-r border-border">
           <form onSubmit={handleSubmit} class="flex flex-col flex-1 min-h-0">
             <div class="flex-1 overflow-y-auto p-6 pb-4 flex flex-col gap-4">
             <div>
@@ -131,39 +131,39 @@ function AddEventModal() {
                 placeholder="Event Title"
                 value={title()}
                 onInput={(e) => setTitle(e.target.value)}
-                class="w-full bg-transparent border-none px-0 py-2 text-text-primary text-3xl font-bold placeholder:text-text-muted outline-none"
+                class="w-full bg-transparent border-none px-0 py-2 text-primary text-3xl font-bold placeholder:text-disabled outline-none"
                 required
               />
             </div>
 
             <div>
-              <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Description</label>
+              <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">Description</label>
               <textarea 
                 placeholder="Add details..."
                 value={description()}
                 onInput={(e) => setDescription(e.target.value)}
-                class="w-full bg-text-primary/5 border border-border-theme rounded-xl px-3.5 py-3 text-text-primary text-[15px] outline-none focus:border-accent transition-colors resize-none h-16"
+                class="w-full bg-primary/5 border border-border rounded-xl px-3.5 py-3 text-primary text-[15px] outline-none focus:border-accent transition-colors resize-none h-16"
               />
             </div>
 
             <div class="flex items-center gap-2 mb-2">
               <label class="flex items-center gap-2 cursor-pointer group">
-                <div class="relative w-10 h-6 bg-text-primary/10 rounded-full transition-colors group-hover:bg-text-primary/20" classList={{ '!bg-accent': allDay() }}>
-                  <div class="absolute left-1 top-1 w-4 h-4 bg-text-primary rounded-full transition-transform shadow-sm" classList={{ 'translate-x-4 bg-bg-theme': allDay() }} />
+                <div class="relative w-10 h-6 bg-primary/10 rounded-full transition-colors group-hover:bg-primary/20" classList={{ '!bg-accent': allDay() }}>
+                  <div class="absolute left-1 top-1 w-4 h-4 bg-primary rounded-full transition-transform shadow-sm" classList={{ 'translate-x-4 bg-body': allDay() }} />
                 </div>
                 <input type="checkbox" class="hidden" checked={allDay()} onChange={(e) => setAllDay(e.target.checked)} />
-                <span class="text-[13px] font-bold text-text-primary">All-Day</span>
+                <span class="text-[13px] font-bold text-primary">All-Day</span>
               </label>
             </div>
 
             <Show when={allDay()}>
               <div class="flex flex-col sm:flex-row gap-4">
                 <div class="flex-1">
-                  <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Start Date</label>
+                  <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">Start Date</label>
                   <DatePicker value={date()} onChange={(v) => setDate(v)} />
                 </div>
                 <div class="flex-1">
-                  <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">End Date</label>
+                  <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">End Date</label>
                   <DatePicker value={endDate()} onChange={(v) => setEndDate(v)} />
                 </div>
               </div>
@@ -172,22 +172,22 @@ function AddEventModal() {
             <Show when={!allDay()}>
               <div class="flex flex-col sm:flex-row gap-4">
                 <div class="flex-1">
-                  <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Start Date</label>
+                  <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">Start Date</label>
                   <DatePicker value={date()} onChange={(v) => setDate(v)} />
                 </div>
                 <div class="flex-1 sm:min-w-[140px]">
-                  <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Start Time</label>
+                  <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">Start Time</label>
                   <TimePicker value={time()} onChange={(v) => setTime(v)} />
                 </div>
               </div>
 
               <div class="flex flex-col sm:flex-row gap-4">
                 <div class="flex-1">
-                  <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">End Date</label>
+                  <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">End Date</label>
                   <DatePicker value={endDate()} onChange={(v) => setEndDate(v)} />
                 </div>
                 <div class="flex-1 sm:min-w-[140px]">
-                  <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">End Time</label>
+                  <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">End Time</label>
                   <TimePicker value={endTime()} onChange={(v) => setEndTime(v)} />
                 </div>
               </div>
@@ -195,15 +195,15 @@ function AddEventModal() {
             
             <Show when={!allDay()}>
               <div class="flex items-center gap-2">
-                <button type="button" onClick={() => setDurationPill(15)} class={`px-3 py-1.5 rounded-full text-xs font-semibold border ${currentDurationMins() === 15 ? 'bg-accent/20 border-accent text-accent' : 'bg-text-primary/5 border-border-theme text-text-secondary hover:bg-text-primary/10 transition-colors'}`}>15m</button>
-                <button type="button" onClick={() => setDurationPill(30)} class={`px-3 py-1.5 rounded-full text-xs font-semibold border ${currentDurationMins() === 30 ? 'bg-accent/20 border-accent text-accent' : 'bg-text-primary/5 border-border-theme text-text-secondary hover:bg-text-primary/10 transition-colors'}`}>30m</button>
-                <button type="button" onClick={() => setDurationPill(60)} class={`px-3 py-1.5 rounded-full text-xs font-semibold border ${currentDurationMins() === 60 ? 'bg-accent/20 border-accent text-accent' : 'bg-text-primary/5 border-border-theme text-text-secondary hover:bg-text-primary/10 transition-colors'}`}>1h</button>
-                <button type="button" onClick={() => setDurationPill(120)} class={`px-3 py-1.5 rounded-full text-xs font-semibold border ${currentDurationMins() === 120 ? 'bg-accent/20 border-accent text-accent' : 'bg-text-primary/5 border-border-theme text-text-secondary hover:bg-text-primary/10 transition-colors'}`}>2h</button>
+                <button type="button" onClick={() => setDurationPill(15)} class={`px-3 py-1.5 rounded-full text-xs font-semibold border ${currentDurationMins() === 15 ? 'bg-accent/20 border-accent text-accent' : 'bg-primary/5 border-border text-secondary hover:bg-primary/10 transition-colors'}`}>15m</button>
+                <button type="button" onClick={() => setDurationPill(30)} class={`px-3 py-1.5 rounded-full text-xs font-semibold border ${currentDurationMins() === 30 ? 'bg-accent/20 border-accent text-accent' : 'bg-primary/5 border-border text-secondary hover:bg-primary/10 transition-colors'}`}>30m</button>
+                <button type="button" onClick={() => setDurationPill(60)} class={`px-3 py-1.5 rounded-full text-xs font-semibold border ${currentDurationMins() === 60 ? 'bg-accent/20 border-accent text-accent' : 'bg-primary/5 border-border text-secondary hover:bg-primary/10 transition-colors'}`}>1h</button>
+                <button type="button" onClick={() => setDurationPill(120)} class={`px-3 py-1.5 rounded-full text-xs font-semibold border ${currentDurationMins() === 120 ? 'bg-accent/20 border-accent text-accent' : 'bg-primary/5 border-border text-secondary hover:bg-primary/10 transition-colors'}`}>2h</button>
               </div>
             </Show>
 
             <div>
-              <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Calendar</label>
+              <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">Calendar</label>
               <SelectPicker 
                 value={calendarId()} 
                 onChange={setCalendarId}
@@ -220,7 +220,7 @@ function AddEventModal() {
                 </button>
               ) : (
                 <div class="flex flex-col gap-1.5">
-                  <label class="font-display lowercase flex text-xs text-text-muted font-semibold tracking-wider justify-between items-center">
+                  <label class="font-display lowercase flex text-xs text-disabled font-semibold tracking-wider justify-between items-center">
                     <span>Repeat</span>
                     <span class="text-accent cursor-pointer hover:underline normal-case tracking-normal" onClick={() => { setShowRecurrence(false); setRecurrence('NONE'); }}>Remove</span>
                   </label>
@@ -239,10 +239,10 @@ function AddEventModal() {
             </div>
 
             </div>
-            <div class="p-6 pt-4 border-t border-border-theme bg-modal-bg flex-shrink-0">
+            <div class="p-6 pt-4 border-t border-border bg-popover/85 flex-shrink-0">
               <button 
                 type="submit"
-                class="w-full bg-accent text-text-primary border-none p-3.5 rounded-xl text-[15px] font-bold cursor-pointer hover:bg-accent/80 transition-colors shadow-lg shadow-accent/20"
+                class="w-full bg-accent text-primary border-none p-3.5 rounded-xl text-[15px] font-bold cursor-pointer hover:bg-accent/80 transition-colors shadow-lg shadow-accent/20"
               >
                 Add Event
               </button>

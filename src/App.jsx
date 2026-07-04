@@ -31,9 +31,9 @@ function App() {
   return (
     <div class="w-full h-full flex bg-black relative overflow-hidden">
       {/* Aurora Glow Orbs for Glassmorphism (Dynamic to Theme) */}
-      <div class="absolute top-[-5%] left-[-5%] w-[400px] h-[400px] bg-[rgba(var(--accent-rgb),0.25)] rounded-full blur-[100px] pointer-events-none" />
-      <div class="absolute top-[35%] left-[-10%] w-[350px] h-[350px] bg-[rgba(var(--secondary-rgb),0.2)] rounded-full blur-[100px] pointer-events-none" />
-      <div class="absolute bottom-[-10%] left-[0%] w-[500px] h-[500px] bg-[rgba(var(--accent-rgb),0.25)] rounded-full blur-[120px] pointer-events-none" />
+      <div class="absolute top-[-5%] left-[-5%] w-[400px] h-[400px] bg-accent-bg/25 rounded-full blur-[100px] pointer-events-none" />
+      <div class="absolute top-[35%] left-[-10%] w-[350px] h-[350px] bg-purple-vivid/20 rounded-full blur-[100px] pointer-events-none" />
+      <div class="absolute bottom-[-10%] left-[0%] w-[500px] h-[500px] bg-accent-bg/25 rounded-full blur-[120px] pointer-events-none" />
 
       <Sidebar />
       
@@ -41,11 +41,11 @@ function App() {
       <Show when={uiState.sidebarOpen}>
         <div 
           onClick={() => uiStore.toggleSidebar()} 
-          class="fixed inset-0 bg-bg-theme/40 backdrop-blur-sm z-[90] lg:hidden"
+          class="fixed inset-0 bg-body/40 backdrop-blur-sm z-[90] lg:hidden"
         />
       </Show>
       
-      <div id="main-content" class="flex-1 h-[calc(100vh-16px)] my-2 mx-2 lg:ml-0 rounded-[32px] flex flex-col relative overflow-hidden bg-bg-theme text-text-primary shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+      <div id="main-content" class="flex-1 h-[calc(100vh-16px)] my-2 mx-2 lg:ml-0 rounded-[32px] flex flex-col relative overflow-hidden bg-body text-primary shadow-[0_0_40px_rgba(0,0,0,0.5)]">
         <div class="flex-1 flex flex-col overflow-hidden h-full relative">
           <Transition 
             onEnter={(el, done) => {

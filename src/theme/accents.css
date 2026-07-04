@@ -1,0 +1,71 @@
+/*
+ * Sequent accent variants
+ *
+ * The 6 user-selectable accents from the Settings picker. Each block
+ * overrides ONLY the accent-family tokens of the built sequent theme
+ * (src/theme/sequent.css): --color-accent, --color-accent-muted,
+ * --color-on-accent, --color-text-accent, --color-icon-accent.
+ * Accent-derived inset shadows follow via var(--color-accent).
+ *
+ * uiStore.js sets document.documentElement.dataset.accent to the slug.
+ * "amber" is the built-in default (identical to the base theme tokens —
+ * kept here so every slug is explicit).
+ *
+ * Light mode reuses the app's historical desaturation: 75% accent mixed
+ * with 25% #666666, expressed via light-dark() + color-mix() so the mode
+ * is driven by color-scheme, not a class.
+ *
+ * Kept as a separate file (not defineTheme variants) because an Astryx
+ * theme carries a single accent; these are runtime token overrides in the
+ * same astryx-theme layer, scoped to the same themed root.
+ */
+
+@layer astryx-theme {
+  :root[data-accent="amber"] {
+    --color-accent: light-dark(color-mix(in srgb, #E8942A 75%, #666666), #E8942A);
+    --color-accent-muted: light-dark(color-mix(in srgb, #E8942A 20%, transparent), color-mix(in srgb, #E8942A 25%, transparent));
+    --color-text-accent: light-dark(color-mix(in srgb, #E8942A 75%, #666666), #E8942A);
+    --color-icon-accent: light-dark(color-mix(in srgb, #E8942A 75%, #666666), #E8942A);
+    --color-on-accent: #ffffff;
+  }
+
+  :root[data-accent="rose"] {
+    --color-accent: light-dark(color-mix(in srgb, #C0185A 75%, #666666), #C0185A);
+    --color-accent-muted: light-dark(color-mix(in srgb, #C0185A 20%, transparent), color-mix(in srgb, #C0185A 25%, transparent));
+    --color-text-accent: light-dark(color-mix(in srgb, #C0185A 75%, #666666), #C0185A);
+    --color-icon-accent: light-dark(color-mix(in srgb, #C0185A 75%, #666666), #C0185A);
+    --color-on-accent: #ffffff;
+  }
+
+  :root[data-accent="teal"] {
+    --color-accent: light-dark(color-mix(in srgb, #1FA7A7 75%, #666666), #1FA7A7);
+    --color-accent-muted: light-dark(color-mix(in srgb, #1FA7A7 20%, transparent), color-mix(in srgb, #1FA7A7 25%, transparent));
+    --color-text-accent: light-dark(color-mix(in srgb, #1FA7A7 75%, #666666), #1FA7A7);
+    --color-icon-accent: light-dark(color-mix(in srgb, #1FA7A7 75%, #666666), #1FA7A7);
+    --color-on-accent: #ffffff;
+  }
+
+  :root[data-accent="purple"] {
+    --color-accent: light-dark(color-mix(in srgb, #6B5BDB 75%, #666666), #6B5BDB);
+    --color-accent-muted: light-dark(color-mix(in srgb, #6B5BDB 20%, transparent), color-mix(in srgb, #6B5BDB 25%, transparent));
+    --color-text-accent: light-dark(color-mix(in srgb, #6B5BDB 75%, #666666), #6B5BDB);
+    --color-icon-accent: light-dark(color-mix(in srgb, #6B5BDB 75%, #666666), #6B5BDB);
+    --color-on-accent: #ffffff;
+  }
+
+  :root[data-accent="blue"] {
+    --color-accent: light-dark(color-mix(in srgb, #3B6ED6 75%, #666666), #3B6ED6);
+    --color-accent-muted: light-dark(color-mix(in srgb, #3B6ED6 20%, transparent), color-mix(in srgb, #3B6ED6 25%, transparent));
+    --color-text-accent: light-dark(color-mix(in srgb, #3B6ED6 75%, #666666), #3B6ED6);
+    --color-icon-accent: light-dark(color-mix(in srgb, #3B6ED6 75%, #666666), #3B6ED6);
+    --color-on-accent: #ffffff;
+  }
+
+  :root[data-accent="graphite"] {
+    --color-accent: light-dark(color-mix(in srgb, #888888 75%, #666666), #888888);
+    --color-accent-muted: light-dark(color-mix(in srgb, #888888 20%, transparent), color-mix(in srgb, #888888 25%, transparent));
+    --color-text-accent: light-dark(color-mix(in srgb, #888888 75%, #666666), #888888);
+    --color-icon-accent: light-dark(color-mix(in srgb, #888888 75%, #666666), #888888);
+    --color-on-accent: #ffffff;
+  }
+}

@@ -35,13 +35,13 @@ function EditableItem(props) {
             setIsEditing(false);
           }
         }}
-        class="bg-transparent border-none text-text-primary text-sm font-semibold outline-none w-full pr-8"
+        class="bg-transparent border-none text-primary text-sm font-semibold outline-none w-full pr-8"
         placeholder={props.placeholder || "Name..."}
       />
       {isEditing() && (
         <button 
           onClick={handleSave}
-          class="absolute right-1 text-text-primary bg-accent hover:bg-accent/80 rounded-md p-1 cursor-pointer transition-colors border-none flex items-center justify-center animate-in fade-in shadow-md"
+          class="absolute right-1 text-primary bg-accent hover:bg-accent/80 rounded-md p-1 cursor-pointer transition-colors border-none flex items-center justify-center animate-in fade-in shadow-md"
           title="Save changes"
         >
           <Check class="w-3.5 h-3.5" />

@@ -82,57 +82,57 @@ function AddTaskModal() {
 
   return (
     <Modal id="addTask" wide={true} noPadding={true}>
-      <div class="flex flex-col sm:flex-row w-full bg-modal-bg rounded-2xl overflow-hidden">
+      <div class="flex flex-col sm:flex-row w-full bg-popover/85 rounded-2xl overflow-hidden">
         
         {/* Left Pane - Form */}
         <div class="flex-1 p-6 flex flex-col gap-4">
           <form onSubmit={handleSubmit} class="flex flex-col gap-4">
-            <h2 class="font-display lowercase text-xl font-extrabold text-text-primary mb-2">New Task</h2>
+            <h2 class="font-display lowercase text-xl font-extrabold text-primary mb-2">New Task</h2>
             
             <div>
-              <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Title</label>
+              <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">Title</label>
               <input 
                 ref={el => el && setTimeout(() => el.focus(), 50)}
                 type="text" 
                 placeholder="Buy groceries..."
                 value={title()}
                 onInput={(e) => setTitle(e.target.value)}
-                class="w-full bg-text-primary/5 border border-border-theme rounded-xl px-3.5 py-3 text-text-primary text-[15px] outline-none focus:border-accent transition-colors"
+                class="w-full bg-primary/5 border border-border rounded-xl px-3.5 py-3 text-primary text-[15px] outline-none focus:border-accent transition-colors"
                 required
               />
             </div>
 
             <div>
-              <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Description</label>
+              <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">Description</label>
               <textarea 
                 placeholder="Add details..."
                 value={description()}
                 onInput={(e) => setDescription(e.target.value)}
-                class="w-full bg-text-primary/5 border border-border-theme rounded-xl px-3.5 py-3 text-text-primary text-[15px] outline-none focus:border-accent transition-colors resize-none h-16"
+                class="w-full bg-primary/5 border border-border rounded-xl px-3.5 py-3 text-primary text-[15px] outline-none focus:border-accent transition-colors resize-none h-16"
               />
             </div>
 
             <div class="flex flex-col sm:flex-row gap-4">
               <div class="flex-1">
-                <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Due Date</label>
+                <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">Due Date</label>
                 <DatePicker value={date()} onChange={(v) => setDate(v)} />
               </div>
               <div class="flex-1 sm:min-w-[140px]">
                 <div class="flex items-center justify-between mb-1.5 h-[18px]">
-                  <label class="font-display lowercase block text-xs text-text-muted font-semibold tracking-wider">Time</label>
+                  <label class="font-display lowercase block text-xs text-disabled font-semibold tracking-wider">Time</label>
                   <div class="flex items-center gap-2">
-                    <span class="font-display lowercase text-text-secondary text-[11px] font-bold tracking-wide">All-day</span>
+                    <span class="font-display lowercase text-secondary text-[11px] font-bold tracking-wide">All-day</span>
                     <button 
                       type="button"
                       onClick={() => setAllDay(!allDay())}
-                      class={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${allDay() ? 'bg-accent' : 'bg-text-primary/20 hover:bg-text-primary/30'}`}
+                      class={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${allDay() ? 'bg-accent' : 'bg-primary/20 hover:bg-primary/30'}`}
                     >
                       <span class={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-card shadow ring-0 transition duration-200 ease-in-out ${allDay() ? 'translate-x-3' : 'translate-x-0'}`} />
                     </button>
                   </div>
                 </div>
                 {allDay() ? (
-                  <div class="w-full bg-text-primary/5 border border-border-theme rounded-xl px-3.5 py-2.5 text-text-muted text-sm font-medium flex items-center h-[46px]">--:--</div>
+                  <div class="w-full bg-primary/5 border border-border rounded-xl px-3.5 py-2.5 text-disabled text-sm font-medium flex items-center h-[46px]">--:--</div>
                 ) : (
                   <TimePicker value={time()} onChange={(v) => setTime(v)} />
                 )}
@@ -141,7 +141,7 @@ function AddTaskModal() {
 
             <div class="flex flex-col gap-4">
               <div>
-                <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">List</label>
+                <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">List</label>
                 <SelectPicker 
                   value={listId()} 
                   onChange={setListId}
@@ -151,22 +151,22 @@ function AddTaskModal() {
               </div>
               
               <div>
-                <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Priority</label>
-                <div class="flex bg-text-primary/5 rounded-xl p-1 border border-border-theme w-full">
+                <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">Priority</label>
+                <div class="flex bg-primary/5 rounded-xl p-1 border border-border w-full">
                   <button 
                     type="button"
                     onClick={() => setPriority('low')}
-                    class={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${priority() === 'low' ? 'bg-[#1FA7A7] text-text-primary shadow-md scale-105 border border-border-theme' : 'text-text-secondary hover:text-text-primary hover:bg-text-primary/5'}`}
+                    class={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${priority() === 'low' ? 'bg-[#1FA7A7] text-primary shadow-md scale-105 border border-border' : 'text-secondary hover:text-primary hover:bg-primary/5'}`}
                   >Low</button>
                   <button 
                     type="button"
                     onClick={() => setPriority('normal')}
-                    class={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${priority() === 'normal' ? 'bg-text-primary/20 text-text-primary shadow-md scale-105 border border-border-theme' : 'text-text-secondary hover:text-text-primary hover:bg-text-primary/5'}`}
+                    class={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${priority() === 'normal' ? 'bg-primary/20 text-primary shadow-md scale-105 border border-border' : 'text-secondary hover:text-primary hover:bg-primary/5'}`}
                   >Normal</button>
                   <button 
                     type="button"
                     onClick={() => setPriority('high')}
-                    class={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${priority() === 'high' ? 'bg-[#FF3B30] text-text-primary shadow-md scale-105 border border-border-theme' : 'text-text-secondary hover:text-text-primary hover:bg-text-primary/5'}`}
+                    class={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${priority() === 'high' ? 'bg-[#FF3B30] text-primary shadow-md scale-105 border border-border' : 'text-secondary hover:text-primary hover:bg-primary/5'}`}
                   >High</button>
                 </div>
               </div>
@@ -183,7 +183,7 @@ function AddTaskModal() {
                 </button>
               ) : (
                 <div>
-                  <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider flex justify-between">
+                  <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider flex justify-between">
                     <span>Repeat</span>
                     <span class="text-accent cursor-pointer hover:underline normal-case tracking-normal" onClick={() => { setShowRecurrence(false); setRecurrence('NONE'); }}>Remove</span>
                   </label>
@@ -203,7 +203,7 @@ function AddTaskModal() {
 
             <button 
               type="submit"
-              class="mt-2 bg-accent text-text-primary border-none p-3.5 rounded-xl text-[15px] font-bold cursor-pointer hover:bg-accent/80 transition-colors shadow-lg shadow-accent/20"
+              class="mt-2 bg-accent text-primary border-none p-3.5 rounded-xl text-[15px] font-bold cursor-pointer hover:bg-accent/80 transition-colors shadow-lg shadow-accent/20"
             >
               Add Task
             </button>

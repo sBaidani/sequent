@@ -48,7 +48,7 @@ function ColorPicker(props) {
     <div class="relative" ref={containerRef}>
       <button
         onClick={togglePicker}
-        class="w-6 h-6 rounded-full border-[1.5px] border-border-theme cursor-pointer p-0 transition-transform hover:scale-110 flex-shrink-0"
+        class="w-6 h-6 rounded-full border-[1.5px] border-border cursor-pointer p-0 transition-transform hover:scale-110 flex-shrink-0"
         style={{ background: props.value }}
         title="Choose color"
       />
@@ -57,10 +57,10 @@ function ColorPicker(props) {
         <Portal>
           <div 
             ref={popoverRef}
-            class="fixed z-[9999] p-3 bg-bg-theme/40 border border-border-theme rounded-xl shadow-2xl backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200 w-[200px]"
+            class="fixed z-[9999] p-3 bg-body/40 border border-border rounded-xl shadow-2xl backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200 w-[200px]"
             style={{ top: `${coords().top}px`, left: `${coords().left}px` }}
           >
-          <div class="font-display lowercase text-[11px] font-bold text-text-muted mb-2 tracking-wider">Presets</div>
+          <div class="font-display lowercase text-[11px] font-bold text-disabled mb-2 tracking-wider">Presets</div>
           <div class="grid grid-cols-4 gap-2 mb-3">
             <For each={themes}>{t => (
               <button
@@ -68,13 +68,13 @@ function ColorPicker(props) {
                   props.onChange(t.color);
                   setIsOpen(false);
                 }}
-                class={`w-8 h-8 rounded-full transition-transform hover:scale-110 border-2 cursor-pointer ${props.value === t.color ? 'border-text-primary' : 'border-transparent'}`}
+                class={`w-8 h-8 rounded-full transition-transform hover:scale-110 border-2 cursor-pointer ${props.value === t.color ? 'border-primary' : 'border-transparent'}`}
                 style={{ background: t.color }}
                 title={t.name}
               />
             )}</For>
           </div>
-          <div class="font-display lowercase text-[11px] font-bold text-text-muted mb-2 tracking-wider border-t border-border-theme pt-2 mt-1">Custom</div>
+          <div class="font-display lowercase text-[11px] font-bold text-disabled mb-2 tracking-wider border-t border-border pt-2 mt-1">Custom</div>
           <div class="flex gap-2">
             <input 
               type="color" 

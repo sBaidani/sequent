@@ -129,8 +129,8 @@ function SidebarAtAGlance() {
           classList={{
             "group flex items-center justify-between gap-4 bg-accent/10 border border-accent/20 rounded-2xl p-4 transition-all duration-300": true,
             "hover:bg-accent/20 cursor-pointer": !!displayData(),
-            "animate-pulse-glow hover:!shadow-[0_0_35px_rgba(var(--accent-rgb),0.8)]": displayData()?.pulse,
-            "shadow-[0_0_20px_rgba(var(--accent-rgb),0.2)] hover:shadow-[0_0_25px_rgba(var(--accent-rgb),0.4)]": displayData() && !displayData().pulse
+            "animate-pulse-glow hover:!shadow-[0_0_35px_color-mix(in_srgb,var(--color-accent)_80%,transparent)]": displayData()?.pulse,
+            "shadow-[0_0_20px_color-mix(in_srgb,var(--color-accent)_20%,transparent)] hover:shadow-[0_0_25px_color-mix(in_srgb,var(--color-accent)_40%,transparent)]": displayData() && !displayData().pulse
           }}
           onClick={() => displayData() && uiStore.setActiveEvent(displayData().event.originalId || displayData().event.id, 'event')}
         >

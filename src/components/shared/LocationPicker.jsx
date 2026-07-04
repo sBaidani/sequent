@@ -133,21 +133,21 @@ function LocationPicker(props) {
           onInput={handleInput}
           onFocus={() => setIsOpen(true)}
           placeholder="Search city..."
-          class="w-full bg-transparent border border-border-theme rounded-lg py-1.5 px-3 text-[13px] text-text-primary focus:outline-none focus:border-accent transition-colors placeholder:text-text-muted"
+          class="w-full bg-transparent border border-border rounded-lg py-1.5 px-3 text-[13px] text-primary focus:outline-none focus:border-accent transition-colors placeholder:text-disabled"
         />
         <Show when={isLoading()}>
           <div class="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 border-2 border-accent border-t-transparent rounded-full animate-spin" />
         </Show>
         
         <Show when={isOpen() && (suggestions().length > 0 || error())}>
-          <div class="absolute top-full left-0 right-0 mt-1 bg-card border border-border-theme rounded-lg shadow-xl overflow-hidden z-50 max-h-60 overflow-y-auto">
+          <div class="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-xl overflow-hidden z-50 max-h-60 overflow-y-auto">
             <Show when={error()}>
-              <div class="p-3 text-[12px] text-text-muted">{error()}</div>
+              <div class="p-3 text-[12px] text-disabled">{error()}</div>
             </Show>
             <For each={suggestions()}>
               {(loc) => (
                 <div 
-                  class="p-2.5 px-3 text-[13px] text-text-primary hover:bg-accent/10 cursor-pointer border-b border-border-theme last:border-b-0 truncate transition-colors"
+                  class="p-2.5 px-3 text-[13px] text-primary hover:bg-accent/10 cursor-pointer border-b border-border last:border-b-0 truncate transition-colors"
                   onClick={() => selectLocation(loc)}
                   title={loc.display_name}
                 >
@@ -161,7 +161,7 @@ function LocationPicker(props) {
       
       <button
         onClick={geolocate}
-        class="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg bg-text-primary/5 hover:bg-accent/20 text-text-primary border border-border-theme cursor-pointer transition-colors"
+        class="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg bg-primary/5 hover:bg-accent/20 text-primary border border-border cursor-pointer transition-colors"
         title="Use My Location"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>

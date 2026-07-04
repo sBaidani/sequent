@@ -83,12 +83,12 @@ function Modal(props) {
       <Show when={uiStore.state.activeModal === props.id}>
         <div 
           id={props.id}
-          class="absolute inset-0 bg-bg-theme/60 backdrop-blur-[2px] z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 opacity-100 transition-opacity" 
+          class="absolute inset-0 bg-body/60 backdrop-blur-[2px] z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 opacity-100 transition-opacity" 
           ref={overlayRef} 
           onClick={handleOverlayClick}
         >
           <div 
-            class={`modal-content bg-modal-bg backdrop-blur-3xl border-t sm:border border-border-theme w-full max-w-[100vw] rounded-t-2xl sm:rounded-2xl relative flex flex-col max-h-[90vh] ${props.wide ? 'sm:w-[850px] max-w-full' : (props.compact ? 'sm:w-[400px]' : 'sm:w-[500px]')}`}
+            class={`modal-content bg-popover/85 backdrop-blur-3xl border-t sm:border border-border w-full max-w-[100vw] rounded-t-2xl sm:rounded-2xl relative flex flex-col max-h-[90vh] ${props.wide ? 'sm:w-[850px] max-w-full' : (props.compact ? 'sm:w-[400px]' : 'sm:w-[500px]')}`}
             style={{
               "box-shadow": "0 32px 64px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.08), 0 0 120px -20px color-mix(in srgb, var(--color-accent) 40%, transparent)",
               "transform": `translateY(${touchDelta()}px)`,
@@ -99,8 +99,8 @@ function Modal(props) {
             onTouchEnd={handleTouchEnd}
           >
             <div class="flex items-center justify-between p-4 pb-0 mb-4 cursor-grab active:cursor-grabbing shrink-0">
-              <div class="w-12 h-1.5 bg-text-primary/20 rounded-full mx-auto sm:hidden mb-4" />
-              <button class="w-8 h-8 flex items-center justify-center rounded-full bg-text-primary/10 text-text-primary/50 hover:bg-text-primary/20 hover:text-text-primary transition-colors cursor-pointer border-none absolute right-4 top-4 z-50" onClick={() => uiStore.setActiveModal(null)}>
+              <div class="w-12 h-1.5 bg-primary/20 rounded-full mx-auto sm:hidden mb-4" />
+              <button class="w-8 h-8 flex items-center justify-center rounded-full bg-primary/10 text-primary/50 hover:bg-primary/20 hover:text-primary transition-colors cursor-pointer border-none absolute right-4 top-4 z-50" onClick={() => uiStore.setActiveModal(null)}>
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>

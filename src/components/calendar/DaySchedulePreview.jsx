@@ -130,24 +130,24 @@ function DaySchedulePreview(props) {
   });
 
   return (
-    <div class={`flex flex-col h-full min-h-[500px] border-l border-border-theme bg-bg-theme/50 transition-all duration-300 ease-in-out ${collapsed() ? 'w-12 min-w-[48px]' : 'w-[350px] min-w-[350px]'}`}>
+    <div class={`flex flex-col h-full min-h-[500px] border-l border-border bg-body/50 transition-all duration-300 ease-in-out ${collapsed() ? 'w-12 min-w-[48px]' : 'w-[350px] min-w-[350px]'}`}>
       
-      <div class="flex items-center p-4 border-b border-border-theme gap-3">
+      <div class="flex items-center p-4 border-b border-border gap-3">
         <button 
           onClick={() => setCollapsed(!collapsed())}
-          class={`flex items-center justify-center w-6 h-6 rounded border-none bg-transparent cursor-pointer hover:bg-text-primary/10 text-text-muted hover:text-text-primary transition-colors ${collapsed() ? 'mx-auto' : ''} shrink-0`}
+          class={`flex items-center justify-center w-6 h-6 rounded border-none bg-transparent cursor-pointer hover:bg-primary/10 text-disabled hover:text-primary transition-colors ${collapsed() ? 'mx-auto' : ''} shrink-0`}
           title={collapsed() ? "Expand Preview" : "Collapse Preview"}
         >
           <svg class={`w-4 h-4 transition-transform duration-300 ${collapsed() ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
         </button>
         <Show when={!collapsed()}>
           <div class="flex items-center justify-between w-full min-w-0">
-            <div class="text-[14px] font-bold text-text-primary tracking-wide truncate pr-2">
+            <div class="text-[14px] font-bold text-primary tracking-wide truncate pr-2">
               {props.mode === 'task' 
                 ? `${format(new Date(props.date.includes('T') ? props.date : props.date + 'T12:00:00'), 'eeee')} Tasks` 
                 : `${format(new Date(props.date.includes('T') ? props.date : props.date + 'T12:00:00'), 'eeee')} Events`}
             </div>
-            <div class="text-[12px] font-bold text-text-muted shrink-0">
+            <div class="text-[12px] font-bold text-disabled shrink-0">
               {format(new Date(props.date.includes('T') ? props.date : props.date + 'T12:00:00'), 'MMM d')}
             </div>
           </div>
@@ -155,9 +155,9 @@ function DaySchedulePreview(props) {
       </div>
 
       <Show when={allDayItems().length > 0 && !collapsed()}>
-        <div class="w-full border-b border-border-theme bg-bg-theme px-12 py-2 flex flex-col gap-1 max-h-[80px] overflow-y-auto relative">
-          <div class="absolute left-0 top-0 bottom-0 w-12 border-r border-border-theme flex flex-col items-center justify-center pt-1">
-             <span class="font-display lowercase text-[9px] font-bold text-text-muted tracking-wider -rotate-90 origin-center whitespace-nowrap">All Day</span>
+        <div class="w-full border-b border-border bg-body px-12 py-2 flex flex-col gap-1 max-h-[80px] overflow-y-auto relative">
+          <div class="absolute left-0 top-0 bottom-0 w-12 border-r border-border flex flex-col items-center justify-center pt-1">
+             <span class="font-display lowercase text-[9px] font-bold text-disabled tracking-wider -rotate-90 origin-center whitespace-nowrap">All Day</span>
           </div>
           <For each={allDayItems()}>
             {(item) => (
@@ -177,9 +177,9 @@ function DaySchedulePreview(props) {
           {/* Grid lines */}
           <For each={Array.from({length: 24})}>
             {(_, i) => (
-              <div class="absolute w-full h-[60px] border-b border-border-theme pointer-events-none flex" style={{ top: `${i() * 60}px` }}>
-                <div class="w-12 h-full border-r border-border-theme flex justify-center py-1">
-                  <span class="text-[10px] text-text-muted font-bold">{i() === 0 ? '12 AM' : i() < 12 ? `${i()} AM` : i() === 12 ? '12 PM' : `${i()-12} PM`}</span>
+              <div class="absolute w-full h-[60px] border-b border-border pointer-events-none flex" style={{ top: `${i() * 60}px` }}>
+                <div class="w-12 h-full border-r border-border flex justify-center py-1">
+                  <span class="text-[10px] text-disabled font-bold">{i() === 0 ? '12 AM' : i() < 12 ? `${i()} AM` : i() === 12 ? '12 PM' : `${i()-12} PM`}</span>
                 </div>
                 <div class="flex-1 h-[30px] border-b border-white/[0.03]" />
               </div>
@@ -207,7 +207,7 @@ function DaySchedulePreview(props) {
                 const height = Math.max(item.endMin - item.startMin, 30);
                 return (
                   <div 
-                    class="absolute rounded-md overflow-hidden transition-all duration-300 shadow-sm z-10 border border-border-theme bg-bg-theme text-text-primary cursor-pointer hover:z-40 hover:shadow-2xl group flex flex-col justify-start backdrop-blur-md bg-opacity-90 hover:!h-max min-h-[30px]"
+                    class="absolute rounded-md overflow-hidden transition-all duration-300 shadow-sm z-10 border border-border bg-body text-primary cursor-pointer hover:z-40 hover:shadow-2xl group flex flex-col justify-start backdrop-blur-md bg-opacity-90 hover:!h-max min-h-[30px]"
                     style={{ 
                       top: `${item.startMin}px`, 
                       height: `${height}px`,
@@ -250,7 +250,7 @@ function DaySchedulePreview(props) {
               const height = Math.max(item.endMin - item.startMin, 15);
               return (
                 <div 
-                  class={`absolute rounded-md p-1.5 overflow-hidden transition-all duration-300 shadow-sm ${item.isGhost ? 'border-2 border-dashed border-text-primary/50 bg-[var(--cal-color)]/20 animate-pulse z-20' : 'bg-[var(--cal-color)] z-10 border border-black/10 text-white'}`}
+                  class={`absolute rounded-md p-1.5 overflow-hidden transition-all duration-300 shadow-sm ${item.isGhost ? 'border-2 border-dashed border-primary/50 bg-[var(--cal-color)]/20 animate-pulse z-20' : 'bg-[var(--cal-color)] z-10 border border-black/10 text-white'}`}
                   style={{ 
                     top: `${item.startMin}px`, 
                     height: `${height}px`,
@@ -259,11 +259,11 @@ function DaySchedulePreview(props) {
                     "--cal-color": item.color
                   }}
                 >
-                  <div class={`text-[10px] font-bold leading-tight truncate ${item.isGhost ? 'text-text-primary' : 'text-white'}`}>
+                  <div class={`text-[10px] font-bold leading-tight truncate ${item.isGhost ? 'text-primary' : 'text-white'}`}>
                     {item.title}
                   </div>
                   <Show when={height >= 30}>
-                    <div class={`text-[9px] font-semibold opacity-80 ${item.isGhost ? 'text-text-secondary' : 'text-white/80'}`}>
+                    <div class={`text-[9px] font-semibold opacity-80 ${item.isGhost ? 'text-secondary' : 'text-white/80'}`}>
                       {Math.floor(item.startMin / 60)}:{(item.startMin % 60).toString().padStart(2, '0')} - {Math.floor(item.endMin / 60)}:{(item.endMin % 60).toString().padStart(2, '0')}
                     </div>
                   </Show>

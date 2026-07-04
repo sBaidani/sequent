@@ -157,29 +157,29 @@ function CalendarView() {
   };
 
   return (
-    <div class="flex flex-col h-full bg-bg-theme">
+    <div class="flex flex-col h-full bg-body">
       
       {/* Header */}
-      <div class="px-6 py-5 flex justify-between items-center border-b border-border-theme">
+      <div class="px-6 py-5 flex justify-between items-center border-b border-border">
         <div class="flex items-center gap-4">
           <button 
             onClick={() => uiStore.toggleSidebar()}
-            class="flex w-9 h-9 rounded-full bg-text-primary/5 border-none text-text-primary items-center justify-center cursor-pointer transition-colors hover:bg-text-primary/20 mr-2"
+            class="flex w-9 h-9 rounded-full bg-primary/5 border-none text-primary items-center justify-center cursor-pointer transition-colors hover:bg-primary/20 mr-2"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
           </button>
-          <h2 class="font-display lowercase text-2xl font-extrabold text-text-primary min-w-[200px]">
+          <h2 class="font-display lowercase text-2xl font-extrabold text-primary min-w-[200px]">
             {format(currentDate(), viewMode() === 'month' ? 'MMMM yyyy' : 'MMM yyyy')}
           </h2>
-          <div class="flex gap-1 bg-text-primary/10 rounded-lg p-1">
-            <button onClick={prev} class="bg-transparent border-none text-text-primary cursor-pointer p-1.5 rounded hover:bg-text-primary/10 transition-colors flex items-center justify-center"><ChevronLeft class="w-4 h-4" /></button>
-            <button onClick={today} class="bg-transparent border-none text-text-primary cursor-pointer px-3 py-1 text-[13px] font-semibold rounded hover:bg-text-primary/10 transition-colors">Today</button>
-            <button onClick={next} class="bg-transparent border-none text-text-primary cursor-pointer p-1.5 rounded hover:bg-text-primary/10 transition-colors flex items-center justify-center"><ChevronRight class="w-4 h-4" /></button>
+          <div class="flex gap-1 bg-primary/10 rounded-lg p-1">
+            <button onClick={prev} class="bg-transparent border-none text-primary cursor-pointer p-1.5 rounded hover:bg-primary/10 transition-colors flex items-center justify-center"><ChevronLeft class="w-4 h-4" /></button>
+            <button onClick={today} class="bg-transparent border-none text-primary cursor-pointer px-3 py-1 text-[13px] font-semibold rounded hover:bg-primary/10 transition-colors">Today</button>
+            <button onClick={next} class="bg-transparent border-none text-primary cursor-pointer p-1.5 rounded hover:bg-primary/10 transition-colors flex items-center justify-center"><ChevronRight class="w-4 h-4" /></button>
           </div>
         </div>
 
         <div class="flex items-center gap-4">
-          <div class="relative flex bg-text-primary/10 rounded-lg p-1 w-[200px]">
+          <div class="relative flex bg-primary/10 rounded-lg p-1 w-[200px]">
             <div 
               class="absolute top-1 bottom-1 w-[calc(33.33%-4px)] bg-accent rounded-md transition-transform duration-300 ease-out shadow-sm pointer-events-none"
               style={{ transform: viewMode() === 'month' ? 'translateX(0)' : (viewMode() === 'week' && !workWeekOnly() ? 'translateX(100%)' : 'translateX(200%)') }}
@@ -189,7 +189,7 @@ function CalendarView() {
                 setViewTransitionDir(-1);
                 setViewMode('month');
               }} 
-              class={`relative z-10 flex-1 border-none py-1.5 text-[13px] font-semibold cursor-pointer transition-colors bg-transparent ${viewMode() === 'month' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'}`}
+              class={`relative z-10 flex-1 border-none py-1.5 text-[13px] font-semibold cursor-pointer transition-colors bg-transparent ${viewMode() === 'month' ? 'text-primary' : 'text-secondary hover:text-primary'}`}
             >Month</button>
             <button 
               onClick={() => {
@@ -202,7 +202,7 @@ function CalendarView() {
                   if (timeScroll) timeScroll.scrollTop = 7 * 60;
                 }, 50);
               }} 
-              class={`relative z-10 flex-1 border-none py-1.5 text-[13px] font-semibold cursor-pointer transition-colors bg-transparent ${viewMode() === 'week' && !workWeekOnly() ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'}`}
+              class={`relative z-10 flex-1 border-none py-1.5 text-[13px] font-semibold cursor-pointer transition-colors bg-transparent ${viewMode() === 'week' && !workWeekOnly() ? 'text-primary' : 'text-secondary hover:text-primary'}`}
             >Week</button>
             <button 
               onClick={() => {
@@ -215,7 +215,7 @@ function CalendarView() {
                   if (timeScroll) timeScroll.scrollTop = 7 * 60;
                 }, 50);
               }} 
-              class={`relative z-10 flex-1 border-none py-1.5 text-[13px] font-semibold cursor-pointer transition-colors bg-transparent ${viewMode() === 'week' && workWeekOnly() ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'}`}
+              class={`relative z-10 flex-1 border-none py-1.5 text-[13px] font-semibold cursor-pointer transition-colors bg-transparent ${viewMode() === 'week' && workWeekOnly() ? 'text-primary' : 'text-secondary hover:text-primary'}`}
             >Work</button>
           </div>
         </div>
@@ -241,13 +241,13 @@ function CalendarView() {
           }}
         >
           <Show when={viewMode() === 'month'}>
-            <div class="flex-1 overflow-hidden flex flex-col absolute inset-0 bg-bg-theme">
-              <div class="grid grid-cols-7 border-b border-border-theme shrink-0">
+            <div class="flex-1 overflow-hidden flex flex-col absolute inset-0 bg-body">
+              <div class="grid grid-cols-7 border-b border-border shrink-0">
                 <For each={['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].slice(weekStartsOn()).concat(weekStartsOn() === 1 ? ['Sun'] : [])}>
-                  {day => <div class="font-display lowercase p-2 sm:p-3 text-center text-[10px] sm:text-xs font-bold text-text-muted tracking-wider truncate">{day}</div>}
+                  {day => <div class="font-display lowercase p-2 sm:p-3 text-center text-[10px] sm:text-xs font-bold text-disabled tracking-wider truncate">{day}</div>}
                 </For>
               </div>
-              <div class={`grid grid-cols-7 auto-rows-[minmax(120px,1fr)] flex-1 overflow-y-auto bg-text-primary/5 ${animationClass()}`}>
+              <div class={`grid grid-cols-7 auto-rows-[minmax(120px,1fr)] flex-1 overflow-y-auto bg-primary/5 ${animationClass()}`}>
                 <For each={monthDays()}>
                   {date => {
                     const items = createMemo(() => getDayItems(date));
@@ -258,20 +258,20 @@ function CalendarView() {
                     
                     return (
                       <div 
-                        class={`border-r border-b border-border-theme p-2 flex flex-col gap-1 transition-colors calendar-day-cell cursor-pointer ${isToday ? 'bg-accent/10' : (isPast ? 'bg-black/20 opacity-70 hover:opacity-100' : (isCurrentMonth ? 'bg-transparent hover:bg-text-primary/5' : 'bg-text-primary/5'))}`}
+                        class={`border-r border-b border-border p-2 flex flex-col gap-1 transition-colors calendar-day-cell cursor-pointer ${isToday ? 'bg-accent/10' : (isPast ? 'bg-black/20 opacity-70 hover:opacity-100' : (isCurrentMonth ? 'bg-transparent hover:bg-primary/5' : 'bg-primary/5'))}`}
                         onClick={() => {
                           uiStore.setActiveDate(date.toISOString());
                           uiStore.setActiveModal('addEvent');
                         }}
-                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-text-primary/10'); }}
-                        onDragLeave={(e) => { e.currentTarget.classList.remove('bg-text-primary/10'); }}
+                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-primary/10'); }}
+                        onDragLeave={(e) => { e.currentTarget.classList.remove('bg-primary/10'); }}
                         onDrop={(e) => {
-                          e.currentTarget.classList.remove('bg-text-primary/10');
+                          e.currentTarget.classList.remove('bg-primary/10');
                           handleDrop(e, date);
                         }}
                       >
                         <div class="flex justify-between items-start mb-1">
-                          <div class="text-text-muted mt-0.5">
+                          <div class="text-disabled mt-0.5">
                             <Show when={weatherService.state && weatherService.state.forecast.find(f => isSameDay(new Date(f.time), date))}>
                               {(() => {
                                 const dayWeather = weatherService.state.forecast.find(f => isSameDay(new Date(f.time), date));
@@ -284,13 +284,13 @@ function CalendarView() {
                               })()}
                             </Show>
                           </div>
-                          <div class={`text-[15px] font-extrabold flex justify-end ${isToday || eventCount() > 0 ? '' : (isCurrentMonth ? 'text-text-primary/70' : 'text-text-muted')}`}>
+                          <div class={`text-[15px] font-extrabold flex justify-end ${isToday || eventCount() > 0 ? '' : (isCurrentMonth ? 'text-primary/70' : 'text-disabled')}`}>
                             <span class={
-                              isToday ? "bg-accent text-text-primary w-7 h-7 flex items-center justify-center rounded-full shadow-[0_0_10px_var(--color-accent)]" :
+                              isToday ? "bg-accent text-primary w-7 h-7 flex items-center justify-center rounded-full shadow-[0_0_10px_var(--color-accent)]" :
                               (eventCount() > 0 && isCurrentMonth ? 
-                                (eventCount() === 1 ? "bg-text-primary/10 text-text-primary w-7 h-7 flex items-center justify-center rounded-full" :
-                                 eventCount() === 2 ? "bg-text-primary/20 text-text-primary w-7 h-7 flex items-center justify-center rounded-full" :
-                                 "bg-text-primary/30 text-text-primary w-7 h-7 flex items-center justify-center rounded-full font-extrabold")
+                                (eventCount() === 1 ? "bg-primary/10 text-primary w-7 h-7 flex items-center justify-center rounded-full" :
+                                 eventCount() === 2 ? "bg-primary/20 text-primary w-7 h-7 flex items-center justify-center rounded-full" :
+                                 "bg-primary/30 text-primary w-7 h-7 flex items-center justify-center rounded-full font-extrabold")
                               : "w-7 h-7 flex items-center justify-center")
                             }>
                               {format(date, 'd')}
@@ -311,14 +311,14 @@ function CalendarView() {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                 }}
-                                class={`py-1 px-1.5 rounded-r-md text-[11px] flex items-center gap-1.5 cursor-grab hover:bg-text-primary/10 transition-colors ${(item.type === 'task' && item.completed) ? 'opacity-50' : 'opacity-100'}`}
+                                class={`py-1 px-1.5 rounded-r-md text-[11px] flex items-center gap-1.5 cursor-grab hover:bg-primary/10 transition-colors ${(item.type === 'task' && item.completed) ? 'opacity-50' : 'opacity-100'}`}
                                 style={{ "border-left": `2px solid ${item.color}` }}
                               >
-                                <span class="whitespace-nowrap overflow-hidden text-ellipsis flex-1 text-text-primary/90 font-medium">
+                                <span class="whitespace-nowrap overflow-hidden text-ellipsis flex-1 text-primary/90 font-medium">
                                   {item.title} {item.rrule && '🔄'}
                                 </span>
                                 {item.type === 'event' && (
-                                  <span class="text-text-muted text-[9px]">{format(parseISO(item.start_time), settings.use24HourClock ? 'H:mm' : 'h:mm a')}</span>
+                                  <span class="text-disabled text-[9px]">{format(parseISO(item.start_time), settings.use24HourClock ? 'H:mm' : 'h:mm a')}</span>
                                 )}
                               </div>
                             )}
@@ -333,20 +333,20 @@ function CalendarView() {
           </Show>
           
           <Show when={viewMode() === 'week'}>
-            <div class="overflow-auto bg-bg-theme absolute inset-0" id="weekViewScrollArea">
+            <div class="overflow-auto bg-body absolute inset-0" id="weekViewScrollArea">
               <div class="flex w-full min-h-max relative">
-                <div class="w-[60px] min-w-[60px] border-r border-border-theme flex flex-col bg-bg-theme sticky left-0 z-30">
-                  <div class="h-[72px] min-h-[72px] shrink-0 border-b border-border-theme sticky top-0 bg-bg-theme z-40" />
+                <div class="w-[60px] min-w-[60px] border-r border-border flex flex-col bg-body sticky left-0 z-30">
+                  <div class="h-[72px] min-h-[72px] shrink-0 border-b border-border sticky top-0 bg-body z-40" />
                 <For each={Array.from({length: 24})}>
                   {(_, i) => (
-                    <div class="h-[60px] min-h-[60px] shrink-0 border-b border-border-theme p-1 text-right text-[10px] text-text-muted">
+                    <div class="h-[60px] min-h-[60px] shrink-0 border-b border-border p-1 text-right text-[10px] text-disabled">
                       {i() === 0 ? '' : `${i()}:00`}
                     </div>
                   )}
                 </For>
               </div>
               
-              <div class={`flex flex-1 bg-bg-theme ${animationClass()}`}>
+              <div class={`flex flex-1 bg-body ${animationClass()}`}>
                 <For each={weekDays()}>
                   {date => {
                     const isToday = isSameDay(date, new Date());
@@ -434,26 +434,26 @@ function CalendarView() {
                           "flex": isHidden() ? "0 0 0px" : "1 1 0%",
                           "min-width": isHidden() ? "0px" : "120px"
                         }}
-                        class={`transition-all duration-500 ease-[var(--ease-spring-smooth)] border-r border-border-theme flex flex-col overflow-hidden ${
+                        class={`transition-all duration-500 ease-[var(--ease-spring-smooth)] border-r border-border flex flex-col overflow-hidden ${
                           isHidden() ? 'border-r-transparent' : ''
                         } ${isToday ? 'bg-accent/5' : (isPast ? 'bg-black/10 opacity-80' : '')}`}
                       >
-                        <div class="border-b border-border-theme flex flex-col sticky top-0 bg-bg-theme z-40 min-h-[72px]">
+                        <div class="border-b border-border flex flex-col sticky top-0 bg-body z-40 min-h-[72px]">
                           <div class="flex justify-between items-start w-full p-2.5">
                             {/* Left: Date */}
                             <div class="flex flex-col items-start">
-                              <div class={`text-[11px] uppercase font-bold tracking-wider ${isToday ? 'text-accent' : 'text-text-muted'}`}>{format(date, 'EEE')}</div>
-                              <div class={`text-[22px] font-bold mt-0.5 leading-none ${isToday ? 'text-accent' : 'text-text-primary'}`}>{format(date, 'd')}</div>
+                              <div class={`text-[11px] uppercase font-bold tracking-wider ${isToday ? 'text-accent' : 'text-disabled'}`}>{format(date, 'EEE')}</div>
+                              <div class={`text-[22px] font-bold mt-0.5 leading-none ${isToday ? 'text-accent' : 'text-primary'}`}>{format(date, 'd')}</div>
                             </div>
                             {/* Right: Weather */}
                             <Show when={weatherService.state && weatherService.state.forecast.find(f => isSameDay(new Date(f.time), date))}>
                               {(() => {
                                 const dayWeather = weatherService.state.forecast.find(f => isSameDay(new Date(f.time), date));
                                 return (
-                                  <div class="flex flex-col items-end text-text-muted" title={dayWeather.condition}>
+                                  <div class="flex flex-col items-end text-disabled" title={dayWeather.condition}>
                                     <div class="text-[18px] font-display lowercase mb-0.5 leading-none">{dayWeather.icon}</div>
                                     <div class="flex items-center gap-1 text-[10px] font-bold leading-none mt-1">
-                                      <span class="text-text-primary">{dayWeather.tempMax}°</span>
+                                      <span class="text-primary">{dayWeather.tempMax}°</span>
                                       <span class="opacity-60">{dayWeather.tempMin}°</span>
                                     </div>
                                   </div>
@@ -464,7 +464,7 @@ function CalendarView() {
                           <div class="w-full px-1.5 pb-1.5 flex flex-col gap-0.5 max-h-[60px] overflow-y-auto">
                             <For each={allDayItems()}>
                               {task => (
-                                <div class="text-[10px] px-1.5 py-0.5 rounded text-text-primary truncate shadow-sm cursor-grab" style={{ background: `color-mix(in srgb, ${task.color} 30%, transparent)`, "border-left": `2px solid ${task.color}` }}>
+                                <div class="text-[10px] px-1.5 py-0.5 rounded text-primary truncate shadow-sm cursor-grab" style={{ background: `color-mix(in srgb, ${task.color} 30%, transparent)`, "border-left": `2px solid ${task.color}` }}>
                                   {task.title} {task.rrule && '🔄'}
                                 </div>
                               )}
@@ -511,12 +511,12 @@ function CalendarView() {
                                handleDrop(e, date, { hour, mins });
                              }}
                         >
-                          <div class="absolute top-[540px] h-[480px] w-full bg-text-primary/5 pointer-events-none" />
+                          <div class="absolute top-[540px] h-[480px] w-full bg-primary/5 pointer-events-none" />
                           
                           <For each={Array.from({length: 24})}>
                             {(_, i) => (
-                              <div class="absolute w-full h-[60px] border-b border-border-theme pointer-events-none" style={{ top: `${i() * 60}px` }}>
-                                <div class="w-full h-[30px] border-b border-text-primary/[0.06]" />
+                              <div class="absolute w-full h-[60px] border-b border-border pointer-events-none" style={{ top: `${i() * 60}px` }}>
+                                <div class="w-full h-[30px] border-b border-primary/[0.06]" />
                               </div>
                             )}
                           </For>
@@ -534,7 +534,7 @@ function CalendarView() {
                           </Show>
 
                           <Show when={hoverBlock() && hoverBlock().dateStr === date.toISOString()}>
-                            <div class="absolute left-1 right-1 rounded bg-text-primary/10 border-2 border-dashed border-border-theme pointer-events-none z-10 transition-all duration-75"
+                            <div class="absolute left-1 right-1 rounded bg-primary/10 border-2 border-dashed border-border pointer-events-none z-10 transition-all duration-75"
                                  style={{ 
                                    top: `${hoverBlock().hour * 60 + hoverBlock().mins}px`, 
                                    height: `${settings.defaultDuration || 60}px`
@@ -560,7 +560,7 @@ function CalendarView() {
                                     e.dataTransfer.setData('type', item.type);
                                     e.dataTransfer.setData('isInstance', item.isInstance ? 'true' : 'false');
                                   }}
-                                  class="absolute rounded p-1 text-[10px] text-text-primary overflow-hidden cursor-grab flex flex-col shadow-sm z-20 hover:z-30 hover:shadow-lg transition-shadow"
+                                  class="absolute rounded p-1 text-[10px] text-primary overflow-hidden cursor-grab flex flex-col shadow-sm z-20 hover:z-30 hover:shadow-lg transition-shadow"
                                   style={`top: ${startMin}px; height: ${height}px; left: ${left}; width: ${width}; background: color-mix(in srgb, ${item.color} 30%, transparent); border-left: 3px solid ${item.color}; opacity: ${(item.type === 'task' && item.completed) ? 0.5 : 1}; backdrop-filter: blur(4px);`}
                                   onClick={(e) => e.stopPropagation()}
                                 >
@@ -568,7 +568,7 @@ function CalendarView() {
                                     {item.title} {item.rrule && '🔄'}
                                   </div>
                                   <Show when={height >= 30 && item.type === 'event'}>
-                                    <div class="text-text-primary/70 text-[9px]">{format(parseISO(item.start_time), settings.use24HourClock ? 'H:mm' : 'h:mm a')}</div>
+                                    <div class="text-primary/70 text-[9px]">{format(parseISO(item.start_time), settings.use24HourClock ? 'H:mm' : 'h:mm a')}</div>
                                   </Show>
                                 </div>
                               )
@@ -588,7 +588,7 @@ function CalendarView() {
                   return (
                     <div class="absolute w-full flex items-center z-20 pointer-events-none" style={{ top: `${mins - 6 + 72}px`, left: '0px' }}>
                       <div class="w-[60px] flex items-center justify-end pr-1">
-                        <span class="text-[10px] font-bold text-red-500 bg-bg-theme px-1 rounded">{format(now, settings.use24HourClock ? 'H:mm' : 'h:mm a')}</span>
+                        <span class="text-[10px] font-bold text-red-500 bg-body px-1 rounded">{format(now, settings.use24HourClock ? 'H:mm' : 'h:mm a')}</span>
                       </div>
                       <div class="flex-1 h-[2px] border-b-2 border-dashed border-red-500/50" />
                     </div>
@@ -603,7 +603,7 @@ function CalendarView() {
       
       <Show when={viewMode() === 'month'}>
         <button 
-          class="fixed bottom-8 right-8 w-14 h-14 rounded-full bg-accent text-text-primary border-none shadow-xl flex items-center justify-center cursor-pointer transition-transform hover:scale-105 active:scale-95 z-[100]" 
+          class="fixed bottom-8 right-8 w-14 h-14 rounded-full bg-accent text-primary border-none shadow-xl flex items-center justify-center cursor-pointer transition-transform hover:scale-105 active:scale-95 z-[100]" 
           onClick={() => {
             uiStore.setActiveDate(currentDate().toISOString());
             uiStore.setActiveModal('addEvent');

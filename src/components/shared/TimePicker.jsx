@@ -83,21 +83,21 @@ function TimePicker(props) {
       <button 
         type="button"
         onClick={togglePicker}
-        class="w-full bg-text-primary/5 border border-border-theme text-text-primary rounded-xl px-4 py-2.5 outline-none focus:border-accent transition-colors text-sm font-medium flex items-center justify-between"
+        class="w-full bg-primary/5 border border-border text-primary rounded-xl px-4 py-2.5 outline-none focus:border-accent transition-colors text-sm font-medium flex items-center justify-between"
       >
         <span>{displayValue()}</span>
-        <Clock class="w-4 h-4 text-text-muted" />
+        <Clock class="w-4 h-4 text-disabled" />
       </button>
 
       <Show when={isOpen()}>
         <Portal>
           <div 
             ref={popoverRef}
-            class="fixed z-[9999] p-3 bg-bg-theme border border-border-theme rounded-xl shadow-2xl backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200 flex flex-col gap-3 w-max"
+            class="fixed z-[9999] p-3 bg-body border border-border rounded-xl shadow-2xl backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200 flex flex-col gap-3 w-max"
             style={{ top: `${coords().top}px`, left: `${coords().left}px` }}
           >
             <div class="flex gap-2">
-              <div ref={hoursContainerRef} class="flex flex-col h-[200px] overflow-y-auto rounded-lg bg-text-primary/5 px-1 py-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <div ref={hoursContainerRef} class="flex flex-col h-[200px] overflow-y-auto rounded-lg bg-primary/5 px-1 py-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <For each={hours}>
                   {h => (
                     <button
@@ -107,15 +107,15 @@ function TimePicker(props) {
                         e.stopPropagation();
                         updateTime(h, selectedMinute()); 
                       }}
-                      class={`w-12 py-2 shrink-0 text-center text-sm rounded-md transition-colors ${h === selectedHour() ? 'bg-accent text-text-primary font-bold shadow-md' : 'text-text-secondary hover:text-text-primary hover:bg-text-primary/10'}`}
+                      class={`w-12 py-2 shrink-0 text-center text-sm rounded-md transition-colors ${h === selectedHour() ? 'bg-accent text-primary font-bold shadow-md' : 'text-secondary hover:text-primary hover:bg-primary/10'}`}
                     >
                       {h}
                     </button>
                   )}
                 </For>
               </div>
-              <div class="w-px bg-text-primary/10" />
-              <div ref={minutesContainerRef} class="flex flex-col h-[200px] overflow-y-auto rounded-lg bg-text-primary/5 px-1 py-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <div class="w-px bg-primary/10" />
+              <div ref={minutesContainerRef} class="flex flex-col h-[200px] overflow-y-auto rounded-lg bg-primary/5 px-1 py-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <For each={minutes}>
                   {m => (
                     <button
@@ -125,7 +125,7 @@ function TimePicker(props) {
                         e.stopPropagation();
                         updateTime(selectedHour(), m); 
                       }}
-                      class={`w-12 py-2 shrink-0 text-center text-sm rounded-md transition-colors ${m === selectedMinute() ? 'bg-accent text-text-primary font-bold shadow-md' : 'text-text-secondary hover:text-text-primary hover:bg-text-primary/10'}`}
+                      class={`w-12 py-2 shrink-0 text-center text-sm rounded-md transition-colors ${m === selectedMinute() ? 'bg-accent text-primary font-bold shadow-md' : 'text-secondary hover:text-primary hover:bg-primary/10'}`}
                     >
                       {m}
                     </button>
@@ -136,7 +136,7 @@ function TimePicker(props) {
             <button 
               type="button"
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsOpen(false); }}
-              class="w-full bg-accent text-text-primary font-bold py-2 rounded-lg text-sm hover:bg-accent/80 transition-colors flex items-center justify-center gap-1 shadow-sm"
+              class="w-full bg-accent text-primary font-bold py-2 rounded-lg text-sm hover:bg-accent/80 transition-colors flex items-center justify-center gap-1 shadow-sm"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
               Done

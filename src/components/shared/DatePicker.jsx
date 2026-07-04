@@ -62,28 +62,28 @@ function DatePicker(props) {
       <button 
         type="button"
         onClick={togglePicker}
-        class={props.class || "w-full bg-text-primary/5 border border-border-theme text-text-primary rounded-xl px-4 py-2.5 outline-none focus:border-accent transition-colors text-sm font-medium flex items-center justify-between"}
+        class={props.class || "w-full bg-primary/5 border border-border text-primary rounded-xl px-4 py-2.5 outline-none focus:border-accent transition-colors text-sm font-medium flex items-center justify-between"}
       >
         <span>{props.value ? format(parseISO(props.value), 'MMM d, yyyy') : 'Select date'}</span>
-        <CalendarIcon class="w-4 h-4 text-text-muted" />
+        <CalendarIcon class="w-4 h-4 text-disabled" />
       </button>
 
       <Show when={isOpen()}>
         <Portal>
           <div 
             ref={popoverRef}
-            class="fixed z-[9999] p-4 bg-bg-theme/40 border border-border-theme rounded-xl shadow-2xl backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200 w-[280px]"
+            class="fixed z-[9999] p-4 bg-body/40 border border-border rounded-xl shadow-2xl backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200 w-[280px]"
             style={{ top: `${coords().top}px`, left: `${coords().left}px` }}
           >
             <div class="flex justify-between items-center mb-4">
-            <button type="button" onClick={prevMonth} class="text-text-muted hover:text-text-primary p-1 rounded hover:bg-text-primary/10 transition-colors"><ChevronLeft class="w-4 h-4" /></button>
-            <div class="text-sm font-bold text-text-primary">{format(currentMonth(), 'MMMM yyyy')}</div>
-            <button type="button" onClick={nextMonth} class="text-text-muted hover:text-text-primary p-1 rounded hover:bg-text-primary/10 transition-colors"><ChevronRight class="w-4 h-4" /></button>
+            <button type="button" onClick={prevMonth} class="text-disabled hover:text-primary p-1 rounded hover:bg-primary/10 transition-colors"><ChevronLeft class="w-4 h-4" /></button>
+            <div class="text-sm font-bold text-primary">{format(currentMonth(), 'MMMM yyyy')}</div>
+            <button type="button" onClick={nextMonth} class="text-disabled hover:text-primary p-1 rounded hover:bg-primary/10 transition-colors"><ChevronRight class="w-4 h-4" /></button>
           </div>
           
           <div class="grid grid-cols-7 mb-2">
             <For each={['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']}>
-              {day => <div class="text-center text-[10px] font-bold text-text-muted uppercase">{day}</div>}
+              {day => <div class="text-center text-[10px] font-bold text-disabled uppercase">{day}</div>}
             </For>
           </div>
           
@@ -100,9 +100,9 @@ function DatePicker(props) {
                     onClick={() => handleSelect(date)}
                     class={`
                       w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-colors
-                      ${isSelected ? 'bg-accent text-text-primary shadow-md' : 
-                        isToday ? 'bg-text-primary/10 text-accent' : 
-                        'text-text-primary hover:bg-text-primary/10'}
+                      ${isSelected ? 'bg-accent text-primary shadow-md' : 
+                        isToday ? 'bg-primary/10 text-accent' : 
+                        'text-primary hover:bg-primary/10'}
                       ${!isCurrentMonth && !isSelected ? 'opacity-30' : 'opacity-100'}
                     `}
                   >

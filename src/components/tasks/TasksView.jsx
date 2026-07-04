@@ -28,18 +28,18 @@ function TasksView() {
 
   return (
     <>
-      <div class="h-[60px] min-h-[60px] border-b border-border-theme flex items-center justify-between px-6 bg-bg-theme/40 backdrop-blur-md sticky top-0 z-50">
+      <div class="h-[60px] min-h-[60px] border-b border-border flex items-center justify-between px-6 bg-body/40 backdrop-blur-md sticky top-0 z-50">
         <div class="flex items-center gap-4">
           <button 
             onClick={() => uiStore.toggleSidebar()}
-            class="flex w-9 h-9 rounded-full bg-text-primary/5 border-none text-text-primary items-center justify-center cursor-pointer transition-colors hover:bg-text-primary/20"
+            class="flex w-9 h-9 rounded-full bg-primary/5 border-none text-primary items-center justify-center cursor-pointer transition-colors hover:bg-primary/20"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
           </button>
-          <div class="font-display lowercase text-xl font-bold text-text-primary tracking-wide">Tasks</div>
+          <div class="font-display lowercase text-xl font-bold text-primary tracking-wide">Tasks</div>
         </div>
         <div class="flex items-center gap-3">
-          <button class="w-9 h-9 rounded-full bg-text-primary/5 border-none text-text-primary flex items-center justify-center cursor-pointer transition-colors hover:bg-text-primary/20" onClick={() => { uiStore.setActiveListId(''); uiStore.setActiveModal('addTask'); }}>
+          <button class="w-9 h-9 rounded-full bg-primary/5 border-none text-primary flex items-center justify-center cursor-pointer transition-colors hover:bg-primary/20" onClick={() => { uiStore.setActiveListId(''); uiStore.setActiveModal('addTask'); }}>
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
           </button>
         </div>
@@ -65,7 +65,7 @@ function TasksView() {
                       <For each={listTasks()}>
                         {(task) => (
                           <div 
-                            class={`group flex items-center justify-between py-2 border-b border-border-theme/20 last:border-b-0 ${task.completed ? 'opacity-50' : 'opacity-100'} hover:bg-black/5 rounded-lg px-2 -mx-2 transition-colors`}
+                            class={`group flex items-center justify-between py-2 border-b border-border/20 last:border-b-0 ${task.completed ? 'opacity-50' : 'opacity-100'} hover:bg-black/5 rounded-lg px-2 -mx-2 transition-colors`}
                           >
                             <div class="flex flex-col flex-1 min-w-0 pr-2">
                               <span class={`truncate font-medium ${task.completed ? "task-strike-animate opacity-60" : ""}`}>{task.title}</span>
@@ -110,7 +110,7 @@ function TasksView() {
         </div>
       </div>
       
-      <button class="fixed bottom-8 right-8 w-14 h-14 rounded-full bg-accent text-text-primary border-none shadow-xl flex items-center justify-center cursor-pointer transition-transform hover:scale-105 active:scale-95 z-[100]" onClick={() => { uiStore.setActiveListId(''); uiStore.setActiveModal('addTask'); }}>
+      <button class="fixed bottom-8 right-8 w-14 h-14 rounded-full bg-accent text-primary border-none shadow-xl flex items-center justify-center cursor-pointer transition-transform hover:scale-105 active:scale-95 z-[100]" onClick={() => { uiStore.setActiveListId(''); uiStore.setActiveModal('addTask'); }}>
         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" /></svg>
       </button>
     </>
