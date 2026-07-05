@@ -1,5 +1,15 @@
-import { createSignal, createEffect } from 'solid-js';
+// EditableItem — inline rename control used inside kit ListItem rows
+// (SettingsView calendar/list rows pass it as the ListItem `label`).
+//
+// Public contract unchanged: `value`, `onChange(newValue)` on save,
+// optional `placeholder`. Enter saves, Escape reverts; a save button
+// appears while the draft differs from the stored value.
+//
+// Internals: kit TextInput (labelled, standard field chrome + focus ring)
+// and kit IconButton for the save action.
+import { createSignal, createEffect, Show } from 'solid-js';
 import { Check } from 'lucide-solid';
+import { TextInput, IconButton } from '../kit';
 
 function EditableItem(props) {
   const [value, setValue] = createSignal(props.value);
@@ -19,34 +29,39 @@ function EditableItem(props) {
     setIsEditing(false);
   };
 
+  const handleRevert = () => {
+    setValue(props.value);
+    setIsEditing(false);
+  };
+
   return (
-    <div class="relative flex-1 flex items-center group">
-      <input 
-        type="text" 
-        value={value()}
-        onInput={(e) => {
-          setValue(e.target.value);
-          setIsEditing(e.target.value !== props.value);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') handleSave();
-          if (e.key === 'Escape') {
-            setValue(props.value);
-            setIsEditing(false);
-          }
-        }}
-        class="bg-transparent border-none text-primary text-sm font-semibold outline-none w-full pr-8"
-        placeholder={props.placeholder || "Name..."}
-      />
-      {isEditing() && (
-        <button 
+    <div class="flex-1 flex items-center gap-1 min-w-0">
+      <div class="flex-1 min-w-0">
+        <TextInput
+          label={props.placeholder || 'Name'}
+          isLabelHidden
+          size="sm"
+          value={value()}
+          onChange={(v) => {
+            setValue(v);
+            setIsEditing(v !== props.value);
+          }}
+          onEnter={handleSave}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') handleRevert();
+          }}
+          placeholder={props.placeholder || 'Name...'}
+        />
+      </div>
+      <Show when={isEditing()}>
+        <IconButton
+          variant="primary"
+          size="sm"
+          label="Save changes"
+          icon={<Check aria-hidden="true" />}
           onClick={handleSave}
-          class="absolute right-1 text-primary bg-accent hover:bg-accent/80 rounded-md p-1 cursor-pointer transition-colors border-none flex items-center justify-center animate-in fade-in shadow-md"
-          title="Save changes"
-        >
-          <Check class="w-3.5 h-3.5" />
-        </button>
-      )}
+        />
+      </Show>
     </div>
   );
 }

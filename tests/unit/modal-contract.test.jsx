@@ -1,23 +1,28 @@
 /**
- * PRE-REFACTOR characterization tests for the Modal contract.
+ * Characterization tests for the Modal contract — POST-REFACTOR (Phase 4).
  *
- * Pins the BEHAVIOR of src/components/ui/Modal.jsx + src/stores/uiStore.js
- * before the UI is rewritten (Astryx Dialog). Queries by role/text only —
- * never by class or DOM structure. The one exception is the backdrop:
- * today's overlay has no role or label, so we locate it via the `id` prop,
- * which is part of the Modal component's public API (props.id is stamped on
- * the overlay element and matched against uiStore.state.activeModal).
+ * Modal (src/components/ui/Modal.jsx) is now a deprecated thin adapter over
+ * the kit Dialog: it preserves the legacy id/uiStore contract (open while
+ * uiStore.state.activeModal === props.id, every dismiss path calls
+ * uiStore.setActiveModal(null)) while Dialog provides the surface.
+ *
+ * Queries by role/text/label only. The backdrop is the dialog's overlay
+ * parent element; it intentionally has no role (same approach as
+ * src/components/kit/Dialog.test.jsx).
  *
  * Contract pinned here:
  *  - Modal renders its children only while uiStore.state.activeModal === props.id
  *  - Clicking the backdrop closes (setActiveModal(null))
- *  - Clicking the close button closes (setActiveModal(null))
+ *  - Clicking the close button (aria-label="Close", rendered by the composed
+ *    DialogHeader) closes (setActiveModal(null))
  *  - Clicking modal content does NOT close
- *  - Escape does NOT close today (Astryx Dialog will add this — see below)
+ *  - Escape NOW CLOSES (new Dialog behavior; the old hand-rolled Modal had
+ *    no key handling — that pre-refactor pin was inverted here on purpose)
  */
 import { render, screen, fireEvent } from '@solidjs/testing-library';
 import { describe, test, expect, beforeAll, beforeEach, vi } from 'vitest';
 import Modal from '../../src/components/ui/Modal';
+import { DialogHeader } from '../../src/components/kit';
 import { uiStore } from '../../src/stores/uiStore';
 
 const MODAL_ID = 'test-modal';
@@ -41,12 +46,13 @@ const openModal = () => {
   uiStore.setActiveModal(MODAL_ID);
   return render(() => (
     <Modal id={MODAL_ID}>
+      <DialogHeader title="Test modal" />
       <p>Modal body content</p>
     </Modal>
   ));
 };
 
-describe('Modal contract (pre-refactor characterization)', () => {
+describe('Modal contract (Dialog adapter)', () => {
   beforeEach(() => {
     uiStore.setActiveModal(null);
   });
@@ -55,6 +61,7 @@ describe('Modal contract (pre-refactor characterization)', () => {
     test('renders children when activeModal matches its id', () => {
       openModal();
       expect(screen.getByText('Modal body content')).toBeInTheDocument();
+      expect(screen.getByRole('dialog', { name: 'Test modal' })).toBeInTheDocument();
     });
 
     test('renders nothing when activeModal is null', () => {
@@ -91,9 +98,9 @@ describe('Modal contract (pre-refactor characterization)', () => {
   describe('close paths', () => {
     test('backdrop click closes: setActiveModal(null)', () => {
       openModal();
-      // The overlay carries the modal's `id` prop; the component only closes
-      // when the click target IS the overlay itself (e.target === overlayRef).
-      const backdrop = document.getElementById(MODAL_ID);
+      // The backdrop is the dialog panel's overlay parent (no role by design);
+      // Dialog only closes when the click target IS the overlay itself.
+      const backdrop = screen.getByRole('dialog').parentElement;
       expect(backdrop).toBeTruthy();
       fireEvent.click(backdrop);
       expect(uiStore.state.activeModal).toBe(null);
@@ -101,11 +108,9 @@ describe('Modal contract (pre-refactor characterization)', () => {
 
     test('close button click closes: setActiveModal(null)', () => {
       openModal();
-      // NOTE (pinned quirk): today's close button has NO accessible name —
-      // it's an icon-only <button> with a bare SVG (no aria-label). It is the
-      // only button the Modal itself renders. The Astryx Dialog replacement
-      // should give it a proper accessible name (e.g. "Close").
-      const closeButton = screen.getByRole('button');
+      // The DialogHeader close button now has a proper accessible name
+      // ("Close") — this was an unnamed icon-only button pre-refactor.
+      const closeButton = screen.getByRole('button', { name: 'Close' });
       fireEvent.click(closeButton);
       expect(uiStore.state.activeModal).toBe(null);
     });
@@ -113,21 +118,18 @@ describe('Modal contract (pre-refactor characterization)', () => {
     test('clicking modal content does NOT close', () => {
       openModal();
       fireEvent.click(screen.getByText('Modal body content'));
+      fireEvent.click(screen.getByRole('dialog'));
       expect(uiStore.state.activeModal).toBe(MODAL_ID);
       expect(screen.getByText('Modal body content')).toBeInTheDocument();
     });
 
-    test('Escape does NOT close (current behavior — no key handling exists)', () => {
-      // CHARACTERIZATION: Modal.jsx has no keyboard handling today, so
-      // pressing Escape leaves the modal open. The Astryx Dialog that
-      // replaces this component WILL close on Escape — this test documents
-      // the current behavior and is expected to be updated (inverted) as
-      // part of the refactor. Do not "fix" Modal.jsx to make Escape close.
+    test('Escape closes: setActiveModal(null) (new Dialog contract)', () => {
+      // Pre-refactor the hand-rolled Modal had no keyboard handling and this
+      // test pinned "Escape does NOT close". The kit Dialog adds
+      // Escape-to-close; this pin was inverted as part of the refactor.
       openModal();
-      fireEvent.keyDown(document.activeElement || document.body, { key: 'Escape' });
-      fireEvent.keyDown(document.getElementById(MODAL_ID), { key: 'Escape' });
-      expect(uiStore.state.activeModal).toBe(MODAL_ID);
-      expect(screen.getByText('Modal body content')).toBeInTheDocument();
+      fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+      expect(uiStore.state.activeModal).toBe(null);
     });
   });
 });

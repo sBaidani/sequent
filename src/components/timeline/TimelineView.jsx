@@ -8,9 +8,29 @@ import { format, addDays, isSameDay, parseISO } from 'date-fns';
 import { expandRecurringItems } from '../../lib/recurrenceEngine';
 import { calculateGridOverlap } from '../../lib/scheduling';
 import { weatherService } from '../../services/weatherService';
+import { snapUserColor } from '../../lib/colorTokens';
+import {
+  Button,
+  IconButton,
+  Heading,
+  Text,
+  List,
+  ListItem,
+  CheckboxInput,
+  SegmentedControl,
+  SegmentedControlItem,
+  EmptyState,
+  Skeleton,
+  cx,
+} from '../kit';
+import { Menu as MenuIcon, Plus, PanelRight, MapPin, ChevronUp } from 'lucide-solid';
+
+// Now-line glow shadows: --color-error through color-mix (replaces the old
+// raw rgba(239,68,68,*) glows).
+const NOW_DOT_GLOW = 'shadow-[0_0_8px_color-mix(in_srgb,var(--color-error)_60%,transparent)]';
+const NOW_LINE_GLOW = 'shadow-[0_0_5px_color-mix(in_srgb,var(--color-error)_40%,transparent)]';
 
 function TimelineView() {
-  const [hoverBlock, setHoverBlock] = createSignal(null);
   const [scheduleViewMode, setScheduleViewMode] = createSignal('grid'); // 'list' or 'grid'
   const [showTodayPane, setShowTodayPane] = createSignal(true);
   const [isWeatherExpanded, setIsWeatherExpanded] = createSignal(false);
@@ -47,13 +67,30 @@ function TimelineView() {
   const [isReady, setIsReady] = createSignal(false);
   const [smoothScroll, setSmoothScroll] = createSignal(false);
 
+  // Per-item USER colors rendered through the bounded Astryx hue palette
+  // (snapUserColor). Missing calendar → accent token; missing list → purple
+  // hue token (replacing the old raw '#E8942A' / '#6B5BDB' fallbacks).
+  const eventColor = (e) => {
+    const stored = eventState.calendars.find(c => c.id === e.calendarId)?.color;
+    return stored ? snapUserColor(stored).cssVar : 'var(--color-accent)';
+  };
+  const taskColor = (t) => {
+    const stored = taskState.lists.find(l => l.id === t.listId)?.color;
+    return stored ? snapUserColor(stored).cssVar : 'var(--color-purple-vivid)';
+  };
+
+  const fmtTime = (dateLike) => {
+    const d = new Date(dateLike);
+    return isNaN(d.getTime()) ? '' : format(d, settings.use24HourClock ? 'H:mm' : 'h:mm a');
+  };
+
   // Compute expanded events and tasks
   const expandedEvents = createMemo(() => {
     const d = days();
     if (!d || d.length === 0) return [];
     return expandRecurringItems(eventStore.visibleEvents, d[0], d[d.length - 1]);
   });
-  
+
   const expandedTasks = createMemo(() => {
     const d = days();
     if (!d || d.length === 0) return [];
@@ -62,10 +99,10 @@ function TimelineView() {
 
   const todayItems = createMemo(() => {
     const events = expandedEvents().filter(e => e.start_time && isSameDay(new Date(e.start_time), today)).map(e => ({
-      ...e, type: 'event', color: eventState.calendars.find(c => c.id === e.calendarId)?.color || '#E8942A'
+      ...e, type: 'event', color: eventColor(e)
     }));
     const tasks = expandedTasks().filter(t => t.scheduled_date && isSameDay(new Date(t.scheduled_date), today)).map(t => ({
-      ...t, type: 'task', color: taskState.lists.find(l => l.id === t.listId)?.color || '#6B5BDB'
+      ...t, type: 'task', color: taskColor(t)
     }));
     return [...events, ...tasks].sort((a, b) => {
         const tA = a.type === 'event' ? parseISO(a.start_time).getTime() : (a.allDay ? 0 : parseISO(a.scheduled_date).getTime());
@@ -80,6 +117,34 @@ function TimelineView() {
     const tB = b.allDay ? 0 : parseISO(b.scheduled_date).getTime();
     return tA - tB;
   }));
+
+  const upcomingTodayEvents = () => {
+    const now = new Date().getTime();
+    return todayItems().filter(i => i.type === 'event' && !i.allDay && parseISO(i.end_time).getTime() > now);
+  };
+
+  const openItem = (item) => {
+    if (item.type === 'event') {
+      uiStore.setActiveEvent(item.originalId || item.id, 'event');
+      uiStore.setActiveModal('eventView');
+    } else {
+      uiStore.setActiveEvent(item.originalId || item.id, 'task');
+    }
+  };
+
+  const setAgendaMode = (mode) => {
+    setScheduleViewMode(mode);
+    if (mode === 'grid') {
+      setTimeout(() => {
+        const scrollArea = document.getElementById('todayGridScrollArea');
+        if (scrollArea) {
+          const now = new Date();
+          const mins = now.getHours() * 60 + now.getMinutes();
+          scrollArea.scrollTop = Math.max(0, mins - 60);
+        }
+      }, 50);
+    }
+  };
 
   let topSentinel;
   let bottomSentinel;
@@ -106,9 +171,9 @@ function TimelineView() {
                 // Temporarily disable smooth scrolling to prevent bouncing back animation
                 const oldBehavior = scrollContainer.style.scrollBehavior;
                 scrollContainer.style.scrollBehavior = 'auto';
-                
+
                 scrollContainer.scrollTop = oldScrollTop + (newScrollHeight - oldScrollHeight);
-                
+
                 // Restore in the next frame
                 requestAnimationFrame(() => {
                   scrollContainer.style.scrollBehavior = oldBehavior;
@@ -135,20 +200,20 @@ function TimelineView() {
     const scrollToToday = () => {
       const scrollContainer = document.getElementById('timelineScroll');
       const todayEl = document.querySelector('.day-section.is-today');
-      
+
       if (todayEl && scrollContainer && todayEl.offsetTop > 0) {
         // Set the scroll position instantly
         scrollContainer.scrollTop = todayEl.offsetTop;
-        
+
         // Track user scroll to break the pin
         const stopPin = () => hasUserScrolled = true;
         scrollContainer.addEventListener('wheel', stopPin, { passive: true, once: true });
         scrollContainer.addEventListener('touchstart', stopPin, { passive: true, once: true });
-        
+
         // Wait for the browser to apply the scroll before showing the container
         requestAnimationFrame(() => {
           setIsReady(true);
-          
+
           // Pin scroll for 1 second to account for asynchronous data loading
           // which expands past days and shifts the offset
           let attempts = 0;
@@ -179,37 +244,53 @@ function TimelineView() {
   return (
     <>
       <div class="h-[60px] min-h-[60px] border-b border-border flex items-center justify-between px-6 bg-body/40 backdrop-blur-md sticky top-0 z-50">
-        <button 
-          onClick={() => uiStore.toggleSidebar()}
-          class="flex w-9 h-9 rounded-full bg-primary/5 border-none text-primary items-center justify-center cursor-pointer transition-colors hover:bg-primary/20"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
-        </button>
-        <div class="flex flex-col">
-          <div class="font-display lowercase text-xl font-bold text-primary tracking-wide leading-tight">Timeline</div>
-          <div class="font-display lowercase text-[11px] font-bold text-disabled tracking-widest leading-none mt-0.5">Upcoming Schedule</div>
+        <div class="flex items-center gap-4">
+          <IconButton
+            variant="ghost"
+            label="Toggle sidebar"
+            icon={<MenuIcon />}
+            class="rounded-full"
+            onClick={() => uiStore.toggleSidebar()}
+          />
+          <div class="flex flex-col">
+            <Heading level={1} class="lowercase leading-tight">Timeline</Heading>
+            <Text
+              type="supporting"
+              color="disabled"
+              weight="bold"
+              display="block"
+              class="font-display lowercase text-xs tracking-widest leading-none mt-0.5"
+            >
+              Upcoming Schedule
+            </Text>
+          </div>
         </div>
         <div class="flex items-center gap-2">
-          <button 
-            class={`hidden xl:flex w-9 h-9 rounded-full border-none items-center justify-center cursor-pointer transition-colors ${showTodayPane() ? 'bg-accent/10 text-accent' : 'bg-primary/5 text-primary hover:bg-primary/20'}`} 
-            onClick={() => setShowTodayPane(!showTodayPane())}
-            title="Toggle Today Pane"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
-            </svg>
-          </button>
-          <button class="w-9 h-9 rounded-full bg-primary/5 border-none text-primary flex items-center justify-center cursor-pointer transition-colors hover:bg-primary/20" onClick={() => uiStore.setActiveModal('addItem')}>
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" /></svg>
-          </button>
+          <span class="hidden xl:inline-flex">
+            <IconButton
+              variant="ghost"
+              label="Toggle today pane"
+              aria-pressed={showTodayPane()}
+              icon={<PanelRight />}
+              class={cx('rounded-full', showTodayPane() && 'text-accent bg-accent-muted')}
+              onClick={() => setShowTodayPane(!showTodayPane())}
+            />
+          </span>
+          <IconButton
+            variant="ghost"
+            label="Add item"
+            icon={<Plus />}
+            class="rounded-full"
+            onClick={() => uiStore.setActiveModal('addItem')}
+          />
         </div>
       </div>
 
       <div class="flex-1 flex overflow-hidden relative">
         {/* Main Timeline Column */}
         <div class="flex-1 relative overflow-hidden flex flex-col">
-          <div 
-            id="timelineScroll" 
+          <div
+            id="timelineScroll"
             class={`flex-1 overflow-y-auto overflow-x-hidden relative transition-opacity duration-300 ${isReady() ? 'opacity-100' : 'opacity-0'} ${smoothScroll() ? 'scroll-smooth' : ''}`}
           >
             <div ref={topSentinel} style={{ height: '1px' }} />
@@ -217,26 +298,26 @@ function TimelineView() {
             {(day) => {
               const isDayToday = isSameDay(day, today);
               const dateStr = format(day, 'yyyy-MM-dd');
-              
+
               const unifiedItems = createMemo(() => {
                 const events = expandedEvents().filter(e => e.start_time && isSameDay(new Date(e.start_time), day)).map(e => ({
-                  ...e, type: 'event', time: parseISO(e.start_time).getTime(), color: eventState.calendars.find(c => c.id === e.calendarId)?.color || '#E8942A'
+                  ...e, type: 'event', time: parseISO(e.start_time).getTime(), color: eventColor(e)
                 }));
-                
+
                 let tasks = [];
                 if (settings.showTasksInTimeline) {
                   tasks = expandedTasks().filter(t => t.scheduled_date && isSameDay(new Date(t.scheduled_date), day)).map(t => ({
-                    ...t, type: 'task', time: t.allDay ? 0 : parseISO(t.scheduled_date).getTime(), color: taskState.lists.find(l => l.id === t.listId)?.color || '#6B5BDB'
+                    ...t, type: 'task', time: t.allDay ? 0 : parseISO(t.scheduled_date).getTime(), color: taskColor(t)
                   }));
                 }
-                
+
                 return [...events, ...tasks].sort((a, b) => a.time - b.time);
               });
 
               const displayItems = createMemo(() => {
                 const items = unifiedItems();
                 if (items.length === 0) return [];
-                
+
                 if (!isSameDay(day, currentTime())) {
                   const isPastDay = day.getTime() < currentTime().getTime();
                   return items.map(item => ({ ...item, isPast: isPastDay }));
@@ -250,7 +331,7 @@ function TimelineView() {
                   const item = { ...items[i] };
                   const start = item.time;
                   const end = item.type === 'event' && !item.allDay ? parseISO(item.end_time).getTime() : start + 30 * 60000;
-                  
+
                   item.isPast = end <= now;
 
                   if (item.allDay) {
@@ -283,110 +364,111 @@ function TimelineView() {
                 <div class={`day-section timeline-row-enter flex border-b border-border min-h-[160px] transition-colors relative ${isDayToday ? 'bg-accent/5 is-today' : ''}`} data-date={dateStr}>
                   <div class="w-20 min-w-20 border-r border-border p-4 flex flex-col items-center sticky top-0">
                     {day.getDate() === 1 && (
-                      <div class="text-xs font-bold text-secondary uppercase mb-2">{format(day, 'MMMM')}</div>
+                      <Text type="supporting" color="secondary" weight="bold" display="block" class="text-xs uppercase mb-2">{format(day, 'MMMM')}</Text>
                     )}
-                    <div class="text-[10px] font-bold text-disabled uppercase mb-1">{format(day, 'EEE')}</div>
-                    <div class={`flex items-center justify-center ${isDayToday ? 'w-9 h-9 rounded-full bg-accent text-primary shadow-[0_0_15px_var(--color-accent)]' : ''}`}>
-                      <div class="font-display lowercase text-2xl font-bold text-primary">{format(day, 'd')}</div>
+                    <Text color="disabled" weight="bold" display="block" class="text-xs uppercase mb-1">{format(day, 'EEE')}</Text>
+                    <div class={`flex items-center justify-center ${isDayToday ? 'w-9 h-9 rounded-full bg-accent shadow-[0_0_15px_var(--color-accent)]' : ''}`}>
+                      <div class={cx('font-display lowercase text-2xl font-bold', isDayToday ? 'text-on-accent' : 'text-primary')}>{format(day, 'd')}</div>
                     </div>
                   </div>
-                  
+
                   <div class="flex-1 p-4 md:px-8 lg:px-12">
-                    <div class="flex flex-col gap-0.5 max-w-[800px] mx-auto">
-                      {displayItems().length === 0 ? (
-                        <div class="text-sm font-semibold text-disabled italic py-4">Nothing scheduled.</div>
-                      ) : (
-                        <For each={displayItems()}>
-                          {(item) => (
-                            <Show 
-                              when={!item.isRedLine}
-                              fallback={
-                                <div class="w-full flex items-center gap-2 my-2 z-0 relative pointer-events-none opacity-90" style={{"margin-left":"-12px","width":"calc(100% + 24px)"}}>
-                                  <div class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
-                                  <div class="flex-1 h-[2px] bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.4)]" />
-                                </div>
-                              }
-                            >
-                              <div class="relative w-full z-10 transition-opacity duration-300" style={{ opacity: item.isPast ? 0.4 : 1 }}>
-                                <Show when={item.hasRedLine}>
-                                  <div 
-                                    class="absolute h-[2px] bg-red-500 z-[-1] flex items-center pointer-events-none shadow-[0_0_5px_rgba(239,68,68,0.4)] opacity-90"
-                                    style={{ 
-                                      top: `${Math.max(5, Math.min(95, item.progress * 100))}%`, 
-                                      left: '-12px', 
-                                      right: '-12px' 
-                                    }}
-                                  >
-                                    <div class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)] absolute left-0" />
-                                  </div>
-                                </Show>
-                                <div 
-                                  class="group relative bg-transparent hover:bg-primary/5 rounded-xl p-2 flex items-stretch gap-3 md:gap-4 transition-colors cursor-pointer"
+                    <div class="max-w-[800px] mx-auto">
+                      <Show
+                        when={displayItems().length > 0}
+                        fallback={<EmptyState isCompact title="Nothing scheduled." />}
+                      >
+                        <List density="balanced" aria-label={`Schedule for ${format(day, 'EEEE d MMMM')}`}>
+                          <For each={displayItems()}>
+                            {(item) => (
+                              <Show
+                                when={!item.isRedLine}
+                                fallback={
+                                  <li aria-hidden="true" class="flex items-center gap-2 my-2 z-0 relative pointer-events-none opacity-90 -ml-3 w-[calc(100%+var(--spacing-6))]">
+                                    <span class={cx('w-2 h-2 rounded-full bg-error', NOW_DOT_GLOW)} />
+                                    <span class={cx('flex-1 h-0.5 bg-error', NOW_LINE_GLOW)} />
+                                  </li>
+                                }
+                              >
+                                <ListItem
+                                  class="group z-10 transition-opacity duration-300"
+                                  style={{
+                                    opacity: (item.isPast ? 0.4 : 1) * ((item.type === 'task' && item.completed) ? 0.5 : 1),
+                                  }}
                                   onClick={() => uiStore.setActiveEvent(item.originalId || item.id, item.type)}
-                                  style={{ opacity: (item.type === 'task' && item.completed) ? 0.5 : 1 }}
-                                >
-                                  {/* Pill / Checkbox Column */}
-                                  <div class="flex items-center justify-center shrink-0 w-6">
-                                    <Show 
-                                      when={item.type === 'task'}
-                                      fallback={
-                                        <div 
-                                          class="w-1.5 rounded-full"
-                                          style={{ "background-color": item.color, "min-height": "100%" }}
-                                         />
-                                      }
-                                    >
-                                      <button 
-                                        onClick={(e) => { e.stopPropagation(); taskStore.toggleTask(item.originalId || item.id); }}
-                                        class="w-5 h-5 rounded-full border-[2px] flex items-center justify-center cursor-pointer transition-colors bg-transparent hover:scale-110"
-                                        style={{ "border-color": item.color }}
-                                      >
-                                        <Show when={item.completed}>
-                                          <div class="w-2.5 h-2.5 rounded-full" style={{ background: item.color }} />
-                                        </Show>
-                                      </button>
-                                    </Show>
-                                  </div>
-
-                                  {/* Title & Location Column */}
-                                  <div class="flex flex-col min-w-0 flex-1 justify-center py-1">
-                                    <div class={`text-[15px] font-bold text-primary/90 truncate transition-colors ${(item.type === 'task' && item.completed) ? 'line-through text-disabled' : 'group-hover:text-primary'}`}>
-                                      {item.title} {item.rrule && '🔄'}
-                                    </div>
-                                    <Show when={item.type === 'event' && item.location}>
-                                      <div class="text-[12px] font-medium text-disabled truncate flex items-center gap-1 mt-0.5">
-                                        <svg class="w-3.5 h-3.5 opacity-70 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                        <span class="truncate">{item.location}</span>
-                                      </div>
-                                    </Show>
-                                  </div>
-
-                                  {/* Time Column */}
-                                  <div class="w-16 md:w-20 shrink-0 text-right flex flex-col justify-center py-1 pr-1">
-                                    <Show when={item.allDay} fallback={
-                                      <>
-                                        <div class="text-[13px] font-bold text-primary/80 group-hover:text-primary transition-colors">
-                                          {item.type === 'event' 
-                                            ? (() => { const d = new Date(item.start_time); return isNaN(d.getTime()) ? '' : format(d, settings.use24HourClock ? 'H:mm' : 'h:mm a'); })()
-                                            : (() => { const d = new Date(item.scheduled_date); return isNaN(d.getTime()) ? '' : format(d, settings.use24HourClock ? 'H:mm' : 'h:mm a'); })()
+                                  startContent={
+                                    <>
+                                      <Show when={item.hasRedLine}>
+                                        <span
+                                          aria-hidden="true"
+                                          class={cx('absolute h-0.5 bg-error z-[-1] flex items-center pointer-events-none opacity-90 -left-3 -right-3', NOW_LINE_GLOW)}
+                                          style={{ top: `${Math.max(5, Math.min(95, item.progress * 100))}%` }}
+                                        >
+                                          <span class={cx('w-2 h-2 rounded-full bg-error absolute left-0', NOW_DOT_GLOW)} />
+                                        </span>
+                                      </Show>
+                                      <span class="flex items-center justify-center w-6">
+                                        <Show
+                                          when={item.type === 'task'}
+                                          fallback={
+                                            <span
+                                              class="w-1.5 min-h-9 self-stretch rounded-full"
+                                              style={{ 'background-color': item.color }}
+                                            />
                                           }
-                                        </div>
-                                        <Show when={item.type === 'event' && item.end_time}>
-                                          <div class="text-[11px] font-semibold text-disabled mt-0.5">
-                                            {(() => { const d = new Date(item.end_time); return isNaN(d.getTime()) ? '' : format(d, settings.use24HourClock ? 'H:mm' : 'h:mm a'); })()}
-                                          </div>
+                                        >
+                                          <CheckboxInput
+                                            size="sm"
+                                            isLabelHidden
+                                            label={item.title}
+                                            value={!!item.completed}
+                                            color={item.color}
+                                            onChange={() => taskStore.toggleTask(item.originalId || item.id)}
+                                          />
                                         </Show>
-                                      </>
-                                    }>
-                                      <div class="text-[12px] font-bold text-disabled uppercase tracking-wider">All-day</div>
-                                    </Show>
-                                  </div>
-                                </div>
-                              </div>
-                            </Show>
-                          )}
-                        </For>
-                      )}
+                                      </span>
+                                    </>
+                                  }
+                                  label={
+                                    <span class={cx(
+                                      'block truncate text-base font-bold transition-colors',
+                                      (item.type === 'task' && item.completed)
+                                        ? 'line-through text-disabled'
+                                        : 'text-primary/90 group-hover:text-primary',
+                                    )}>
+                                      {item.title} {item.rrule && '🔄'}
+                                    </span>
+                                  }
+                                  description={item.type === 'event' && item.location ? (
+                                    <span class="flex items-center gap-1 min-w-0 text-sm font-medium text-disabled mt-0.5">
+                                      <MapPin aria-hidden="true" class="size-3.5 opacity-70 shrink-0" />
+                                      <span class="truncate">{item.location}</span>
+                                    </span>
+                                  ) : undefined}
+                                  endContent={
+                                    <span class="w-16 md:w-20 text-right flex flex-col justify-center py-1 pr-1">
+                                      <Show when={item.allDay} fallback={
+                                        <>
+                                          <span class="text-sm font-bold text-primary/80 group-hover:text-primary transition-colors">
+                                            {item.type === 'event' ? fmtTime(item.start_time) : fmtTime(item.scheduled_date)}
+                                          </span>
+                                          <Show when={item.type === 'event' && item.end_time}>
+                                            <span class="text-xs font-semibold text-disabled mt-0.5">
+                                              {fmtTime(item.end_time)}
+                                            </span>
+                                          </Show>
+                                        </>
+                                      }>
+                                        <span class="text-sm font-bold text-disabled uppercase tracking-wider">All-day</span>
+                                      </Show>
+                                    </span>
+                                  }
+                                />
+                              </Show>
+                            )}
+                          </For>
+                        </List>
+                      </Show>
                     </div>
                   </div>
                 </div>
@@ -395,31 +477,38 @@ function TimelineView() {
           </For>
           <div ref={bottomSentinel} style={{ height: '1px' }} />
         </div>
-        
+
         {/* FAB for Today Scroll */}
-        <button class="absolute bottom-8 right-8 w-14 h-14 rounded-full bg-card ring-1 ring-border text-primary shadow-2xl flex items-center justify-center cursor-pointer transition-transform hover:scale-105 active:scale-95 z-[100]" onClick={() => {
-          const scrollContainer = document.getElementById('timelineScroll');
-          const todayEl = document.querySelector('.day-section.is-today');
-          if (scrollContainer && todayEl) {
-            scrollContainer.scrollTo({ top: todayEl.offsetTop, behavior: 'smooth' });
-          }
-        }}>
-          <div class="relative flex items-center justify-center">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2" />
-              <path d="M16 2v4M8 2v4M3 10h18" stroke-width="2" stroke-linecap="round" />
-            </svg>
-            <div class="absolute inset-0 flex items-center justify-center">
-              <span class="text-[12px] font-bold text-primary leading-none mt-[6px]">
-                {currentTime().getDate()}
+        <IconButton
+          variant="primary"
+          size="lg"
+          label="Scroll to today"
+          class="absolute bottom-8 right-8 rounded-full shadow-[var(--shadow-high)] z-[var(--z-popover,60)] hover:scale-105 transition-transform"
+          onClick={() => {
+            const scrollContainer = document.getElementById('timelineScroll');
+            const todayEl = document.querySelector('.day-section.is-today');
+            if (scrollContainer && todayEl) {
+              scrollContainer.scrollTo({ top: todayEl.offsetTop, behavior: 'smooth' });
+            }
+          }}
+          icon={
+            <span class="relative flex items-center justify-center">
+              <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2" />
+                <path d="M16 2v4M8 2v4M3 10h18" stroke-width="2" stroke-linecap="round" />
+              </svg>
+              <span class="absolute inset-0 flex items-center justify-center pt-1">
+                <span class="text-2xs font-bold leading-none">
+                  {currentTime().getDate()}
+                </span>
               </span>
-            </div>
-          </div>
-        </button>
+            </span>
+          }
+        />
       </div>
 
       {/* Right Pane: Today View */}
-      <div 
+      <div
         class="hidden xl:flex flex-col border-l border-border bg-body z-10 transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden relative"
         style={{
           width: showTodayPane() ? '400px' : '0px',
@@ -429,84 +518,82 @@ function TimelineView() {
         <div class="w-[400px] flex flex-col h-full absolute top-0 left-0 overflow-y-auto overflow-x-hidden">
         <div class="p-8 pb-4 flex items-start justify-between">
           <div>
-            <h2 class="font-display lowercase text-2xl font-extrabold text-primary tracking-widest">{format(today, 'EEEE')}</h2>
-            <div class="font-display lowercase text-sm font-bold text-disabled tracking-widest mt-1">{format(today, 'd MMMM')}</div>
+            <Heading level={2} class="lowercase tracking-widest">{format(today, 'EEEE')}</Heading>
+            <Text type="supporting" color="disabled" weight="bold" display="block" class="font-display lowercase tracking-widest mt-1">{format(today, 'd MMMM')}</Text>
           </div>
-          <button 
+          <IconButton
+            variant="ghost"
+            label="Add event today"
+            icon={<Plus />}
+            class="rounded-full text-accent bg-accent-muted mt-1 shrink-0"
             onClick={() => {
               uiStore.setActiveDate(today.toISOString());
               uiStore.setActiveModal('addEvent');
             }}
-            class="w-8 h-8 rounded-full bg-accent/10 text-accent border-none flex items-center justify-center cursor-pointer hover:bg-accent hover:text-primary transition-colors mt-1 shrink-0"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" /></svg>
-          </button>
+          />
         </div>
-          
+
         {/* Tasks Section */}
         <div class="px-8 py-4">
           <div class="flex items-center justify-between mb-4">
-            <span class="font-display lowercase text-[11px] font-extrabold text-disabled tracking-widest">Tasks</span>
+            <Text color="disabled" weight="bold" class="font-display lowercase text-xs tracking-widest">Tasks</Text>
           </div>
-          
-          <div class="flex flex-col gap-2">
-            <For each={todayTasks()}>
-              {(task) => {
-                const color = taskState.lists.find(l => l.id === task.listId)?.color || '#6B5BDB';
-                return (
-                  <div class="flex items-start gap-3 py-1 group">
-                    <button 
-                      onClick={() => taskStore.toggleTask(task.originalId || task.id)}
-                      class="w-5 h-5 rounded-full border-[2px] mt-0.5 flex items-center justify-center shrink-0 cursor-pointer transition-colors bg-transparent"
-                      style={{ "border-color": color }}
-                    >
-                      <Show when={task.completed}>
-                        <div class="w-2.5 h-2.5 rounded-full" style={{ background: color }} />
-                      </Show>
-                    </button>
-                    <div 
-                      class="flex-1 cursor-pointer"
-                      onClick={() => uiStore.setActiveEvent(task.originalId || task.id, 'task')}
-                    >
-                      <div class={`text-[14px] font-medium text-primary/90 leading-tight ${task.completed ? 'line-through text-disabled' : ''}`}>
-                        {task.title}
-                      </div>
-                    </div>
-                  </div>
-                );
-              }}
-            </For>
 
-            <button 
+          <div class="flex flex-col gap-2">
+            <List density="compact" class="-mx-2" aria-label="Today's tasks">
+              <For each={todayTasks()}>
+                {(task) => (
+                  <ListItem
+                    class="group"
+                    startContent={
+                      <CheckboxInput
+                        size="sm"
+                        isLabelHidden
+                        label={task.title}
+                        value={!!task.completed}
+                        color={taskColor(task)}
+                        onChange={() => taskStore.toggleTask(task.originalId || task.id)}
+                      />
+                    }
+                    label={
+                      <span class={cx(
+                        'block truncate text-base font-medium leading-tight',
+                        task.completed ? 'line-through text-disabled' : 'text-primary/90',
+                      )}>
+                        {task.title}
+                      </span>
+                    }
+                    onClick={() => uiStore.setActiveEvent(task.originalId || task.id, 'task')}
+                  />
+                )}
+              </For>
+            </List>
+
+            <Button
+              variant="secondary"
+              label="Add task"
+              icon={<Plus />}
+              class="w-full mt-2"
               onClick={() => uiStore.setActiveModal('addTask')}
-              class="mt-2 w-full bg-card hover:bg-primary/10 border-none rounded-xl p-3 flex items-center justify-center text-primary cursor-pointer transition-colors shadow-sm"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" /></svg>
-            </button>
+            />
           </div>
         </div>
 
         {/* Agenda Section */}
         <div class="px-8 py-4 flex-1 flex flex-col min-h-0">
           <div class="flex items-center justify-between mb-4">
-            <span class="font-display lowercase text-[11px] font-extrabold text-disabled tracking-widest">Agenda</span>
-            <div class="flex bg-primary/10 rounded-lg p-0.5 relative">
-              <div class={`absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] bg-accent rounded shadow-sm transition-transform duration-300 pointer-events-none ${scheduleViewMode() === 'grid' ? 'translate-x-[calc(100%+2px)]' : 'translate-x-0'}`} />
-              <button type="button" class={`relative z-10 px-2 py-1 text-[10px] font-bold uppercase tracking-wide cursor-pointer transition-colors rounded bg-transparent border-none ${scheduleViewMode() === 'list' ? 'text-primary' : 'text-secondary hover:text-primary'}`} onClick={() => setScheduleViewMode('list')}>List</button>
-              <button type="button" class={`relative z-10 px-2 py-1 text-[10px] font-bold uppercase tracking-wide cursor-pointer transition-colors rounded bg-transparent border-none ${scheduleViewMode() === 'grid' ? 'text-primary' : 'text-secondary hover:text-primary'}`} onClick={() => {
-                setScheduleViewMode('grid');
-                setTimeout(() => {
-                  const scrollArea = document.getElementById('todayGridScrollArea');
-                  if (scrollArea) {
-                    const now = new Date();
-                    const mins = now.getHours() * 60 + now.getMinutes();
-                    scrollArea.scrollTop = Math.max(0, mins - 60);
-                  }
-                }, 50);
-              }}>Grid</button>
-            </div>
+            <Text color="disabled" weight="bold" class="font-display lowercase text-xs tracking-widest">Agenda</Text>
+            <SegmentedControl
+              size="sm"
+              value={scheduleViewMode()}
+              onChange={setAgendaMode}
+              label="Agenda view"
+            >
+              <SegmentedControlItem value="list" label="List" />
+              <SegmentedControlItem value="grid" label="Grid" />
+            </SegmentedControl>
           </div>
-          
+
           <div class="flex-1 overflow-hidden relative">
             <Transition
               mode="outin"
@@ -518,36 +605,40 @@ function TimelineView() {
               }}
             >
               <Show when={scheduleViewMode() === 'list'}>
-                <div class="flex flex-col gap-2 absolute inset-0 overflow-y-auto pr-2 pb-4">
-                  <For each={(() => {
-                    const now = new Date().getTime();
-                    return todayItems().filter(i => i.type === 'event' && !i.allDay && parseISO(i.end_time).getTime() > now);
-                  })()}>
-                    {item => {
-                      const timeFmt = settings.use24HourClock ? 'H:mm' : 'h:mm a';
-                      const timeStr = format(parseISO(item.start_time), timeFmt) + ' - ' + format(parseISO(item.end_time), timeFmt);
+                <div class="flex flex-col absolute inset-0 overflow-y-auto pr-2 pb-4">
+                  <Show
+                    when={upcomingTodayEvents().length > 0}
+                    fallback={<EmptyState isCompact title="No upcoming events today" />}
+                  >
+                    <List density="compact" aria-label="Upcoming events today">
+                      <For each={upcomingTodayEvents()}>
+                        {item => {
+                          const timeStr = fmtTime(parseISO(item.start_time)) + ' - ' + fmtTime(parseISO(item.end_time));
 
-                      return (
-                        <div class="flex gap-4 group cursor-pointer p-2 rounded-xl hover:bg-primary/5 transition-colors border border-transparent hover:border-border shrink-0">
-                          <div class="w-16 text-right text-xs font-bold text-disabled pt-1">
-                            {timeStr.split(' - ')[0]}
-                          </div>
-                          <div class="flex-1 flex gap-3">
-                            <div class="w-1 rounded-full flex-shrink-0" style={{ "background-color": item.color }} />
-                            <div class="flex-1">
-                              <div class="text-[13px] font-bold text-primary group-hover:text-accent transition-colors">{item.title} {item.rrule && '🔄'}</div>
-                              <div class="text-[11px] font-semibold text-disabled mt-0.5">{timeStr}</div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    }}
-                  </For>
-                  <Show when={(() => {
-                    const now = new Date().getTime();
-                    return todayItems().filter(i => i.type === 'event' && !i.allDay && parseISO(i.end_time).getTime() > now).length === 0;
-                  })()}>
-                    <div class="text-[13px] font-semibold text-disabled py-4 text-center">No upcoming events today</div>
+                          return (
+                            <ListItem
+                              class="group border border-transparent hover:border-border"
+                              startContent={
+                                <span class="flex items-stretch gap-3">
+                                  <span class="w-16 text-right text-xs font-bold text-disabled pt-1">
+                                    {timeStr.split(' - ')[0]}
+                                  </span>
+                                  <span class="w-1 rounded-full" style={{ 'background-color': item.color }} />
+                                </span>
+                              }
+                              label={
+                                <span class="block truncate text-sm font-bold text-primary group-hover:text-accent transition-colors">
+                                  {item.title} {item.rrule && '🔄'}
+                                </span>
+                              }
+                              description={
+                                <span class="text-xs font-semibold text-disabled mt-0.5">{timeStr}</span>
+                              }
+                            />
+                          );
+                        }}
+                      </For>
+                    </List>
                   </Show>
                 </div>
               </Show>
@@ -555,30 +646,28 @@ function TimelineView() {
               <Show when={scheduleViewMode() === 'grid'}>
                 <div class="absolute inset-0 flex flex-col pb-4">
                   <Show when={todayItems().filter(i => i.allDay).length > 0}>
-                    <div class="w-full border border-border bg-body rounded-xl mb-2 flex flex-col gap-1 p-2 max-h-[100px] overflow-y-auto relative shrink-0">
-                      <div class="font-display lowercase text-[9px] font-bold text-disabled tracking-wider mb-1 px-1">All Day</div>
+                    <div class="w-full border border-border bg-body rounded-lg mb-2 flex flex-col gap-1 p-2 max-h-[100px] overflow-y-auto relative shrink-0">
+                      <Text color="disabled" weight="bold" display="block" class="font-display lowercase text-xs tracking-wider mb-1 px-1">All Day</Text>
                       <For each={todayItems().filter(i => i.allDay)}>
                         {(item) => (
-                          <div 
-                            class="rounded px-2 py-1.5 text-[10px] font-bold text-white truncate shadow-sm cursor-pointer hover:brightness-110"
-                            style={{ background: item.color, opacity: (item.type === 'task' && item.completed) ? 0.5 : 1 }}
-                            onClick={() => {
-                              if (item.type === 'event') {
-                                uiStore.setActiveEvent(item.originalId || item.id, 'event');
-                                uiStore.setActiveModal('eventView');
-                              } else {
-                                uiStore.setActiveEvent(item.originalId || item.id, 'task');
-                              }
+                          <button
+                            type="button"
+                            class="w-full text-left rounded px-2 py-1.5 text-xs font-bold text-primary truncate shadow-[var(--shadow-low)] cursor-pointer hover:brightness-110 border-0"
+                            style={{
+                              background: `color-mix(in srgb, ${item.color} 30%, transparent)`,
+                              'border-left': `3px solid ${item.color}`,
+                              opacity: (item.type === 'task' && item.completed) ? 0.5 : 1,
                             }}
+                            onClick={() => openItem(item)}
                           >
                             {item.title} {item.rrule && '🔄'}
-                          </div>
+                          </button>
                         )}
                       </For>
                     </div>
                   </Show>
 
-                  <div id="todayGridScrollArea" class="flex-1 overflow-y-auto relative border border-border rounded-xl bg-primary/5 min-h-[300px]">
+                  <div id="todayGridScrollArea" class="flex-1 overflow-y-auto relative border border-border rounded-lg bg-primary/5 min-h-[300px]">
                     <div class="relative h-[1440px] w-full">
                       <For each={Array.from({length: 24})}>
                         {(_, i) => {
@@ -589,15 +678,15 @@ function TimelineView() {
                           return (
                             <div class="absolute w-full h-[60px] border-b border-border pointer-events-none flex" style={{ top: `${i() * 60}px` }}>
                               <div class="w-14 min-w-[56px] h-full border-r border-border flex flex-col items-center py-1">
-                                <span class="text-[10px] text-disabled font-bold">{i() === 0 ? '12 AM' : i() < 12 ? `${i()} AM` : i() === 12 ? '12 PM' : `${i()-12} PM`}</span>
+                                <span class="text-xs text-disabled font-bold">{i() === 0 ? '12 AM' : i() < 12 ? `${i()} AM` : i() === 12 ? '12 PM' : `${i()-12} PM`}</span>
                                 <Show when={hourForecast()}>
-                                  <div class="flex items-center gap-0.5 text-[10px] text-disabled font-semibold mt-1">
+                                  <div class="flex items-center gap-0.5 text-xs text-disabled font-semibold mt-1">
                                     <span title={hourForecast().condition}>{hourForecast().icon}</span>
                                     <span>{hourForecast().temp}°</span>
                                   </div>
                                 </Show>
                               </div>
-                              <div class="flex-1 h-[30px] border-b border-white/[0.03]" />
+                              <div class="flex-1 h-[30px] border-b border-border/30" />
                             </div>
                           );
                         }}
@@ -610,8 +699,8 @@ function TimelineView() {
                           const mins = now.getHours() * 60 + now.getMinutes();
                           return (
                             <div class="absolute w-[calc(100%-56px)] flex items-center z-30 pointer-events-none" style={{ top: `${mins - 6}px`, left: '56px' }}>
-                              <svg class="w-3 h-3 text-red-500 -ml-1.5 drop-shadow-md" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                              <div class="flex-1 h-[2px] bg-red-500 shadow-sm" />
+                              <svg class="w-3 h-3 text-error -ml-1.5 drop-shadow-md" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                              <div class={cx('flex-1 h-0.5 bg-error', NOW_LINE_GLOW)} />
                             </div>
                           );
                         })()}
@@ -642,36 +731,36 @@ function TimelineView() {
                           if (item.isGroup) {
                             const height = Math.max(item.endMin - item.startMin, 30);
                             return (
-                              <div 
-                                class="absolute rounded-md p-2 overflow-hidden transition-all duration-300 shadow-sm z-10 border border-border bg-body text-primary cursor-pointer hover:z-30 hover:shadow-lg group flex items-center justify-center backdrop-blur-md bg-opacity-90 hover:h-auto min-h-[30px]"
-                                style={{ 
-                                  top: `${item.startMin}px`, 
+                              <div
+                                class="absolute rounded-md p-2 overflow-hidden transition-all duration-300 shadow-[var(--shadow-low)] z-10 border border-border bg-body text-primary cursor-pointer hover:z-30 hover:shadow-[var(--shadow-med)] group flex items-center justify-center backdrop-blur-md hover:h-auto min-h-[30px]"
+                                style={{
+                                  top: `${item.startMin}px`,
                                   height: `${height}px`,
                                   left: item.left,
                                   width: item.width
                                 }}
                               >
-                                <div class="text-[11px] font-bold tracking-wide group-hover:hidden text-center truncate w-full px-2">
+                                <div class="text-xs font-bold tracking-wide group-hover:hidden text-center truncate w-full px-2">
                                   {item.items.length} Events
                                 </div>
                                 <div class="hidden group-hover:flex flex-col gap-1 w-full bg-body relative p-1 z-40 rounded">
                                   <For each={item.items}>
                                     {(subItem) => (
-                                      <div 
-                                        class="w-full text-left rounded p-1.5 hover:brightness-110 transition-colors cursor-pointer text-white truncate text-[10px] font-semibold"
-                                        style={{ background: subItem.color, opacity: (subItem.type === 'task' && subItem.completed) ? 0.5 : 1 }}
+                                      <button
+                                        type="button"
+                                        class="w-full text-left rounded p-1.5 hover:brightness-110 transition-colors cursor-pointer text-primary truncate text-xs font-semibold border-0"
+                                        style={{
+                                          background: `color-mix(in srgb, ${subItem.color} 30%, transparent)`,
+                                          'border-left': `3px solid ${subItem.color}`,
+                                          opacity: (subItem.type === 'task' && subItem.completed) ? 0.5 : 1,
+                                        }}
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          if (subItem.type === 'event') {
-                                            uiStore.setActiveEvent(subItem.originalId || subItem.id, 'event');
-                                            uiStore.setActiveModal('eventView');
-                                          } else {
-                                            uiStore.setActiveEvent(subItem.originalId || subItem.id, 'task');
-                                          }
+                                          openItem(subItem);
                                         }}
                                       >
                                         {subItem.title}
-                                      </div>
+                                      </button>
                                     )}
                                   </For>
                                 </div>
@@ -681,34 +770,30 @@ function TimelineView() {
 
                           const height = Math.max(item.endMin - item.startMin, 15);
                           return (
-                            <div 
-                              class="absolute rounded-md p-1.5 overflow-hidden transition-all duration-300 shadow-sm z-10 border border-black/10 text-white cursor-pointer hover:z-20 hover:shadow-md"
-                              style={{ 
-                                top: `${item.startMin}px`, 
+                            <button
+                              type="button"
+                              class="absolute text-left rounded-md p-1.5 overflow-hidden transition-all duration-300 shadow-[var(--shadow-low)] z-10 text-primary cursor-pointer hover:z-20 hover:shadow-[var(--shadow-med)] border-0"
+                              style={{
+                                top: `${item.startMin}px`,
                                 height: `${height}px`,
                                 left: item.left,
                                 width: item.width,
-                                background: item.color,
+                                background: `color-mix(in srgb, ${item.color} 30%, transparent)`,
+                                'border-left': `3px solid ${item.color}`,
+                                'backdrop-filter': 'blur(4px)',
                                 opacity: (item.type === 'task' && item.completed) ? 0.5 : 1
                               }}
-                              onClick={() => {
-                                if (item.type === 'event') {
-                                  uiStore.setActiveEvent(item.originalId || item.id, 'event');
-                                  uiStore.setActiveModal('eventView');
-                                } else {
-                                  uiStore.setActiveEvent(item.originalId || item.id, 'task');
-                                }
-                              }}
+                              onClick={() => openItem(item)}
                             >
-                              <div class="text-[10px] font-bold leading-tight truncate text-white">
+                              <div class="text-xs font-bold leading-tight truncate text-primary">
                                 {item.title} {item.rrule && '🔄'}
                               </div>
                               <Show when={height >= 30 && item.type === 'event'}>
-                                <div class="text-[9px] font-semibold opacity-80 text-white/80">
+                                <div class="text-2xs font-semibold text-secondary">
                                   {Math.floor(item.startMin / 60)}:{(item.startMin % 60).toString().padStart(2, '0')} - {Math.floor(item.endMin / 60)}:{(item.endMin % 60).toString().padStart(2, '0')}
                                 </div>
                               </Show>
-                            </div>
+                            </button>
                           );
                         }}
                       </For>
@@ -723,42 +808,45 @@ function TimelineView() {
           {/* Weather Section */}
           <div class="px-8 py-4 relative z-20">
             <div class="flex items-center justify-between mb-4">
-              <span class="font-display lowercase text-[11px] font-extrabold text-disabled tracking-widest">Weather</span>
+              <Text color="disabled" weight="bold" class="font-display lowercase text-xs tracking-widest">Weather</Text>
               <Show when={weatherService.state}>
-                <button 
+                <IconButton
+                  variant="ghost"
+                  size="sm"
+                  label={isWeatherExpanded() ? 'Collapse weather details' : 'Expand weather details'}
+                  aria-expanded={isWeatherExpanded()}
+                  icon={<ChevronUp />}
+                  class={cx('rounded-full transition-transform', isWeatherExpanded() && 'rotate-180')}
                   onClick={() => setIsWeatherExpanded(!isWeatherExpanded())}
-                  class={`bg-transparent border-none text-disabled hover:text-primary cursor-pointer transition-transform ${isWeatherExpanded() ? 'rotate-180' : ''}`}
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>
-                </button>
+                />
               </Show>
             </div>
-            
-            <Show 
-              when={weatherService.state} 
+
+            <Show
+              when={weatherService.state}
               fallback={
-                <div class="bg-card rounded-xl p-4 shadow-sm flex items-center gap-4 animate-pulse">
-                  <div class="w-12 h-12 rounded-full bg-white/5" />
+                <div class="bg-card rounded-lg p-4 shadow-[var(--shadow-low)] flex items-center gap-4" aria-busy="true">
+                  <Skeleton shape="circle" width={48} />
                   <div class="flex-1 flex flex-col gap-2">
-                    <div class="h-3 w-3/4 bg-white/5 rounded" />
-                    <div class="h-3 w-1/2 bg-white/5 rounded" />
+                    <Skeleton shape="text" width="75%" height={12} index={1} />
+                    <Skeleton shape="text" width="50%" height={12} index={2} />
                   </div>
                 </div>
               }
             >
-              <div 
-                class={`bg-card rounded-xl shadow-sm transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden cursor-pointer flex flex-col relative ${isWeatherExpanded() ? 'h-[380px] shadow-[0_-15px_40px_rgba(0,0,0,0.2),0_0_20px_rgba(255,255,255,0.05)] ring-1 ring-border transform -translate-y-2 scale-[1.02] z-30' : 'h-[80px] hover:bg-primary/5'}`}
+              <div
+                class={`bg-card rounded-lg transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden cursor-pointer flex flex-col relative ${isWeatherExpanded() ? 'h-[380px] shadow-[var(--shadow-high)] ring-1 ring-border transform -translate-y-2 scale-[1.02] z-30' : 'h-[80px] shadow-[var(--shadow-low)] hover:bg-primary/5'}`}
                 onClick={() => { if (!isWeatherExpanded()) setIsWeatherExpanded(true); }}
               >
                 {/* Collapsed / Header View */}
                 <div class="p-4 flex items-center gap-4 shrink-0">
                   <div class="font-display lowercase text-4xl" title={weatherService.state.current.condition}>{weatherService.state.current.icon}</div>
                   <div class="flex-1 flex flex-col">
-                    <span class="text-[14px] font-bold text-primary leading-tight">{weatherService.state.current.temp}° and {weatherService.state.current.condition}</span>
-                    <span class="text-[11px] font-semibold text-disabled mt-0.5">Today's forecast</span>
+                    <span class="text-base font-bold text-primary leading-tight">{weatherService.state.current.temp}° and {weatherService.state.current.condition}</span>
+                    <span class="text-xs font-semibold text-disabled mt-0.5">Today's forecast</span>
                   </div>
                   <Show when={weatherService.state.forecast[0]}>
-                    <div class="flex flex-col text-right text-[11px] font-bold text-disabled">
+                    <div class="flex flex-col text-right text-xs font-bold text-disabled">
                       <span class="text-primary">↑ {weatherService.state.forecast[0].tempMax}°</span>
                       <span>↓ {weatherService.state.forecast[0].tempMin}°</span>
                     </div>
@@ -766,17 +854,17 @@ function TimelineView() {
                 </div>
 
                 {/* Expanded View */}
-                <div 
+                <div
                   class={`flex-1 flex flex-col px-4 pb-4 transition-opacity duration-500 delay-100 ${isWeatherExpanded() ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                 >
                   <Show when={weatherService.state.current.insight}>
-                    <div class="bg-accent/10 rounded-lg p-3 mb-4 shrink-0 border border-accent/20 flex items-start gap-2">
-                      <span class="text-accent mt-0.5">✨</span>
-                      <span class="text-[12px] font-semibold text-primary leading-snug">{weatherService.state.current.insight}</span>
+                    <div class="bg-accent/10 rounded-md p-3 mb-4 shrink-0 border border-accent/20 flex items-start gap-2">
+                      <span class="text-accent mt-0.5" aria-hidden="true">✨</span>
+                      <span class="text-sm font-semibold text-primary leading-snug">{weatherService.state.current.insight}</span>
                     </div>
                   </Show>
 
-                  <div class="font-display lowercase text-[10px] font-bold text-disabled tracking-wider mb-2">Hourly</div>
+                  <Text color="disabled" weight="bold" display="block" class="font-display lowercase text-xs tracking-wider mb-2">Hourly</Text>
                   <div class="flex-1 overflow-y-auto pr-1 flex flex-col gap-1 -mx-2 px-2">
                     <For each={(() => {
                       const now = new Date();
@@ -786,20 +874,20 @@ function TimelineView() {
                       {(hour) => {
                         const date = new Date(hour.time);
                         return (
-                          <div class="flex items-center justify-between p-2 rounded-lg hover:bg-primary/5 transition-colors">
-                            <span class="text-[12px] font-bold text-secondary w-12">{format(date, settings.use24HourClock ? 'H:00' : 'ha')}</span>
+                          <div class="flex items-center justify-between p-2 rounded-md hover:bg-primary/5 transition-colors">
+                            <span class="text-sm font-bold text-secondary w-12">{format(date, settings.use24HourClock ? 'H:00' : 'ha')}</span>
                             <span class="text-lg w-8 text-center">{hour.icon}</span>
-                            <span class="text-[13px] font-bold text-primary w-12 text-right">{hour.temp}°</span>
+                            <span class="text-sm font-bold text-primary w-12 text-right">{hour.temp}°</span>
                           </div>
                         );
                       }}
                     </For>
                   </div>
-                  
-                  <div class="mt-4 pt-3 border-t border-border flex justify-between items-center text-[10px] font-semibold text-disabled shrink-0">
-                    <div class="flex items-center gap-1"><span class="text-[14px]">💨</span> {weatherService.state.current.windSpeed} mph</div>
-                    <div class="flex items-center gap-1"><span class="text-[14px]">💧</span> {weatherService.state.current.humidity}%</div>
-                    <div class="flex items-center gap-1"><span class="text-[14px]">☂️</span> {weatherService.state.current.precipitationProbability}%</div>
+
+                  <div class="mt-4 pt-3 border-t border-border flex justify-between items-center text-xs font-semibold text-disabled shrink-0">
+                    <div class="flex items-center gap-1"><span class="text-base" aria-hidden="true">💨</span> {weatherService.state.current.windSpeed} mph</div>
+                    <div class="flex items-center gap-1"><span class="text-base" aria-hidden="true">💧</span> {weatherService.state.current.humidity}%</div>
+                    <div class="flex items-center gap-1"><span class="text-base" aria-hidden="true">☂️</span> {weatherService.state.current.precipitationProbability}%</div>
                   </div>
                 </div>
               </div>

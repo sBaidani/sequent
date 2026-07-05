@@ -2,6 +2,13 @@ import { createMemo, For, Show, createSignal } from 'solid-js';
 import { format, isSameDay } from 'date-fns';
 import { taskStore } from '../../stores/taskStore';
 import { expandRecurringItems } from '../../lib/recurrenceEngine';
+import { IconButton, List, ListItem, CheckboxInput, Text, EmptyState, cx } from '../kit';
+
+// Per-item user colors fall back to the theme accent token. Stored colors are
+// rendered through the CheckboxInput `color` prop (its documented token
+// exception); wave 2's colorTokens.js snapUserColor() will take over
+// hue-snapping once it lands.
+const FALLBACK_COLOR = 'var(--color-accent)';
 
 function DayTaskListPreview(props) {
   const { state: taskState } = taskStore;
@@ -17,7 +24,7 @@ function DayTaskListPreview(props) {
     let tasks = expandedTasks.filter(t => t.scheduled_date && isSameDay(new Date(t.scheduled_date), d)).map(t => {
       return {
         ...t,
-        color: taskState.lists.find(l => l.id === t.listId)?.color || '#6B5BDB',
+        color: taskState.lists.find(l => l.id === t.listId)?.color || FALLBACK_COLOR,
       };
     });
 
@@ -26,7 +33,7 @@ function DayTaskListPreview(props) {
       tasks.push({
         id: 'ghost-1',
         title: props.ghostTask.title || 'New Task',
-        color: props.ghostTask.color || '#6B5BDB',
+        color: props.ghostTask.color || FALLBACK_COLOR,
         isGhost: true,
         completed: false
       });
@@ -37,53 +44,71 @@ function DayTaskListPreview(props) {
 
   return (
     <div class={`flex flex-col h-full min-h-[500px] border-l border-border bg-body/50 transition-all duration-300 ease-in-out ${collapsed() ? 'w-12 min-w-[48px]' : 'w-[350px] min-w-[350px]'}`}>
-      
+
       <div class="flex items-center p-4 border-b border-border gap-3">
-        <button 
+        <IconButton
+          variant="ghost"
+          size="sm"
+          label={collapsed() ? 'Expand Preview' : 'Collapse Preview'}
+          title={collapsed() ? 'Expand Preview' : 'Collapse Preview'}
+          icon={
+            <svg class={`w-4 h-4 transition-transform duration-300 ${collapsed() ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+          }
+          class={cx('shrink-0', collapsed() && 'mx-auto')}
           onClick={() => setCollapsed(!collapsed())}
-          class={`flex items-center justify-center w-6 h-6 rounded border-none bg-transparent cursor-pointer hover:bg-primary/10 text-disabled hover:text-primary transition-colors ${collapsed() ? 'mx-auto' : ''} shrink-0`}
-          title={collapsed() ? "Expand Preview" : "Collapse Preview"}
-        >
-          <svg class={`w-4 h-4 transition-transform duration-300 ${collapsed() ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-        </button>
+        />
         <Show when={!collapsed()}>
           <div class="flex items-center justify-between w-full min-w-0">
-            <div class="text-[14px] font-bold text-primary tracking-wide truncate pr-2">
+            <Text type="body" weight="bold" maxLines={1} class="tracking-wide pr-2">
               {`${format(new Date(props.date.includes('T') ? props.date : props.date + 'T12:00:00'), 'eeee')} Tasks`}
-            </div>
-            <div class="text-[12px] font-bold text-disabled shrink-0">
+            </Text>
+            <Text type="supporting" color="disabled" weight="bold" class="shrink-0">
               {format(new Date(props.date.includes('T') ? props.date : props.date + 'T12:00:00'), 'MMM d')}
-            </div>
+            </Text>
           </div>
         </Show>
       </div>
 
-      <div class={`flex-1 overflow-y-auto p-4 flex flex-col gap-2 ${collapsed() ? 'hidden' : 'block'}`}>
+      <div class={`flex-1 overflow-y-auto p-4 ${collapsed() ? 'hidden' : 'block'}`}>
         <Show when={dayTasks().length === 0}>
-          <div class="text-sm font-semibold text-disabled italic py-4 text-center">No tasks scheduled for this day.</div>
+          <EmptyState isCompact title="No tasks scheduled for this day." />
         </Show>
-        <For each={dayTasks()}>
-          {(item) => (
-            <div 
-              class={`flex items-start gap-3 p-3 rounded-xl border ${item.isGhost ? 'border-dashed border-primary/40 bg-primary/5 animate-pulse' : 'border-border bg-card hover:border-primary/20 transition-colors'}`}
-              style={{ opacity: item.completed && !item.isGhost ? 0.5 : 1 }}
-            >
-              <div 
-                class="w-5 h-5 rounded-full border-[2px] mt-0.5 flex items-center justify-center shrink-0 bg-transparent"
-                style={{ "border-color": item.color }}
-              >
-                <Show when={item.completed && !item.isGhost}>
-                  <div class="w-2.5 h-2.5 rounded-full" style={{ background: item.color }} />
-                </Show>
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class={`text-[14px] font-medium text-primary/90 leading-tight ${item.completed && !item.isGhost ? 'line-through text-disabled' : ''} truncate`}>
-                  {item.title || 'Untitled Task'}
-                </div>
-              </div>
-            </div>
-          )}
-        </For>
+        <Show when={dayTasks().length > 0}>
+          <List hasDividers density="balanced" aria-label="Tasks for this day">
+            <For each={dayTasks()}>
+              {(item) => (
+                <ListItem
+                  class={cx(
+                    item.isGhost &&
+                      'rounded-md border border-dashed border-primary/40 bg-primary/5 animate-pulse',
+                    item.completed && !item.isGhost && 'opacity-50',
+                  )}
+                  startContent={
+                    <CheckboxInput
+                      size="sm"
+                      isLabelHidden
+                      isReadOnly
+                      label={item.title || 'Untitled Task'}
+                      value={!!(item.completed && !item.isGhost)}
+                      color={item.color}
+                    />
+                  }
+                  label={
+                    <Text
+                      type="body"
+                      weight="medium"
+                      maxLines={1}
+                      color={item.completed && !item.isGhost ? 'disabled' : 'primary'}
+                      hasStrikethrough={!!(item.completed && !item.isGhost)}
+                    >
+                      {item.title || 'Untitled Task'}
+                    </Text>
+                  }
+                />
+              )}
+            </For>
+          </List>
+        </Show>
       </div>
     </div>
   );

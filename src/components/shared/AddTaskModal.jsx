@@ -1,11 +1,26 @@
-import { createSignal, createEffect, Show } from 'solid-js';
-import Modal from '../ui/Modal';
+import { createSignal, createEffect } from 'solid-js';
+import {
+  Dialog, DialogHeader, FormLayout, TextInput, TextArea, Text, Switch,
+  Selector, SegmentedControl, SegmentedControlItem, Button,
+} from '../kit';
 import { taskStore } from '../../stores/taskStore';
 import { uiStore } from '../../stores/uiStore';
 import DatePicker from './DatePicker';
 import TimePicker from './TimePicker';
-import SelectPicker from './SelectPicker';
 import DayTaskListPreview from '../tasks/DayTaskListPreview';
+
+const RECURRENCE_OPTIONS = [
+  { value: 'NONE', label: 'Does not repeat' },
+  { value: 'DAILY', label: 'Daily' },
+  { value: 'WEEKLY', label: 'Weekly' },
+  { value: 'MONTHLY', label: 'Monthly' },
+];
+
+// Per-item user color dot for Selector option rows (stored colors are data;
+// route through src/lib/colorTokens.js snapUserColor once it lands).
+const colorDot = (color) => (
+  <span aria-hidden="true" class="inline-block size-2.5 rounded-full" style={{ background: color }} />
+);
 
 function AddTaskModal() {
   const [title, setTitle] = createSignal('');
@@ -27,7 +42,7 @@ function AddTaskModal() {
       const localDateStr = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}-${dateObj.getDate().toString().padStart(2, '0')}`;
       setDate(localDateStr);
       setHasTaskDate(false);
-      
+
       if (dateObj.getHours() !== 0 || dateObj.getMinutes() !== 0) {
         setAllDay(false);
         setTime(`${dateObj.getHours().toString().padStart(2, '0')}:${dateObj.getMinutes().toString().padStart(2, '0')}`);
@@ -47,7 +62,7 @@ function AddTaskModal() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!title().trim()) return;
-    
+
     let targetDateStr = null;
     if (hasTaskDate() && date()) {
       if (allDay()) {
@@ -57,22 +72,22 @@ function AddTaskModal() {
         targetDateStr = new Date(`${date()}T${timeStr}`).toISOString();
       }
     }
-    
+
     let rruleStr = null;
     if (recurrence() === 'DAILY') rruleStr = 'FREQ=DAILY';
     else if (recurrence() === 'WEEKLY') rruleStr = 'FREQ=WEEKLY';
     else if (recurrence() === 'MONTHLY') rruleStr = 'FREQ=MONTHLY';
-    
+
     taskStore.addTask(
-      title(), 
-      listId() || null, 
-      targetDateStr, 
+      title(),
+      listId() || null,
+      targetDateStr,
       priority(),
       description(),
       rruleStr,
       hasTaskDate() ? allDay() : false
     );
-    
+
     setTitle('');
     setDescription('');
     setRecurrence('NONE');
@@ -81,148 +96,132 @@ function AddTaskModal() {
   };
 
   return (
-    <Modal id="addTask" wide={true} noPadding={true}>
-      <div class="flex flex-col sm:flex-row w-full bg-popover/85 rounded-2xl overflow-hidden">
-        
-        {/* Left Pane - Form */}
-        <div class="flex-1 p-6 flex flex-col gap-4">
-          <form onSubmit={handleSubmit} class="flex flex-col gap-4">
-            <h2 class="font-display lowercase text-xl font-extrabold text-primary mb-2">New Task</h2>
-            
-            <div>
-              <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">Title</label>
-              <input 
-                ref={el => el && setTimeout(() => el.focus(), 50)}
-                type="text" 
+    <Dialog
+      open={uiStore.state.activeModal === 'addTask'}
+      onClose={() => uiStore.setActiveModal(null)}
+      size="lg"
+    >
+      <DialogHeader title="New Task" />
+      <div class="flex min-h-0 flex-1 flex-col overflow-hidden sm:flex-row">
+        {/* Left pane — form */}
+        <form onSubmit={handleSubmit} class="flex min-h-0 flex-1 flex-col border-border sm:border-r">
+          <div class="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+            <FormLayout>
+              <TextInput
+                label="Title"
                 placeholder="Buy groceries..."
                 value={title()}
-                onInput={(e) => setTitle(e.target.value)}
-                class="w-full bg-primary/5 border border-border rounded-xl px-3.5 py-3 text-primary text-[15px] outline-none focus:border-accent transition-colors"
-                required
+                onChange={(v) => setTitle(v)}
+                hasAutoFocus
               />
-            </div>
 
-            <div>
-              <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">Description</label>
-              <textarea 
+              <TextArea
+                label="Description"
                 placeholder="Add details..."
                 value={description()}
-                onInput={(e) => setDescription(e.target.value)}
-                class="w-full bg-primary/5 border border-border rounded-xl px-3.5 py-3 text-primary text-[15px] outline-none focus:border-accent transition-colors resize-none h-16"
+                onChange={(v) => setDescription(v)}
+                rows={2}
               />
-            </div>
 
-            <div class="flex flex-col sm:flex-row gap-4">
-              <div class="flex-1">
-                <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">Due Date</label>
-                <DatePicker value={date()} onChange={(v) => setDate(v)} />
-              </div>
-              <div class="flex-1 sm:min-w-[140px]">
-                <div class="flex items-center justify-between mb-1.5 h-[18px]">
-                  <label class="font-display lowercase block text-xs text-disabled font-semibold tracking-wider">Time</label>
-                  <div class="flex items-center gap-2">
-                    <span class="font-display lowercase text-secondary text-[11px] font-bold tracking-wide">All-day</span>
-                    <button 
-                      type="button"
-                      onClick={() => setAllDay(!allDay())}
-                      class={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${allDay() ? 'bg-accent' : 'bg-primary/20 hover:bg-primary/30'}`}
-                    >
-                      <span class={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-card shadow ring-0 transition duration-200 ease-in-out ${allDay() ? 'translate-x-3' : 'translate-x-0'}`} />
-                    </button>
+              <div class="flex flex-col gap-4 sm:flex-row">
+                <div class="flex flex-1 flex-col gap-1">
+                  <Text as="span" type="label" color="secondary">Due Date</Text>
+                  <DatePicker value={date()} onChange={(v) => setDate(v)} />
+                </div>
+                <div class="flex flex-1 flex-col gap-1 sm:min-w-[140px]">
+                  <div class="flex items-center justify-between gap-2">
+                    <Text as="span" type="label" color="secondary">Time</Text>
+                    <Switch
+                      label="All-day"
+                      labelPosition="start"
+                      value={allDay()}
+                      onChange={(checked) => setAllDay(checked)}
+                    />
                   </div>
-                </div>
-                {allDay() ? (
-                  <div class="w-full bg-primary/5 border border-border rounded-xl px-3.5 py-2.5 text-disabled text-sm font-medium flex items-center h-[46px]">--:--</div>
-                ) : (
-                  <TimePicker value={time()} onChange={(v) => setTime(v)} />
-                )}
-              </div>
-            </div>
-
-            <div class="flex flex-col gap-4">
-              <div>
-                <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">List</label>
-                <SelectPicker 
-                  value={listId()} 
-                  onChange={setListId}
-                  options={taskState.lists.map(list => ({ value: list.id, label: list.name, color: list.color }))}
-                  placeholder="Select..."
-                />
-              </div>
-              
-              <div>
-                <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">Priority</label>
-                <div class="flex bg-primary/5 rounded-xl p-1 border border-border w-full">
-                  <button 
-                    type="button"
-                    onClick={() => setPriority('low')}
-                    class={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${priority() === 'low' ? 'bg-[#1FA7A7] text-primary shadow-md scale-105 border border-border' : 'text-secondary hover:text-primary hover:bg-primary/5'}`}
-                  >Low</button>
-                  <button 
-                    type="button"
-                    onClick={() => setPriority('normal')}
-                    class={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${priority() === 'normal' ? 'bg-primary/20 text-primary shadow-md scale-105 border border-border' : 'text-secondary hover:text-primary hover:bg-primary/5'}`}
-                  >Normal</button>
-                  <button 
-                    type="button"
-                    onClick={() => setPriority('high')}
-                    class={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${priority() === 'high' ? 'bg-[#FF3B30] text-primary shadow-md scale-105 border border-border' : 'text-secondary hover:text-primary hover:bg-primary/5'}`}
-                  >High</button>
+                  {allDay() ? (
+                    <div class="flex h-(--size-element-md) w-full items-center rounded-md border-(length:--border-width) border-solid border-border bg-surface px-2 text-disabled">
+                      --:--
+                    </div>
+                  ) : (
+                    <TimePicker value={time()} onChange={(v) => setTime(v)} />
+                  )}
                 </div>
               </div>
-            </div>
 
-            <div class="pt-2">
-              {!showRecurrence() ? (
-                <button 
-                  type="button" 
-                  onClick={() => setShowRecurrence(true)}
-                  class="bg-transparent border-none text-accent text-[13px] font-semibold cursor-pointer hover:underline"
+              <Selector
+                label="List"
+                value={listId()}
+                onChange={(v) => setListId(v || '')}
+                options={taskState.lists.map((list) => ({
+                  value: list.id,
+                  label: list.name,
+                  icon: colorDot(list.color),
+                }))}
+                placeholder="Select..."
+              />
+
+              <div class="flex flex-col gap-1">
+                <Text as="span" type="label" color="secondary">Priority</Text>
+                <SegmentedControl
+                  label="Priority"
+                  layout="fill"
+                  value={priority()}
+                  onChange={(v) => setPriority(v)}
                 >
-                  + Add Repeat
-                </button>
-              ) : (
+                  <SegmentedControlItem value="low" label="Low" />
+                  <SegmentedControlItem value="normal" label="Normal" />
+                  <SegmentedControlItem value="high" label="High" />
+                </SegmentedControl>
+              </div>
+
+              {!showRecurrence() ? (
                 <div>
-                  <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider flex justify-between">
-                    <span>Repeat</span>
-                    <span class="text-accent cursor-pointer hover:underline normal-case tracking-normal" onClick={() => { setShowRecurrence(false); setRecurrence('NONE'); }}>Remove</span>
-                  </label>
-                  <SelectPicker 
-                    value={recurrence()} 
-                    onChange={setRecurrence}
-                    options={[
-                      { value: 'NONE', label: 'Does not repeat' },
-                      { value: 'DAILY', label: 'Daily' },
-                      { value: 'WEEKLY', label: 'Weekly' },
-                      { value: 'MONTHLY', label: 'Monthly' }
-                    ]}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    label="+ Add Repeat"
+                    class="text-accent"
+                    onClick={() => setShowRecurrence(true)}
+                  />
+                </div>
+              ) : (
+                <div class="flex items-end gap-2">
+                  <div class="min-w-0 flex-1">
+                    <Selector
+                      label="Repeat"
+                      value={recurrence()}
+                      onChange={(v) => setRecurrence(v || 'NONE')}
+                      options={RECURRENCE_OPTIONS}
+                    />
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    label="Remove"
+                    class="text-accent"
+                    onClick={() => { setShowRecurrence(false); setRecurrence('NONE'); }}
                   />
                 </div>
               )}
-            </div>
+            </FormLayout>
+          </div>
+          <div class="shrink-0 border-t border-border px-6 py-4">
+            <Button type="submit" variant="primary" label="Add Task" class="w-full" />
+          </div>
+        </form>
 
-            <button 
-              type="submit"
-              class="mt-2 bg-accent text-primary border-none p-3.5 rounded-xl text-[15px] font-bold cursor-pointer hover:bg-accent/80 transition-colors shadow-lg shadow-accent/20"
-            >
-              Add Task
-            </button>
-          </form>
-        </div>
-
-        {/* Right Pane - Task List Preview */}
+        {/* Right pane — task list preview */}
         <div class="hidden sm:block">
-          <DayTaskListPreview 
+          <DayTaskListPreview
             date={date() || new Date().toISOString().split('T')[0]}
             ghostTask={{
               title: title() || 'New Task',
-              color: taskState.lists.find(l => l.id === listId())?.color || '#6B5BDB'
+              color: taskState.lists.find((l) => l.id === listId())?.color || '#6B5BDB',
             }}
           />
         </div>
-
       </div>
-    </Modal>
+    </Dialog>
   );
 }
 

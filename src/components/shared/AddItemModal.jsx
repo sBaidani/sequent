@@ -1,14 +1,36 @@
 import { createSignal, createEffect, Show } from 'solid-js';
-import Modal from '../ui/Modal';
+import {
+  Dialog, DialogHeader, FormLayout, TextInput, TextArea, Text, Switch,
+  Selector, SegmentedControl, SegmentedControlItem, Button,
+} from '../kit';
 import { eventStore } from '../../stores/eventStore';
 import { taskStore } from '../../stores/taskStore';
 import { settingsStore } from '../../stores/settingsStore';
 import { uiStore } from '../../stores/uiStore';
 import DatePicker from './DatePicker';
 import TimePicker from './TimePicker';
-import SelectPicker from './SelectPicker';
 import DaySchedulePreview from '../calendar/DaySchedulePreview';
 import DayTaskListPreview from '../tasks/DayTaskListPreview';
+
+const RECURRENCE_OPTIONS = [
+  { value: 'NONE', label: 'Does not repeat' },
+  { value: 'DAILY', label: 'Daily' },
+  { value: 'WEEKLY', label: 'Weekly' },
+  { value: 'MONTHLY', label: 'Monthly' },
+];
+
+const DURATION_PRESETS = [
+  { minutes: 15, label: '15m' },
+  { minutes: 30, label: '30m' },
+  { minutes: 60, label: '1h' },
+  { minutes: 120, label: '2h' },
+];
+
+// Per-item user color dot for Selector option rows (stored colors are data;
+// route through src/lib/colorTokens.js snapUserColor once it lands).
+const colorDot = (color) => (
+  <span aria-hidden="true" class="inline-block size-2.5 rounded-full" style={{ background: color }} />
+);
 
 function AddItemModal() {
   const [mode, setMode] = createSignal('event'); // 'event' or 'task'
@@ -35,15 +57,15 @@ function AddItemModal() {
       const st = new Date(activeStr);
       setDate(st.toISOString().split('T')[0]);
       setTime(st.getHours().toString().padStart(2, '0') + ':00');
-      
+
       const defaultDur = settingsStore.state.defaultDuration || 60;
       const en = new Date(st.getTime() + defaultDur * 60000);
       setEndDate(en.toISOString().split('T')[0]);
       setEndTime(en.getHours().toString().padStart(2, '0') + ':' + en.getMinutes().toString().padStart(2, '0'));
-      
+
       setAllDay(true);
       setHasTaskDate(false);
-      
+
       if (eventState.calendars.length > 0) {
         setCalendarId(eventState.calendars[0].id);
       }
@@ -111,7 +133,7 @@ function AddItemModal() {
       const validStart = isNaN(startObj.getTime()) ? new Date() : startObj;
       const endObj = new Date(`${endDate() || date() || new Date().toISOString().split('T')[0]}T${endTime()}:00`);
       const validEnd = isNaN(endObj.getTime()) ? new Date(validStart.getTime() + 60*60000) : endObj;
-      
+
       eventStore.addEvent(title(), validStart.toISOString(), validEnd.toISOString(), calendarId() || null, description(), rruleStr, allDay());
     } else {
       let targetDateStr = null;
@@ -123,10 +145,10 @@ function AddItemModal() {
           targetDateStr = new Date(`${date()}T${timeStr}`).toISOString();
         }
       }
-      
+
       taskStore.addTask(title(), listId() || null, targetDateStr, priority(), description(), rruleStr, hasTaskDate() ? allDay() : false);
     }
-    
+
     setTitle('');
     setDescription('');
     setRecurrence('NONE');
@@ -134,273 +156,257 @@ function AddItemModal() {
     uiStore.setActiveModal(null);
   };
 
+  const dateField = (label, value, onChange, endSlot) => (
+    <div class="flex flex-1 flex-col gap-1">
+      <div class="flex items-center justify-between gap-2">
+        <Text as="span" type="label" color="secondary">{label}</Text>
+        {endSlot}
+      </div>
+      <DatePicker value={value()} onChange={onChange} />
+    </div>
+  );
+
+  const timeField = (label, value, onChange) => (
+    <div class="flex flex-1 flex-col gap-1 sm:min-w-[140px]">
+      <Text as="span" type="label" color="secondary">{label}</Text>
+      <TimePicker value={value()} onChange={onChange} />
+    </div>
+  );
+
   return (
-    <Modal id="addItem" wide={true} noPadding={true}>
-      <div class="flex flex-col sm:flex-row w-full bg-popover/85 rounded-2xl overflow-hidden h-full min-h-0 max-h-[90vh]">
-        
-        {/* Left Pane - Form */}
-        <div class="flex-1 flex flex-col min-h-0 border-r border-border">
-          <div class="px-6 pt-6 flex-shrink-0">
-            <div 
-              onTouchStart={handleTouchStart} 
-              onTouchEnd={handleTouchEnd}
-              class="w-full flex flex-col gap-4"
+    <Dialog
+      open={uiStore.state.activeModal === 'addItem'}
+      onClose={() => uiStore.setActiveModal(null)}
+      size="lg"
+    >
+      <DialogHeader title={mode() === 'event' ? 'New Event' : 'New Task'} />
+      <div class="flex min-h-0 flex-1 flex-col overflow-hidden sm:flex-row">
+        {/* Left pane — form */}
+        <div class="flex min-h-0 flex-1 flex-col border-border sm:border-r">
+          <div class="shrink-0 px-6 pt-4" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+            <SegmentedControl
+              label="Item type"
+              layout="fill"
+              value={mode()}
+              onChange={(v) => setMode(v)}
             >
-              <div class="flex bg-primary/5 rounded-lg p-1 w-full relative mb-1">
-                <div class={`absolute h-[calc(100%-8px)] w-[calc(50%-4px)] top-1 rounded-md bg-accent transition-transform duration-300 ease-out shadow-sm ${mode() === 'event' ? 'translate-x-0' : 'translate-x-[calc(100%+4px)]'}`} />
-                <button 
-                  type="button"
-                  onClick={() => setMode('event')} 
-                  class={`flex-1 relative z-10 border-none py-2 text-[13px] font-bold cursor-pointer transition-colors bg-transparent ${mode() === 'event' ? 'text-primary' : 'text-secondary hover:text-primary'}`}
-                >Event</button>
-                <button 
-                  type="button"
-                  onClick={() => setMode('task')} 
-                  class={`flex-1 relative z-10 border-none py-2 text-[13px] font-bold cursor-pointer transition-colors bg-transparent ${mode() === 'task' ? 'text-primary' : 'text-secondary hover:text-primary'}`}
-                >Task</button>
-              </div>
-            </div>
+              <SegmentedControlItem value="event" label="Event" />
+              <SegmentedControlItem value="task" label="Task" />
+            </SegmentedControl>
           </div>
 
-        <form onSubmit={handleSubmit} class="flex flex-col flex-1 min-h-0 mt-4">
-          <div class="flex-1 overflow-y-auto px-6 pb-4 flex flex-col gap-4">
-            <div>
-              <input 
-                ref={el => el && setTimeout(() => el.focus(), 50)}
-                type="text" 
-                placeholder={mode() === 'event' ? "Event Title" : "Task Title"}
-                value={title()}
-                onInput={(e) => setTitle(e.target.value)}
-                class="w-full bg-transparent border-none px-0 py-2 text-primary text-3xl font-bold placeholder:text-disabled outline-none"
-                required
+          <form onSubmit={handleSubmit} class="flex min-h-0 flex-1 flex-col">
+            <div class="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+              <FormLayout>
+                <TextInput
+                  label="Title"
+                  placeholder={mode() === 'event' ? 'Event Title' : 'Task Title'}
+                  value={title()}
+                  onChange={(v) => setTitle(v)}
+                  hasAutoFocus
+                />
+
+                <TextArea
+                  label="Description"
+                  placeholder="Add details..."
+                  value={description()}
+                  onChange={(v) => setDescription(v)}
+                  rows={2}
+                />
+
+                <Show when={mode() === 'event' || (mode() === 'task' && hasTaskDate())}>
+                  <Switch
+                    label="All-Day"
+                    value={allDay()}
+                    onChange={(checked) => setAllDay(checked)}
+                  />
+                </Show>
+
+                <Show when={mode() === 'task' && hasTaskDate()}>
+                  <div class="flex flex-col gap-4 sm:flex-row">
+                    {dateField('Due Date', date, (v) => setDate(v), (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        label="Remove"
+                        class="text-accent"
+                        onClick={() => setHasTaskDate(false)}
+                      />
+                    ))}
+                    <Show when={!allDay()}>
+                      {timeField('Time', time, (v) => setTime(v))}
+                    </Show>
+                  </div>
+                </Show>
+
+                <Show when={mode() === 'event'}>
+                  <Show when={allDay()}>
+                    <div class="flex flex-col gap-4 sm:flex-row">
+                      {dateField('Start Date', date, (v) => setDate(v))}
+                      {dateField('End Date', endDate, (v) => setEndDate(v))}
+                    </div>
+                  </Show>
+
+                  <Show when={!allDay()}>
+                    <div class="flex flex-col gap-4 sm:flex-row">
+                      {dateField('Start Date', date, (v) => setDate(v))}
+                      {timeField('Start Time', time, (v) => setTime(v))}
+                    </div>
+
+                    <div class="flex flex-col gap-4 sm:flex-row">
+                      {dateField('End Date', endDate, (v) => setEndDate(v))}
+                      {timeField('End Time', endTime, (v) => setEndTime(v))}
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                      <Text as="span" type="label" color="secondary">Duration</Text>
+                      <SegmentedControl
+                        label="Duration"
+                        size="sm"
+                        value={String(currentDurationMins())}
+                        onChange={(v) => setDurationPill(Number(v))}
+                      >
+                        {DURATION_PRESETS.map((preset) => (
+                          <SegmentedControlItem value={String(preset.minutes)} label={preset.label} />
+                        ))}
+                      </SegmentedControl>
+                    </div>
+                  </Show>
+                </Show>
+
+                <Show when={mode() === 'task' && !hasTaskDate()}>
+                  <Button
+                    variant="secondary"
+                    label="Add Due Date"
+                    class="w-full"
+                    onClick={() => {
+                      setHasTaskDate(true);
+                      if (!date()) {
+                        setDate(new Date().toISOString().split('T')[0]);
+                      }
+                    }}
+                    icon={
+                      <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-4 w-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 11v6m-3-3h6" />
+                      </svg>
+                    }
+                  />
+                </Show>
+
+                <Show when={mode() === 'event'}>
+                  <Selector
+                    label="Calendar"
+                    value={calendarId()}
+                    onChange={(v) => setCalendarId(v || '')}
+                    options={eventState.calendars.map((cal) => ({
+                      value: cal.id,
+                      label: cal.name,
+                      icon: colorDot(cal.color),
+                    }))}
+                    placeholder="Select..."
+                  />
+                </Show>
+
+                <Show when={mode() === 'task'}>
+                  <Selector
+                    label="List"
+                    value={listId()}
+                    onChange={(v) => setListId(v || '')}
+                    options={taskState.lists.map((list) => ({
+                      value: list.id,
+                      label: list.name,
+                      icon: colorDot(list.color),
+                    }))}
+                    placeholder="Select..."
+                  />
+                  <div class="flex flex-col gap-1">
+                    <Text as="span" type="label" color="secondary">Priority</Text>
+                    <SegmentedControl
+                      label="Priority"
+                      layout="fill"
+                      value={priority()}
+                      onChange={(v) => setPriority(v)}
+                    >
+                      <SegmentedControlItem value="low" label="Low" />
+                      <SegmentedControlItem value="normal" label="Normal" />
+                      <SegmentedControlItem value="high" label="High" />
+                    </SegmentedControl>
+                  </div>
+                </Show>
+
+                {!showRecurrence() ? (
+                  <div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      label="+ Add Repeat"
+                      class="text-accent"
+                      onClick={() => setShowRecurrence(true)}
+                    />
+                  </div>
+                ) : (
+                  <div class="flex items-end gap-2">
+                    <div class="min-w-0 flex-1">
+                      <Selector
+                        label="Repeat"
+                        value={recurrence()}
+                        onChange={(v) => setRecurrence(v || 'NONE')}
+                        options={RECURRENCE_OPTIONS}
+                      />
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      label="Remove"
+                      class="text-accent"
+                      onClick={() => { setShowRecurrence(false); setRecurrence('NONE'); }}
+                    />
+                  </div>
+                )}
+              </FormLayout>
+            </div>
+            <div class="shrink-0 border-t border-border px-6 py-4">
+              <Button
+                type="submit"
+                variant="primary"
+                label={mode() === 'event' ? 'Add Event' : 'Add Task'}
+                class="w-full"
               />
             </div>
+          </form>
+        </div>
 
-          <div>
-            <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">Description</label>
-            <textarea 
-              placeholder="Add details..."
-              value={description()}
-              onInput={(e) => setDescription(e.target.value)}
-              class="w-full bg-primary/5 border border-border rounded-xl px-3.5 py-3 text-primary text-[15px] outline-none focus:border-accent transition-colors resize-none h-16"
-            />
-          </div>
-
-          <Show when={mode() === 'event' || (mode() === 'task' && hasTaskDate())}>
-            <div class="flex items-center gap-2 mb-2">
-              <label class="flex items-center gap-2 cursor-pointer group">
-                <div class="relative w-10 h-6 bg-primary/10 rounded-full transition-colors group-hover:bg-primary/20" classList={{ '!bg-accent': allDay() }}>
-                  <div class="absolute left-1 top-1 w-4 h-4 bg-primary rounded-full transition-transform shadow-sm" classList={{ 'translate-x-4 bg-body': allDay() }} />
-                </div>
-                <input type="checkbox" class="hidden" checked={allDay()} onChange={(e) => setAllDay(e.target.checked)} />
-                <span class="text-[13px] font-bold text-primary">All-Day</span>
-              </label>
-            </div>
-          </Show>
-
-          <Show when={mode() === 'task' && hasTaskDate()}>
-            <div class="flex flex-col sm:flex-row gap-4">
-              <div class="flex-1">
-                <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider flex justify-between">
-                  <span>Due Date</span>
-                  <span class="text-accent cursor-pointer hover:underline normal-case tracking-normal" onClick={() => setHasTaskDate(false)}>Remove</span>
-                </label>
-                <DatePicker value={date()} onChange={(v) => setDate(v)} />
-              </div>
-              <Show when={!allDay()}>
-                <div class="flex-1 sm:min-w-[140px]">
-                  <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">Time</label>
-                  <TimePicker value={time()} onChange={(v) => setTime(v)} />
-                </div>
-              </Show>
-            </div>
-          </Show>
-
-          <Show when={mode() === 'event'}>
-            <Show when={allDay()}>
-              <div class="flex flex-col sm:flex-row gap-4">
-                <div class="flex-1">
-                  <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">Start Date</label>
-                  <DatePicker value={date()} onChange={(v) => setDate(v)} />
-                </div>
-                <div class="flex-1">
-                  <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">End Date</label>
-                  <DatePicker value={endDate()} onChange={(v) => setEndDate(v)} />
-                </div>
-              </div>
-            </Show>
-
-            <Show when={!allDay()}>
-              <div class="flex flex-col sm:flex-row gap-4">
-                <div class="flex-1">
-                  <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">Start Date</label>
-                  <DatePicker value={date()} onChange={(v) => setDate(v)} />
-                </div>
-                <div class="flex-1 sm:min-w-[140px]">
-                  <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">Start Time</label>
-                  <TimePicker value={time()} onChange={(v) => setTime(v)} />
-                </div>
-              </div>
-
-              <div class="flex flex-col sm:flex-row gap-4">
-                <div class="flex-1">
-                  <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">End Date</label>
-                  <DatePicker value={endDate()} onChange={(v) => setEndDate(v)} />
-                </div>
-                <div class="flex-1 sm:min-w-[140px]">
-                  <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">End Time</label>
-                  <TimePicker value={endTime()} onChange={(v) => setEndTime(v)} />
-                </div>
-              </div>
-            </Show>
-          </Show>
-
-          <Show when={mode() === 'task' && !hasTaskDate()}>
-            <button 
-              type="button" 
-              onClick={() => {
-                setHasTaskDate(true);
-                if (!date()) {
-                  setDate(new Date().toISOString().split('T')[0]);
-                }
-              }}
-              class="w-full bg-primary/5 border border-border border-dashed rounded-xl py-3 text-primary text-[13px] font-semibold cursor-pointer hover:bg-primary/10 transition-colors flex items-center justify-center gap-2 shadow-sm"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 11v6m-3-3h6" /></svg>
-              Add Due Date
-            </button>
-          </Show>
-
-          <Show when={mode() === 'event'}>
-            <div class="flex flex-col gap-4">
-              
-              <Show when={!allDay()}>
-                <div class="flex items-center gap-2">
-                  <button type="button" onClick={() => setDurationPill(15)} class={`px-3 py-1.5 rounded-full text-xs font-semibold border ${currentDurationMins() === 15 ? 'bg-accent/20 border-accent text-accent' : 'bg-primary/5 border-border text-secondary hover:bg-primary/10 transition-colors'}`}>15m</button>
-                  <button type="button" onClick={() => setDurationPill(30)} class={`px-3 py-1.5 rounded-full text-xs font-semibold border ${currentDurationMins() === 30 ? 'bg-accent/20 border-accent text-accent' : 'bg-primary/5 border-border text-secondary hover:bg-primary/10 transition-colors'}`}>30m</button>
-                  <button type="button" onClick={() => setDurationPill(60)} class={`px-3 py-1.5 rounded-full text-xs font-semibold border ${currentDurationMins() === 60 ? 'bg-accent/20 border-accent text-accent' : 'bg-primary/5 border-border text-secondary hover:bg-primary/10 transition-colors'}`}>1h</button>
-                  <button type="button" onClick={() => setDurationPill(120)} class={`px-3 py-1.5 rounded-full text-xs font-semibold border ${currentDurationMins() === 120 ? 'bg-accent/20 border-accent text-accent' : 'bg-primary/5 border-border text-secondary hover:bg-primary/10 transition-colors'}`}>2h</button>
-                </div>
-              </Show>
-
-              <div>
-                <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">Calendar</label>
-                <SelectPicker 
-                  value={calendarId()} 
-                  onChange={setCalendarId}
-                  options={eventState.calendars.map(cal => ({ value: cal.id, label: cal.name, color: cal.color }))}
-                  placeholder="Select..."
-                />
-              </div>
-            </div>
-          </Show>
-
-          <Show when={mode() === 'task'}>
-            <div class="flex flex-col gap-4">
-              <div>
-                <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">List</label>
-                <SelectPicker 
-                  value={listId()} 
-                  onChange={setListId}
-                  options={taskState.lists.map(list => ({ value: list.id, label: list.name, color: list.color }))}
-                  placeholder="Select..."
-                />
-              </div>
-              <div>
-                <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider">Priority</label>
-                <div class="flex bg-primary/5 rounded-xl p-1 border border-border w-full">
-                  <button 
-                    type="button"
-                    onClick={() => setPriority('low')}
-                    class={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${priority() === 'low' ? 'bg-[#1FA7A7] text-primary shadow-md scale-105 border border-border' : 'text-secondary hover:text-primary hover:bg-primary/5'}`}
-                  >Low</button>
-                  <button 
-                    type="button"
-                    onClick={() => setPriority('normal')}
-                    class={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${priority() === 'normal' ? 'bg-primary/20 text-primary shadow-md scale-105 border border-border' : 'text-secondary hover:text-primary hover:bg-primary/5'}`}
-                  >Normal</button>
-                  <button 
-                    type="button"
-                    onClick={() => setPriority('high')}
-                    class={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${priority() === 'high' ? 'bg-[#FF3B30] text-primary shadow-md scale-105 border border-border' : 'text-secondary hover:text-primary hover:bg-primary/5'}`}
-                  >High</button>
-                </div>
-              </div>
-            </div>
-          </Show>
-
-          <div class="pt-2">
-            {!showRecurrence() ? (
-              <button 
-                type="button" 
-                onClick={() => setShowRecurrence(true)}
-                class="bg-transparent border-none text-accent text-[13px] font-semibold cursor-pointer hover:underline"
-              >
-                + Add Repeat
-              </button>
-            ) : (
-              <div>
-                <label class="font-display lowercase block text-xs text-disabled font-semibold mb-1.5 tracking-wider flex justify-between">
-                  <span>Repeat</span>
-                  <span class="text-accent cursor-pointer hover:underline normal-case tracking-normal" onClick={() => { setShowRecurrence(false); setRecurrence('NONE'); }}>Remove</span>
-                </label>
-                <SelectPicker 
-                  value={recurrence()} 
-                  onChange={setRecurrence}
-                  options={[
-                    { value: 'NONE', label: 'Does not repeat' },
-                    { value: 'DAILY', label: 'Daily' },
-                    { value: 'WEEKLY', label: 'Weekly' },
-                    { value: 'MONTHLY', label: 'Monthly' }
-                  ]}
-                />
-              </div>
-            )}
-          </div>
-
-          </div>
-          <div class="p-6 pt-4 border-t border-border bg-popover/85 flex-shrink-0">
-            <button 
-              type="submit"
-              class="w-full bg-accent text-primary border-none p-3.5 rounded-xl text-[15px] font-bold cursor-pointer hover:bg-accent/80 transition-colors shadow-lg shadow-accent/20"
-            >
-              {mode() === 'event' ? 'Add Event' : 'Add Task'}
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* Right Pane - Schedule/Task Preview */}
-      <div class="hidden sm:block">
-        <Show 
-          when={mode() === 'event'}
-          fallback={
-            <DayTaskListPreview 
-              date={hasTaskDate() ? date() : new Date().toISOString().split('T')[0]}
-              ghostTask={{
-                title: title() || 'New Task',
-                color: taskState.lists.find(l => l.id === listId())?.color || '#6B5BDB'
+        {/* Right pane — schedule/task preview */}
+        <div class="hidden sm:block">
+          <Show
+            when={mode() === 'event'}
+            fallback={
+              <DayTaskListPreview
+                date={hasTaskDate() ? date() : new Date().toISOString().split('T')[0]}
+                ghostTask={{
+                  title: title() || 'New Task',
+                  color: taskState.lists.find((l) => l.id === listId())?.color || '#6B5BDB',
+                }}
+              />
+            }
+          >
+            <DaySchedulePreview
+              mode="event"
+              date={date() || new Date().toISOString().split('T')[0]}
+              ghostEvent={{
+                title: title() || 'New Event',
+                startTime: `${date()}T${time()}:00`,
+                endTime: `${endDate()}T${endTime()}:00`,
+                type: 'event',
+                allDay: allDay(),
+                color: eventState.calendars.find((c) => c.id === calendarId())?.color || '#E8942A',
               }}
             />
-          }
-        >
-          <DaySchedulePreview 
-            mode="event"
-            date={date() || new Date().toISOString().split('T')[0]}
-            ghostEvent={{
-              title: title() || 'New Event',
-              startTime: `${date()}T${time()}:00`,
-              endTime: `${endDate()}T${endTime()}:00`,
-              type: 'event',
-              allDay: allDay(),
-              color: eventState.calendars.find(c => c.id === calendarId())?.color || '#E8942A'
-            }}
-          />
-        </Show>
+          </Show>
+        </div>
       </div>
-
-    </div>
-  </Modal>
+    </Dialog>
   );
 }
 

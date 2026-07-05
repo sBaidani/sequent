@@ -1,101 +1,44 @@
-import { createSignal, onCleanup, onMount, For, Show } from 'solid-js';
-import { Portal } from 'solid-js/web';
-import { ChevronDown, Check } from 'lucide-solid';
+// SelectPicker — thin wrapper over the kit Selector.
+//
+// Keeps the pre-kit public contract (options: [{value, label, color?}],
+// value, onChange, placeholder, class) so existing consumers don't change.
+// Per-option USER colors (calendar/list colors) are rendered through
+// snapUserColor() so stored hex values display as theme-adaptive Astryx
+// hue token references.
+import { Selector, SelectorOption } from '../kit';
+import { snapUserColor } from '../../lib/colorTokens';
+
+const ColorDot = (props) => (
+  <span
+    aria-hidden="true"
+    class="size-2.5 shrink-0 rounded-full"
+    style={{ 'background-color': snapUserColor(props.color).cssVar }}
+  />
+);
 
 function SelectPicker(props) {
-  const [isOpen, setIsOpen] = createSignal(false);
-  const [coords, setCoords] = createSignal({ top: 0, left: 0, width: 0 });
-  
-  let containerRef;
-  let popoverRef;
-
-  const handleClickOutside = (e) => {
-    if (isOpen() && containerRef && !containerRef.contains(e.target) && popoverRef && !popoverRef.contains(e.target)) {
-      setIsOpen(false);
-    }
-  };
-
-  onMount(() => {
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('touchstart', handleClickOutside);
-  });
-
-  onCleanup(() => {
-    document.removeEventListener('mousedown', handleClickOutside);
-    document.removeEventListener('touchstart', handleClickOutside);
-  });
-
-  const togglePicker = (e) => {
-    e.preventDefault();
-    if (!isOpen()) {
-      const rect = containerRef.getBoundingClientRect();
-      setCoords({ top: rect.bottom + 8, left: rect.left, width: rect.width });
-      setIsOpen(true);
-    } else {
-      setIsOpen(false);
-    }
-  };
-
-  const handleSelect = (val) => {
-    props.onChange(val);
-    setIsOpen(false);
-  };
-
-  const selectedOption = () => props.options.find(o => o.value === props.value);
+  const selectedOption = () => props.options.find((o) => o.value === props.value);
 
   return (
-    <div class="relative w-full" ref={containerRef}>
-      <button 
-        type="button"
-        onClick={togglePicker}
-        class={props.class || "w-full bg-primary/5 border border-border text-primary rounded-xl px-4 py-2.5 outline-none focus:border-accent transition-colors text-sm font-medium flex items-center justify-between"}
-      >
-        <div class="flex items-center gap-2">
-          <Show when={selectedOption()?.color}>
-            <div class="w-2.5 h-2.5 rounded-full" style={{ "background-color": selectedOption().color }} />
-          </Show>
-          <span class={selectedOption() ? "" : "text-disabled"}>
-            {selectedOption() ? selectedOption().label : (props.placeholder || 'Select...')}
-          </span>
-        </div>
-        <ChevronDown class={`w-4 h-4 text-disabled transition-transform duration-200 ${isOpen() ? 'rotate-180' : ''}`} />
-      </button>
-
-      <Show when={isOpen()}>
-        <Portal>
-          <div 
-            ref={popoverRef}
-            class="fixed z-[var(--z-dialog,70)] py-1.5 bg-body/40 border border-border rounded-xl shadow-2xl backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200 max-h-[300px] overflow-y-auto"
-            style={{ top: `${coords().top}px`, left: `${coords().left}px`, width: `${Math.max(coords().width, 200)}px` }}
-          >
-            <For each={props.options}>
-              {option => (
-                <button
-                  type="button"
-                  onClick={() => handleSelect(option.value)}
-                  class="w-full text-left px-4 py-2.5 text-sm font-medium flex items-center justify-between hover:bg-primary/10 transition-colors"
-                >
-                  <div class="flex items-center gap-2">
-                    <Show when={option.color}>
-                      <div class="w-2.5 h-2.5 rounded-full shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)]" style={{ "background-color": option.color }} />
-                    </Show>
-                    <span class={props.value === option.value ? 'text-primary' : 'text-secondary'}>
-                      {option.label}
-                    </span>
-                  </div>
-                  <Show when={props.value === option.value}>
-                    <Check class="w-4 h-4 text-accent" />
-                  </Show>
-                </button>
-              )}
-            </For>
-            <Show when={props.options.length === 0}>
-              <div class="px-4 py-3 text-sm text-disabled text-center">No options available</div>
-            </Show>
-          </div>
-        </Portal>
-      </Show>
-    </div>
+    <Selector
+      // Consumers of this wrapper render their own visible captions; the
+      // Selector still needs an accessible name, so derive one and hide it
+      // unless a real label is passed.
+      label={props.label ?? props.placeholder ?? 'Select...'}
+      isLabelHidden={props.label == null}
+      options={props.options}
+      value={props.value}
+      onChange={(v) => props.onChange?.(v)}
+      placeholder={props.placeholder}
+      class={props.class}
+      startIcon={selectedOption()?.color ? <ColorDot color={selectedOption().color} /> : undefined}
+      renderOption={(option) => (
+        <SelectorOption
+          icon={option.color ? <ColorDot color={option.color} /> : undefined}
+          label={option.label ?? option.value}
+        />
+      )}
+    />
   );
 }
 

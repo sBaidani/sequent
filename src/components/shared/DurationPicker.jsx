@@ -1,4 +1,15 @@
+// DurationPicker — preset duration chooser rebuilt on kit primitives.
+//
+// Public contract unchanged: `value` is a number of minutes, `onChange(min)`
+// fires on preset pick or custom submit. Values outside the preset set start
+// (and render) in custom mode, exactly as before.
+//
+// Internals: the presets are a kit SegmentedControl (radiogroup semantics,
+// arrow-key navigation); custom entry is a kit TextInput + Buttons.
 import { createSignal, Show, For } from 'solid-js';
+import { SegmentedControl, SegmentedControlItem, TextInput, Button } from '../kit';
+
+const CUSTOM = 'custom';
 
 function DurationPicker(props) {
   const presets = [
@@ -15,10 +26,22 @@ function DurationPicker(props) {
   const [isCustom, setIsCustom] = createSignal(false);
   const [customVal, setCustomVal] = createSignal(props.value || 60);
 
+  const isCustomValue = () => !presets.find((p) => p.value === props.value) && props.value !== undefined;
+
   // If initial value isn't in presets, start in custom mode
-  if (!presets.find(p => p.value === props.value) && props.value !== undefined) {
+  if (isCustomValue()) {
     setIsCustom(true);
   }
+
+  const selectedSegment = () => (isCustomValue() ? CUSTOM : String(props.value));
+
+  const handleSegmentChange = (segment) => {
+    if (segment === CUSTOM) {
+      setIsCustom(true);
+    } else {
+      props.onChange(parseInt(segment, 10));
+    }
+  };
 
   const handleCustomSubmit = (e) => {
     e.preventDefault();
@@ -33,64 +56,41 @@ function DurationPicker(props) {
       <Show
         when={!isCustom()}
         fallback={
-          <form onSubmit={handleCustomSubmit} class="flex items-center gap-2 w-full">
-            <input
-              type="number"
-              min="1"
-              value={customVal()}
-              onInput={(e) => setCustomVal(e.target.value)}
-              class="flex-1 bg-primary/5 border border-border text-primary rounded-xl px-4 py-2.5 outline-none focus:border-accent transition-colors text-sm font-medium"
-              placeholder="Minutes..."
-              autoFocus
+          <form onSubmit={handleCustomSubmit} class="flex items-end gap-2 w-full">
+            <div class="flex-1 min-w-0">
+              <TextInput
+                label="Custom duration (minutes)"
+                isLabelHidden
+                type="number"
+                min="1"
+                value={String(customVal())}
+                onChange={(v) => setCustomVal(v)}
+                placeholder="Minutes..."
+                hasAutoFocus
+              />
+            </div>
+            <Button type="submit" variant="primary" label="Set" />
+            <Button
+              label="Cancel"
+              onClick={() => setIsCustom(false)}
             />
-            <span class="text-disabled text-sm font-medium">min</span>
-            <button
-              type="submit"
-              class="bg-accent text-primary px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-accent/80 transition-colors shrink-0"
-            >
-              Set
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIsCustom(false);
-                // If the current actual prop value is custom, maybe we keep it selected?
-                // Actually, just go back to presets.
-              }}
-              class="bg-primary/10 text-primary px-3 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary/20 transition-colors shrink-0"
-            >
-              ×
-            </button>
           </form>
         }
       >
-        <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mb-1 w-full mask-edges">
-          <For each={presets}>
-            {preset => (
-              <button
-                type="button"
-                onClick={() => props.onChange(preset.value)}
-                class={`shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 border ${
-                  props.value === preset.value
-                    ? 'bg-accent text-primary border-accent shadow-md scale-105'
-                    : 'bg-primary/5 text-secondary border-border hover:bg-primary/10 hover:text-primary'
-                }`}
-              >
-                {preset.label}
-              </button>
-            )}
-          </For>
-          <button
-            type="button"
-            onClick={() => setIsCustom(true)}
-            class={`shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 border ${
-              !presets.find(p => p.value === props.value) && props.value !== undefined
-                ? 'bg-accent text-primary border-accent shadow-md scale-105'
-                : 'bg-primary/5 text-secondary border-border hover:bg-primary/10 hover:text-primary'
-            }`}
+        <div class="w-full overflow-x-auto no-scrollbar pb-1 -mb-1">
+          <SegmentedControl
+            label="Duration"
+            value={selectedSegment()}
+            onChange={handleSegmentChange}
           >
-            {!presets.find(p => p.value === props.value) && props.value !== undefined ? `${props.value}m` : 'Custom...'}
-          </button>
+            <For each={presets}>
+              {(preset) => <SegmentedControlItem value={String(preset.value)} label={preset.label} />}
+            </For>
+            <SegmentedControlItem
+              value={CUSTOM}
+              label={isCustomValue() ? `${props.value}m` : 'Custom...'}
+            />
+          </SegmentedControl>
         </div>
       </Show>
     </div>

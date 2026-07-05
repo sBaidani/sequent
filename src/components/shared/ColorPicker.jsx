@@ -1,23 +1,32 @@
+// ColorPicker — bounded Astryx hue palette swatch picker.
+//
+// The palette is exactly the ~10 hue token families from
+// src/lib/colorTokens.js (user decision: bounded palette, no free-form
+// custom colors). Selecting a swatch calls `onChange` with the token's
+// representative hex so existing store/DB writes keep working; the stored
+// value is rendered back through snapUserColor() so it always displays as
+// a theme-adaptive token reference.
+//
+// A11y: the trigger is an icon-only button (aria-haspopup/aria-expanded);
+// the portal panel is a radiogroup of swatches with roving tabindex —
+// arrows/Home/End move focus, Enter/Space select, Escape closes and
+// refocuses the trigger.
 import { createSignal, onCleanup, onMount, Show, For } from 'solid-js';
 import { Portal } from 'solid-js/web';
-import { uiStore } from '../../stores/uiStore';
+import { cx } from '../kit';
+import { HUE_TOKENS, snapUserColor } from '../../lib/colorTokens';
+
+const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 function ColorPicker(props) {
   const [isOpen, setIsOpen] = createSignal(false);
   const [coords, setCoords] = createSignal({ top: 0, left: 0 });
   let containerRef;
   let popoverRef;
+  let triggerRef;
+  const swatchRefs = new Map();
 
-  const themes = [
-    { name: 'Amber', color: '#E8942A' },
-    { name: 'Rose', color: '#C0185A' },
-    { name: 'Teal', color: '#1FA7A7' },
-    { name: 'Purple', color: '#6B5BDB' },
-    { name: 'Blue', color: '#3B6ED6' },
-    { name: 'Graphite', color: '#888888' },
-    { name: 'Emerald', color: '#10B981' },
-    { name: 'Cyan', color: '#06B6D4' }
-  ];
+  const selectedToken = () => (props.value ? snapUserColor(props.value) : null);
 
   const handleClickOutside = (e) => {
     if (isOpen() && containerRef && !containerRef.contains(e.target) && popoverRef && !popoverRef.contains(e.target)) {
@@ -33,59 +42,113 @@ function ColorPicker(props) {
     document.removeEventListener('mousedown', handleClickOutside);
   });
 
+  const close = ({ refocus = false } = {}) => {
+    setIsOpen(false);
+    if (refocus) triggerRef?.focus();
+  };
+
   const togglePicker = (e) => {
     e.preventDefault();
     if (!isOpen()) {
       const rect = containerRef.getBoundingClientRect();
       setCoords({ top: rect.bottom + 8, left: rect.left });
       setIsOpen(true);
+      // Focus the selected (or first) swatch once the portal has rendered.
+      requestAnimationFrame(() => {
+        const target = swatchRefs.get(selectedToken()?.name) ?? swatchRefs.get(HUE_TOKENS[0].name);
+        target?.focus();
+      });
     } else {
       setIsOpen(false);
     }
   };
 
+  const select = (token) => {
+    props.onChange(token.hex);
+    close({ refocus: true });
+  };
+
+  const handleGroupKeyDown = (e) => {
+    const focusedIndex = HUE_TOKENS.findIndex((t) => swatchRefs.get(t.name) === document.activeElement);
+    let next = null;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      next = (Math.max(focusedIndex, 0) + 1) % HUE_TOKENS.length;
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      next = (Math.max(focusedIndex, 0) - 1 + HUE_TOKENS.length) % HUE_TOKENS.length;
+    } else if (e.key === 'Home') {
+      next = 0;
+    } else if (e.key === 'End') {
+      next = HUE_TOKENS.length - 1;
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      close({ refocus: true });
+      return;
+    } else {
+      return;
+    }
+    e.preventDefault();
+    swatchRefs.get(HUE_TOKENS[next].name)?.focus();
+  };
+
+  // Roving tabindex: the selected swatch (or the first) is the tab stop.
+  const tabStopName = () => selectedToken()?.name ?? HUE_TOKENS[0].name;
+
   return (
     <div class="relative" ref={containerRef}>
       <button
+        ref={triggerRef}
+        type="button"
         onClick={togglePicker}
-        class="w-6 h-6 rounded-full border-[1.5px] border-border cursor-pointer p-0 transition-transform hover:scale-110 flex-shrink-0"
-        style={{ background: props.value }}
+        aria-label="Choose color"
+        aria-haspopup="dialog"
+        aria-expanded={isOpen() ? 'true' : 'false'}
         title="Choose color"
+        class={cx(
+          'size-6 shrink-0 rounded-full p-0 cursor-pointer',
+          'border-(length:--border-width) border-solid border-border-strong',
+          'transition-transform duration-[var(--duration-fast)] ease-out motion-reduce:transition-none hover:scale-110',
+          'outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-accent)',
+        )}
+        style={{ background: selectedToken()?.cssVar ?? 'var(--color-neutral)' }}
       />
 
       <Show when={isOpen()}>
         <Portal>
-          <div 
+          <div
             ref={popoverRef}
-            class="fixed z-[var(--z-dialog,70)] p-3 bg-body/40 border border-border rounded-xl shadow-2xl backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200 w-[200px]"
+            role="dialog"
+            aria-label="Choose color"
+            class="fixed z-[var(--z-dialog,70)] p-3 rounded-lg border border-border bg-popover shadow-md"
             style={{ top: `${coords().top}px`, left: `${coords().left}px` }}
           >
-          <div class="font-display lowercase text-[11px] font-bold text-disabled mb-2 tracking-wider">Presets</div>
-          <div class="grid grid-cols-4 gap-2 mb-3">
-            <For each={themes}>{t => (
-              <button
-                onClick={() => {
-                  props.onChange(t.color);
-                  setIsOpen(false);
-                }}
-                class={`w-8 h-8 rounded-full transition-transform hover:scale-110 border-2 cursor-pointer ${props.value === t.color ? 'border-primary' : 'border-transparent'}`}
-                style={{ background: t.color }}
-                title={t.name}
-              />
-            )}</For>
+            <div
+              role="radiogroup"
+              aria-label="Color"
+              onKeyDown={handleGroupKeyDown}
+              class="grid grid-cols-5 gap-2"
+            >
+              <For each={HUE_TOKENS}>{(token) => (
+                <button
+                  ref={(el) => swatchRefs.set(token.name, el)}
+                  type="button"
+                  role="radio"
+                  aria-checked={selectedToken()?.name === token.name ? 'true' : 'false'}
+                  aria-label={capitalize(token.name)}
+                  title={capitalize(token.name)}
+                  tabindex={tabStopName() === token.name ? 0 : -1}
+                  onClick={() => select(token)}
+                  class={cx(
+                    'size-8 rounded-full p-0 cursor-pointer border-0',
+                    'transition-transform duration-[var(--duration-fast)] ease-out motion-reduce:transition-none hover:scale-110',
+                    'outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-accent)',
+                    selectedToken()?.name === token.name &&
+                      'shadow-[0_0_0_2px_var(--color-popover),0_0_0_4px_var(--color-accent)]',
+                  )}
+                  style={{ background: token.cssVar }}
+                />
+              )}</For>
+            </div>
           </div>
-          <div class="font-display lowercase text-[11px] font-bold text-disabled mb-2 tracking-wider border-t border-border pt-2 mt-1">Custom</div>
-          <div class="flex gap-2">
-            <input 
-              type="color" 
-              value={props.value} 
-              onChange={(e) => {
-                props.onChange(e.target.value);
-              }}
-              class="w-full h-8 rounded-md cursor-pointer border-none bg-transparent outline-none p-0"
-            />
-          </div>
-        </div>
         </Portal>
       </Show>
     </div>

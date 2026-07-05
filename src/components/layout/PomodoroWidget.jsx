@@ -1,5 +1,38 @@
+// PomodoroWidget — focus/rest timer widget (Phase 4, kit-based).
+// Retired here: unlabeled icon <button>s (kit IconButton — enforced aria-label,
+// keyboard-visible skip button), raw #1FA7A7 rest color (teal hue token
+// --color-border-teal), bg-white/NN + rgba() liquid-fill tints (accent/teal
+// tokens via color-mix + --color-tint-hover so the shimmer adapts to light/
+// dark), and off-scale text-[11px] type (token type scale). Section is the
+// kit's sanctioned Card-equivalent for a dashboard widget like this one.
+// The 60px widget height is existing fixed geometry and stays.
 import { createSignal, createEffect, onCleanup, Show } from 'solid-js';
 import { settingsStore } from '../../stores/settingsStore';
+import { IconButton, Section, Text, cx } from '../kit';
+
+const PlayIcon = () => (
+  <svg class="size-full translate-x-0.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+);
+const PauseIcon = () => (
+  <svg class="size-full" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
+);
+const SkipIcon = () => (
+  <svg class="size-full" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+);
+
+// Liquid-fill colors per mode: focus follows the theme accent, rest uses the
+// teal hue token. Both are 30% color-mix tints with a 40% leading edge, all
+// token-derived (no raw hex / palette colors).
+const FILL_CLASSES = {
+  focus: cx(
+    'bg-[color-mix(in_srgb,var(--color-accent)_30%,transparent)]',
+    '[background-image:linear-gradient(to_right,transparent,color-mix(in_srgb,var(--color-accent)_40%,transparent))]',
+  ),
+  rest: cx(
+    'bg-[color-mix(in_srgb,var(--color-border-teal)_30%,transparent)]',
+    '[background-image:linear-gradient(to_right,transparent,color-mix(in_srgb,var(--color-border-teal)_40%,transparent))]',
+  ),
+};
 
 function PomodoroWidget() {
   const [mode, setMode] = createSignal('focus'); // 'focus' or 'rest'
@@ -9,8 +42,8 @@ function PomodoroWidget() {
   let timerInterval;
 
   const totalSeconds = () => {
-    return mode() === 'focus' 
-      ? settingsStore.state.focusDuration * 60 
+    return mode() === 'focus'
+      ? settingsStore.state.focusDuration * 60
       : settingsStore.state.restDuration * 60;
   };
 
@@ -35,8 +68,8 @@ function PomodoroWidget() {
             // Switch mode automatically
             const nextMode = mode() === 'focus' ? 'rest' : 'focus';
             setMode(nextMode);
-            return nextMode === 'focus' 
-              ? settingsStore.state.focusDuration * 60 
+            return nextMode === 'focus'
+              ? settingsStore.state.focusDuration * 60
               : settingsStore.state.restDuration * 60;
           }
           return prev - 1;
@@ -68,53 +101,57 @@ function PomodoroWidget() {
   };
 
   return (
-    <div class="relative w-full h-[60px] rounded-xl bg-white/5 border border-white/10 overflow-hidden shadow-sm group">
-      {/* Liquid background progress */}
-      <div 
-        class={`absolute top-0 bottom-0 left-0 transition-all duration-1000 ease-linear ${mode() === 'focus' ? 'bg-accent/30' : 'bg-[#1FA7A7]/30'}`}
+    <Section
+      variant="muted"
+      padding={0}
+      aria-label="Pomodoro timer"
+      class="group relative h-[60px] w-full overflow-hidden rounded-md border border-border shadow-(--shadow-low)"
+    >
+      {/* Liquid background progress (decorative) */}
+      <div
+        aria-hidden="true"
+        class={cx(
+          'absolute top-0 bottom-0 left-0 transition-all duration-1000 ease-linear',
+          FILL_CLASSES[mode()],
+        )}
         style={{ width: `${progressPercentage()}%` }}
       >
-        <div class={`absolute inset-0 bg-gradient-to-r ${mode() === 'focus' ? 'from-accent/0 to-accent/40' : 'from-[#1FA7A7]/0 to-[#1FA7A7]/40'} opacity-50`} />
-        {/* Animated edge to simulate liquid */}
-        <div class="absolute right-0 top-0 bottom-0 w-1 bg-white/20 shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
+        {/* Animated edge to simulate liquid — tint-hover adapts to the theme */}
+        <div class="absolute right-0 top-0 bottom-0 w-1 bg-[color-mix(in_srgb,var(--color-tint-hover)_20%,transparent)] shadow-[0_0_8px_color-mix(in_srgb,var(--color-tint-hover)_50%,transparent)]" />
       </div>
 
       {/* Content overlay */}
-      <div class="absolute inset-0 flex items-center justify-between px-3 z-10">
+      <div class="absolute inset-0 z-10 flex items-center justify-between px-3">
         <div class="flex items-center gap-3">
-          <button 
+          <IconButton
+            label={isRunning() ? 'Pause timer' : 'Start timer'}
+            icon={<Show when={isRunning()} fallback={<PlayIcon />}><PauseIcon /></Show>}
+            variant="ghost"
+            size="sm"
+            class="rounded-full"
             onClick={toggleTimer}
-            class="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors border border-white/5 cursor-pointer backdrop-blur-md"
-          >
-            <Show when={isRunning()} fallback={
-              <svg class="w-4 h-4 translate-x-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-            }>
-              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-            </Show>
-          </button>
-          
-          <div class="flex flex-col">
-            <span class="text-[11px] font-bold tracking-wider uppercase text-white/60">
-              {mode() === 'focus' ? 'Focus' : 'Rest'}
-            </span>
-          </div>
+          />
+          <Text size="sm" weight="bold" color="secondary" class="uppercase tracking-wider">
+            {mode() === 'focus' ? 'Focus' : 'Rest'}
+          </Text>
         </div>
 
         <div class="flex items-center gap-3">
-          <div class="font-display text-xl font-light text-white tracking-wider tabular-nums">
+          <Text hasTabularNumbers class="font-display text-xl tracking-wider">
             {formatTime(timeLeft())}
-          </div>
-          
-          <button 
+          </Text>
+
+          <IconButton
+            label={mode() === 'focus' ? 'Skip to rest' : 'Skip to focus'}
+            icon={<SkipIcon />}
+            variant="ghost"
+            size="sm"
+            class="rounded-full opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
             onClick={skipMode}
-            class="w-6 h-6 flex items-center justify-center rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-colors cursor-pointer opacity-0 group-hover:opacity-100"
-            title="Skip"
-          >
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
-          </button>
+          />
         </div>
       </div>
-    </div>
+    </Section>
   );
 }
 

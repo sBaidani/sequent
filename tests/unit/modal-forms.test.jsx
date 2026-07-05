@@ -1,11 +1,12 @@
 /**
- * PRE-REFACTOR characterization tests for form-submit wiring of
- * AddTaskModal and AddEventModal (src/components/shared/).
+ * Characterization tests for form-submit wiring of AddTaskModal and
+ * AddEventModal (src/components/shared/) — POST-REFACTOR (Phase 4, kit
+ * Dialog + FormLayout/TextInput/TextArea/Switch/SegmentedControl).
  *
- * Pins BEHAVIOR only — queries by role / accessible name / placeholder text,
+ * Pins BEHAVIOR only — queries by role / accessible name / label text,
  * never by class or DOM structure. Store methods (taskStore.addTask,
  * eventStore.addEvent) are spied so we assert the exact call shape the
- * modals produce today; syncEngine is mocked at the module boundary (same
+ * modals produce; syncEngine is mocked at the module boundary (same
  * pattern as src/stores/taskStore.test.js) so supabase/idb never load.
  *
  * Contract pinned here:
@@ -22,11 +23,15 @@
  *  - Both modals: whitespace-only title is rejected — no store call, modal
  *    stays open.
  *
- * NOTE: the Title/Description labels are NOT programmatically associated
- * with their inputs (no htmlFor/id), so getByLabelText cannot work today.
- * We query by placeholder text instead — the refactor should fix the
- * label association, at which point these queries can upgrade to
- * getByLabelText.
+ * Refactor upgrades applied to the queries (as the pre-refactor comments
+ * called for):
+ *  - Title/Description are now REAL label-associated kit fields →
+ *    getByLabelText replaces the old placeholder queries.
+ *  - The All-Day toggle is an accessible kit Switch (role="switch") →
+ *    replaces the old hidden-checkbox query (getByRole('checkbox',
+ *    { hidden: true })).
+ *  - Priority is a kit SegmentedControl (role="radio" items) → replaces the
+ *    old getByRole('button', { name: 'High' }) query.
  */
 import { render, screen, fireEvent } from '@solidjs/testing-library';
 import { describe, test, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest';
@@ -47,7 +52,7 @@ import { uiStore } from '../../src/stores/uiStore';
 const pad = (n) => n.toString().padStart(2, '0');
 
 beforeAll(() => {
-  // jsdom has no Web Animations API; Modal's transitions call el.animate().
+  // jsdom has no Web Animations API; Dialog's transitions call el.animate().
   if (!Element.prototype.animate) {
     Element.prototype.animate = vi.fn(() => ({
       onfinish: null,
@@ -76,7 +81,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('AddTaskModal form-submit wiring (pre-refactor characterization)', () => {
+describe('AddTaskModal form-submit wiring (characterization)', () => {
   const openTaskModal = (activeDate = new Date(2026, 6, 10, 0, 0, 0)) => {
     uiStore.setActiveDate(activeDate.toISOString());
     uiStore.setActiveModal('addTask');
@@ -86,17 +91,17 @@ describe('AddTaskModal form-submit wiring (pre-refactor characterization)', () =
   test('renders the New Task form while activeModal === "addTask"', () => {
     openTaskModal();
     expect(screen.getByRole('heading', { name: /new task/i })).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Buy groceries...')).toBeInTheDocument();
+    expect(screen.getByLabelText('Title')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add Task' })).toBeInTheDocument();
   });
 
   test('submit calls taskStore.addTask with the pinned shape and closes the modal', () => {
     openTaskModal();
 
-    fireEvent.input(screen.getByPlaceholderText('Buy groceries...'), {
+    fireEvent.input(screen.getByLabelText('Title'), {
       target: { value: 'Buy groceries' },
     });
-    fireEvent.input(screen.getByPlaceholderText('Add details...'), {
+    fireEvent.input(screen.getByLabelText('Description'), {
       target: { value: 'milk and eggs' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Add Task' }));
@@ -119,10 +124,11 @@ describe('AddTaskModal form-submit wiring (pre-refactor characterization)', () =
   test('selected priority is passed through to addTask', () => {
     openTaskModal();
 
-    fireEvent.input(screen.getByPlaceholderText('Buy groceries...'), {
+    fireEvent.input(screen.getByLabelText('Title'), {
       target: { value: 'Urgent thing' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'High' }));
+    // Priority is a SegmentedControl (radiogroup) post-refactor.
+    fireEvent.click(screen.getByRole('radio', { name: 'High' }));
     fireEvent.click(screen.getByRole('button', { name: 'Add Task' }));
 
     expect(taskStore.addTask).toHaveBeenCalledWith(
@@ -145,7 +151,7 @@ describe('AddTaskModal form-submit wiring (pre-refactor characterization)', () =
     uiStore.setActiveListId('list-2');
     openTaskModal();
 
-    fireEvent.input(screen.getByPlaceholderText('Buy groceries...'), {
+    fireEvent.input(screen.getByLabelText('Title'), {
       target: { value: 'File report' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Add Task' }));
@@ -158,7 +164,7 @@ describe('AddTaskModal form-submit wiring (pre-refactor characterization)', () =
   test('whitespace-only title is rejected: no addTask call, modal stays open', () => {
     openTaskModal();
 
-    fireEvent.input(screen.getByPlaceholderText('Buy groceries...'), {
+    fireEvent.input(screen.getByLabelText('Title'), {
       target: { value: '   ' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Add Task' }));
@@ -168,7 +174,7 @@ describe('AddTaskModal form-submit wiring (pre-refactor characterization)', () =
   });
 });
 
-describe('AddEventModal form-submit wiring (pre-refactor characterization)', () => {
+describe('AddEventModal form-submit wiring (characterization)', () => {
   // Non-midnight active date so the modal adopts its time (midnight → 12:00).
   const ACTIVE = new Date(2026, 6, 10, 9, 30, 0);
 
@@ -195,17 +201,17 @@ describe('AddEventModal form-submit wiring (pre-refactor characterization)', () 
 
   test('renders the event form while activeModal === "addEvent"', () => {
     openEventModal();
-    expect(screen.getByPlaceholderText('Event Title')).toBeInTheDocument();
+    expect(screen.getByLabelText('Title')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add Event' })).toBeInTheDocument();
   });
 
   test('submit calls eventStore.addEvent with the pinned shape and closes the modal', () => {
     openEventModal();
 
-    fireEvent.input(screen.getByPlaceholderText('Event Title'), {
+    fireEvent.input(screen.getByLabelText('Title'), {
       target: { value: 'Team standup' },
     });
-    fireEvent.input(screen.getByPlaceholderText('Add details...'), {
+    fireEvent.input(screen.getByLabelText('Description'), {
       target: { value: 'daily sync' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Add Event' }));
@@ -226,13 +232,12 @@ describe('AddEventModal form-submit wiring (pre-refactor characterization)', () 
   test('All-Day toggle is passed through as the allDay argument', () => {
     openEventModal();
 
-    fireEvent.input(screen.getByPlaceholderText('Event Title'), {
+    fireEvent.input(screen.getByLabelText('Title'), {
       target: { value: 'Conference' },
     });
-    // The toggle's checkbox input is hidden (class="hidden") but still the
-    // real form control; fire change on it directly via its role fallback.
-    const allDayCheckbox = screen.getByRole('checkbox', { hidden: true });
-    fireEvent.change(allDayCheckbox, { target: { checked: true } });
+    // The toggle is an accessible kit Switch post-refactor (the old markup
+    // hid the checkbox with class="hidden" and needed a hidden-role query).
+    fireEvent.click(screen.getByRole('switch', { name: 'All-Day' }));
     fireEvent.click(screen.getByRole('button', { name: 'Add Event' }));
 
     expect(eventStore.addEvent).toHaveBeenCalledTimes(1);
@@ -245,7 +250,7 @@ describe('AddEventModal form-submit wiring (pre-refactor characterization)', () 
   test('whitespace-only title is rejected: no addEvent call, modal stays open', () => {
     openEventModal();
 
-    fireEvent.input(screen.getByPlaceholderText('Event Title'), {
+    fireEvent.input(screen.getByLabelText('Title'), {
       target: { value: '   ' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Add Event' }));
