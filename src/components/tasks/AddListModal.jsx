@@ -2,10 +2,11 @@ import { createSignal, For } from 'solid-js';
 import { Dialog, DialogHeader, DialogBody, DialogFooter, FormLayout, TextInput, Text, Button, cx } from '../kit';
 import { taskStore } from '../../stores/taskStore';
 import { uiStore } from '../../stores/uiStore';
+import { snapUserColor } from '../../lib/colorTokens';
 
 // Seed palette for user list colors. The hex values are DATA (persisted via
-// taskStore.addList); rendering will route through src/lib/colorTokens.js
-// snapUserColor once it lands.
+// taskStore.addList); swatches display
+// through snapUserColor's theme-adaptive hue tokens.
 const COLORS = [
   { value: '#E8942A', name: 'Amber' },
   { value: '#C0185A', name: 'Rose' },
@@ -59,7 +60,7 @@ function AddListModal() {
                       'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-accent)',
                       color() === c.value ? 'border-primary' : 'border-transparent',
                     )}
-                    style={{ background: c.value }}
+                    style={{ background: snapUserColor(c.value).cssVar }}
                   />
                 )}</For>
               </div>

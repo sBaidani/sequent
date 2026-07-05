@@ -2,10 +2,11 @@ import { createSignal, For } from 'solid-js';
 import { Dialog, DialogHeader, DialogBody, DialogFooter, FormLayout, TextInput, Text, Button, cx } from '../kit';
 import { eventStore } from '../../stores/eventStore';
 import { uiStore } from '../../stores/uiStore';
+import { snapUserColor } from '../../lib/colorTokens';
 
 // Seed palette for user calendar colors. The hex values are DATA (persisted
-// via eventStore.addCalendar); rendering will route through
-// src/lib/colorTokens.js snapUserColor once it lands.
+// via eventStore.addCalendar); swatches display through
+// snapUserColor's theme-adaptive hue tokens.
 const COLORS = [
   { value: '#E8942A', name: 'Amber' },
   { value: '#C0185A', name: 'Rose' },
@@ -59,7 +60,7 @@ function AddCalendarModal() {
                       'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-accent)',
                       color() === c.value ? 'border-primary' : 'border-transparent',
                     )}
-                    style={{ background: c.value }}
+                    style={{ background: snapUserColor(c.value).cssVar }}
                   />
                 )}</For>
               </div>

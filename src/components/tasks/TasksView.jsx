@@ -13,6 +13,7 @@ import {
   cx,
 } from '../kit';
 import { format } from 'date-fns';
+import { snapUserColor } from '../../lib/colorTokens';
 import DatePicker from '../shared/DatePicker';
 import { Menu as MenuIcon, Plus, Pencil, X, ClipboardCheck } from 'lucide-solid';
 
@@ -51,10 +52,11 @@ function TasksView() {
           <For each={taskState.lists}>
             {(list) => {
               const listTasks = () => taskState.tasks.filter(t => t.listId === list.id);
-              // Per-list user color; rendered through the CheckboxInput `color`
-              // prop (its documented token exception). Wave 2's colorTokens.js
-              // snapUserColor() will take over hue-snapping once it lands.
-              const listColor = () => list.color || 'var(--color-accent)';
+              // Per-list user color snapped to the nearest Astryx hue token;
+              // rendered through the CheckboxInput `color` prop (its
+              // documented token exception).
+              const listColor = () =>
+                list.color ? snapUserColor(list.color).cssVar : 'var(--color-accent)';
 
               return (
                 <section class="break-inside-avoid rounded-lg border border-border bg-card p-4 shadow-[var(--shadow-low)]">

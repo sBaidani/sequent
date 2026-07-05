@@ -3,6 +3,7 @@ import DOMPurify from 'dompurify';
 import {
   Dialog, DialogHeader, DialogBody, DialogFooter, Text, Token, StatusDot, Button,
 } from '../kit';
+import { snapUserColor } from '../../lib/colorTokens';
 import { uiStore } from '../../stores/uiStore';
 import { eventStore } from '../../stores/eventStore';
 import { taskStore } from '../../stores/taskStore';
@@ -74,11 +75,11 @@ function EventViewModal() {
               <DialogHeader title={i().title} />
               <DialogBody class="flex flex-col gap-5">
                 <div class="flex flex-wrap items-center gap-2">
-                  {/* Per-item user color rendered through Token's customColor
-                      escape hatch (snap to colorTokens.js once it lands). */}
+                  {/* Per-item user color, snapped to the nearest Astryx hue
+                      token, rendered through Token's customColor escape hatch. */}
                   <Token
                     label={type === 'event' ? i().calName : i().listName}
-                    customColor={i().color}
+                    customColor={snapUserColor(i().color).cssVar}
                   />
                   <Show when={i().rrule}>
                     <Token label="Repeats" color="default" />

@@ -1,15 +1,13 @@
 /**
- * Characterization tests for the Wave 2 shared picker migration
- * (kit-based SelectPicker, ColorPicker, DatePicker, TimePicker,
- * DurationPicker, LocationPicker, EditableItem).
+ * Characterization tests for the shared pickers (kit-based ColorPicker,
+ * DatePicker, TimePicker, DurationPicker, LocationPicker, EditableItem).
  *
- * Pins the NEW intended behavior: bounded hue-token color palette,
+ * Pins the intended behavior: bounded hue-token color palette,
  * radiogroup/dialog semantics, kit field chrome, and the unchanged
  * public onChange contracts. Queries by role/label/text only.
  */
 import { render, screen, fireEvent, within } from '@solidjs/testing-library';
 import { describe, test, expect, vi } from 'vitest';
-import SelectPicker from './SelectPicker';
 import ColorPicker from './ColorPicker';
 import DatePicker from './DatePicker';
 import TimePicker from './TimePicker';
@@ -17,33 +15,6 @@ import DurationPicker from './DurationPicker';
 import LocationPicker from './LocationPicker';
 import EditableItem from './EditableItem';
 import { HUE_TOKENS } from '../../lib/colorTokens';
-
-describe('SelectPicker', () => {
-  const OPTIONS = [
-    { value: 'a', label: 'Alpha', color: '#3B6ED6' },
-    { value: 'b', label: 'Beta' },
-  ];
-
-  test('renders a kit Selector combobox with the placeholder as hidden label', () => {
-    render(() => <SelectPicker options={OPTIONS} value={null} onChange={() => {}} placeholder="Pick one" />);
-    const trigger = screen.getByRole('combobox', { name: 'Pick one' });
-    expect(trigger).toHaveAttribute('aria-haspopup', 'listbox');
-    expect(trigger).toHaveTextContent('Pick one');
-  });
-
-  test('opens a listbox and fires onChange with the option value', () => {
-    const onChange = vi.fn();
-    render(() => <SelectPicker options={OPTIONS} value={null} onChange={onChange} placeholder="Pick one" />);
-    fireEvent.click(screen.getByRole('combobox', { name: 'Pick one' }));
-    fireEvent.click(screen.getByRole('option', { name: 'Beta' }));
-    expect(onChange).toHaveBeenCalledWith('b');
-  });
-
-  test('shows the selected option label on the trigger', () => {
-    render(() => <SelectPicker options={OPTIONS} value="a" onChange={() => {}} />);
-    expect(screen.getByRole('combobox')).toHaveTextContent('Alpha');
-  });
-});
 
 describe('ColorPicker', () => {
   test('trigger is an accessible button that opens a 10-swatch radiogroup', () => {

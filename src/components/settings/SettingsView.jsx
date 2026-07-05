@@ -4,6 +4,7 @@ import { settingsStore } from '../../stores/settingsStore';
 import { eventStore } from '../../stores/eventStore';
 import { taskStore } from '../../stores/taskStore';
 import { api } from '../../lib/api';
+import { snapUserColor } from '../../lib/colorTokens';
 import ColorPicker from '../shared/ColorPicker';
 import EditableItem from '../shared/EditableItem';
 import DurationPicker from '../shared/DurationPicker';
@@ -393,10 +394,9 @@ function SettingsView() {
                     <For each={cloudCalendars()}>{cal => (
                       <ListItem
                         startContent={
-                          // Per-item USER color (stored value). Wave 2's
-                          // colorTokens.js snapUserColor() will hue-snap this;
-                          // until then the stored color renders directly.
-                          <span aria-hidden="true" class="size-4 rounded-full" style={{ background: cal.color }} />
+                          // Per-item USER color (stored value) snapped to the
+                          // nearest Astryx hue token.
+                          <span aria-hidden="true" class="size-4 rounded-full" style={{ background: snapUserColor(cal.color).cssVar }} />
                         }
                         label={cal.name}
                         endContent={<Badge label={cal.provider} />}
@@ -470,10 +470,9 @@ function SettingsView() {
                     <For each={cloudLists()}>{list => (
                       <ListItem
                         startContent={
-                          // Per-item USER color (stored value). Wave 2's
-                          // colorTokens.js snapUserColor() will hue-snap this;
-                          // until then the stored color renders directly.
-                          <span aria-hidden="true" class="size-4 rounded-full" style={{ background: list.color }} />
+                          // Per-item USER color (stored value) snapped to the
+                          // nearest Astryx hue token.
+                          <span aria-hidden="true" class="size-4 rounded-full" style={{ background: snapUserColor(list.color).cssVar }} />
                         }
                         label={list.name}
                         endContent={<Badge label={list.provider} />}

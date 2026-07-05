@@ -5,6 +5,7 @@ import {
 } from '../kit';
 import { eventStore } from '../../stores/eventStore';
 import { uiStore } from '../../stores/uiStore';
+import { snapUserColor } from '../../lib/colorTokens';
 import { settingsStore } from '../../stores/settingsStore';
 import DatePicker from './DatePicker';
 import TimePicker from './TimePicker';
@@ -25,9 +26,9 @@ const DURATION_PRESETS = [
 ];
 
 // Per-item user color dot for Selector option rows (stored colors are data;
-// route through src/lib/colorTokens.js snapUserColor once it lands).
+// display snaps to the nearest Astryx hue token).
 const colorDot = (color) => (
-  <span aria-hidden="true" class="inline-block size-2.5 rounded-full" style={{ background: color }} />
+  <span aria-hidden="true" class="inline-block size-2.5 rounded-full" style={{ background: snapUserColor(color).cssVar }} />
 );
 
 function AddEventModal() {

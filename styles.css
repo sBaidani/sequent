@@ -17,17 +17,6 @@
   --ease-spring-bouncy: linear(0, 0.155 3.3%, 0.493 9.6%, 0.771 16.3%, 0.929 23.8%, 0.985 32.3%, 0.998 42.1%, 1);
 }
 
-/* Legacy runtime accent vars — no CSS/JSX consumers remain (the aurora orbs
- * were retired in Phase 3; glow/pulseGlow use var(--color-accent) via
- * color-mix or accent utilities). Kept because uiStore.js still writes the
- * inline versions (asserted by unit + e2e tests); remove both together in
- * Phase 5. */
-:root {
-  --accent: #E8942A;
-  --accent-rgb: 232, 148, 42;
-  --secondary-rgb: 175, 82, 222;
-}
-
 /* Shell layering scale (Phase 3) — the ONLY z-index values shell layers may
  * use. Kit AppShell/SideNav/Popover/Dialog/Toast consume these; app code must
  * reference the vars (z-[var(--z-…)]), never ad-hoc z-[9999]-style numbers.
@@ -87,8 +76,8 @@
   animation: strikeThrough 0.3s var(--ease-spring-smooth) forwards;
 }
 
-/* Spring modal pop keyframes — consumed by Modal.jsx via inline
- * style.animation; keep until Dialog replaces Modal in Phase 4. */
+/* Spring modal pop keyframes — consumed by the kit Dialog
+ * (src/components/kit/Dialog.jsx) via inline style.animation. */
 @keyframes modalPopIn {
   0% {
     opacity: 0;

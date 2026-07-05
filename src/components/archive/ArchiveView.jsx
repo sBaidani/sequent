@@ -1,14 +1,12 @@
-// ArchiveView — Phase 4 pilot migration onto the kit (Astryx spec).
-// Retired here: the hand-rolled filter pill buttons (kit SegmentedControl),
-// Card-wrapped archive rows (kit List/ListItem, edge-to-edge with dividers),
-// the plain-div page/group headings (kit Heading), and the legacy ui/EmptyState
-// (kit EmptyState). Restore/delete row actions ride the existing store APIs
-// (taskStore.toggleTask/deleteTask, eventStore.deleteEvent) via kit MoreMenu.
+// ArchiveView — archived events/tasks list. Restore/delete row actions ride
+// the existing store APIs (taskStore.toggleTask/deleteTask,
+// eventStore.deleteEvent) via kit MoreMenu.
 import { createSignal, createMemo, For, Show } from 'solid-js';
 import { eventStore } from '../../stores/eventStore';
 import { taskStore } from '../../stores/taskStore';
 import { format, isPast } from 'date-fns';
 import { settingsStore } from '../../stores/settingsStore';
+import { snapUserColor } from '../../lib/colorTokens';
 import {
   Heading,
   SegmentedControl,
@@ -152,10 +150,7 @@ function ArchiveView() {
                             <Token
                               label={origin().name}
                               size="sm"
-                              // TODO(colorTokens): route through snapUserColor()
-                              // once src/lib/colorTokens.js lands (wave 2) so
-                              // stored hex maps to the nearest Astryx hue token.
-                              customColor={origin().color}
+                              customColor={snapUserColor(origin().color).cssVar}
                             />
                           )}
                         </Show>

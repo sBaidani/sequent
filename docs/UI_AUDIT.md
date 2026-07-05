@@ -129,3 +129,54 @@ All names verified to exist. **Frame:** `AppShell` + `SideNav` (budget 256–280
 2. **User-selectable arbitrary colors** (per-calendar/list hex persisted in Supabase/IndexedDB) — keep as accepted token exception, or migrate stored data to a bounded Astryx hue palette?
 3. **`android_client/` (native Compose app duplicating every screen)** — out of scope / frozen / align its theme manually?
 4. **Bespoke flourishes** — glassmorphism aurora background, click-origin modal spring, swipe-to-dismiss bottom sheet (primary mobile interaction), Major Mono Display brand type: keep (accepted deviations) or retire?
+
+## 8. Post-migration results (2026-07-05)
+
+**Scope & method:** identical to §2 — `src/**/*.jsx` (57 files, excluding `*.test.*`), `styles.css`, `index.html`; same greps (`grep -o '<div'`, `#[0-9a-fA-F]{3,8}`, `style=`, `[a-zA-Z-]+-\[…\]`, `aria-[a-z]+`, `[0-9]+px`). "kit/" = the 26-component Solid kit under `src/components/kit/` (Path B, §6); "app" = everything else.
+
+### 8.1 Before/after metrics
+
+| Metric | Before (§2, 2026-07-04) | After (2026-07-05) | Notes |
+|---|---|---|---|
+| Raw `<div>` elements | 528 | **345** — app views **261**, kit internals **84** | kit divs implement the Astryx component specs; app residue is mostly the sanctioned custom canvases (timeline 58, calendar 43+21) + modal scaffolding |
+| Raw hex colors (JSX + CSS + HTML) | 110 (31 distinct) | **46 occurrences / 13 distinct — 0 used as hardcoded styling** | breakdown: 3 in comments; **9 sanctioned** brand-logo SVG fills (Google ×8, Microsoft ×1); **18 sanctioned** palette-definition data arrays (`COLORS` in AddCalendarModal/AddListModal, `themes` in SettingsView); 12 persisted-user-color defaults (data values, snapped via `snapUserColor` at render); 4 platform `theme-color` chrome (`index.html` ×2, `src/index.jsx` ×2, mirroring `--color-background-body`) |
+| Raw hex in `styles.css` | present | **0** | |
+| Inline `style=` | 65 | **58** — kit 16, app **42, all data-driven; hardcoded styling: 0** | app split: timeline/calendar minute→px geometry (`top/height/left/width`), picker `Portal` coords, sentinel/progress/pane-width state geometry, and user-color vars (`snapUserColor(...).cssVar` swatches/dots, `color-mix` chips from pre-snapped `item.color`) |
+| Tailwind arbitrary values | 360 | **273** — kit 149 (spec internals, predominantly `var(--token)`-backed), app **124** | app split: 42 token-backed (`shadow-[var(--shadow-low)]`, `z-[var(--z-popover,60)]`, `duration-[var(--duration-fast)]`…); ~64 canvas-geometry/region-budget px (`h-[1440px]` day canvas, `h-[60px]` hour rows, gutters `w-[60px]`/`min-w-[48px]`, `max-w-[800px]`/`w-[350px]` budgets); ~18 misc hardcoded (`text-[9px]`/`[11px]`, `scale-[1.02]`, `ease-[cubic-bezier(…)]` ×2, `content-['']` ×2, heatmap cell sizes) |
+| Hardcoded px (`grep -oE '[0-9]+px'`, incl. comments) | ~349 | **212** — app 119, kit 93 | dominated by the same geometry constants as above |
+| `aria-*` attributes | **0** | **355** — kit 252, app 103 | 28 distinct attributes; `aria-live` toasts, `aria-modal` dialogs, roving `aria-activedescendant`, etc. |
+| Astryx imports | 0 | **present** | `styles.css`: `@astryxdesign/core/reset.css`, `astryx.css`, `tailwind-theme.css` bridge, generated `src/theme/sequent.css` + `accents.css`, layer order pinned; loaded from `src/index.jsx` |
+| Dead `styles.css` rule groups | 12 of ~30 (~40%) | **0** (file 317 → 166 lines) | every remaining class verified in use: `animate-pulse-glow`, `task-strike-animate`, `slide-left/right-anim`, `timeline-row-enter`, `calendar-day-cell`; `modalPopIn/Out` keyframes consumed by kit `Dialog` |
+| Unit tests | 88 passing / 9 files | **645 passing / 40 files** (re-run 2026-07-05) | e2e/screenshot suites not re-run in this pass |
+
+### 8.2 Per-convention verdicts
+
+| Convention | Verdict | Evidence |
+|---|---|---|
+| Setup imports (reset/astryx.css) | **COMPLIANT** | `styles.css` imports reset + astryx + tailwind bridge + built theme; entry `src/index.jsx` imports `../styles.css` |
+| No `<div>` / components do layout | **PARTIAL** | 261 raw divs remain in app views (down 51% from 528); kit rows/dialogs/forms carry structure, but custom canvases and view scaffolding are still div-built |
+| Frame-first shell | **COMPLIANT** | `App.jsx` = kit `AppShell` (`h-dvh`, `env(safe-area-inset-*)`) + `SideNav` sidebar; `--sidenav-width: 272px` inside the 256–280px budget; shell z-index only via `--z-scrim/sidenav/popover/dialog/toast` |
+| Dense data as rows | **COMPLIANT** | Tasks/Archive/Settings use `List`/`ListItem` edge-to-edge with `CheckboxInput`/`MoreMenu`-pattern trailing actions; zero `Card`-wrapped list items in those views |
+| StatusDot/Token/Badge usage | **COMPLIANT** | `StatusDot` for status (Sidebar, SidebarAtAGlance, EventViewModal); `Token` for categories (ArchiveView, EventViewModal); `Badge` only as enumerated provider label (`SettingsView:402,478`) — no decorative Badge |
+| Tokens for every value | **PARTIAL** | Colors fully tokenized (0 styling hex; shadows/motion/z via vars) but ~82 non-token arbitrary px values + literal geometry px persist in views |
+| Theme via `astryx theme` | **COMPLIANT** | `src/theme/sequent.css` is `@generated by astryx theme build` from `sequentTheme.ts`; accents are `:root[data-accent="…"]` overrides of accent-family tokens only, in the `astryx-theme` layer — no raw `--color-*` overrides on bare `:root` |
+
+### 8.3 Documented exceptions (sanctioned deviations)
+
+1. **User-color hue snapping at render** — per-calendar/list colors persist as raw hex data (Supabase/IndexedDB, incl. 12 in-code defaults); every render path routes through `snapUserColor` (`src/lib/colorTokens.js`) onto the bounded theme-adaptive hue-token palette. Stored data intentionally not migrated (§Open decisions 2).
+2. **Brand logos** — 9 hex fills in Google/Microsoft SVG marks (`LoginScreen`, `SettingsView`); brand colors must not theme.
+3. **Data-driven geometry** — 1px-per-minute timeline/calendar canvases (`top/height` from minutes, `h-[1440px]` day height), picker `Portal` coords from `getBoundingClientRect`, heatmap intensity, pomodoro progress width: inline styles/arbitrary values exempt by convention.
+4. **Picker z-layer** — DatePicker/TimePicker/ColorPicker portal to `body` at `z-[var(--z-dialog,70)]` (not `--z-popover`) so they clear their host Dialog; deliberate, still on the shell z-scale.
+5. **Google Fonts CSP** — `index.html` CSP still pins `fonts.googleapis.com`/`fonts.gstatic.com` for DM Sans + Major Mono Display (mapped to `--font-sans`/`--font-display` tokens); self-hosting deferred.
+6. *(theme layer)* Accent palette hex now lives in `src/theme/accents.css` + `sequentTheme.ts` as palette definitions (outside §2 scope by method; sanctioned) since a built Astryx theme carries a single accent — the 6 runtime accents are scoped token overrides.
+
+### 8.4 Remaining known debt
+
+- **261 raw divs** in app views — canvases stay custom by design; modal/settings scaffolding could still shed divs into kit layout primitives.
+- **~82 non-token arbitrary px values** in views — grid constants (`h-[60px]`, `h-[1440px]`, gutters) and region budgets could move to CSS vars; ~18 misc (`text-[9px]`, `scale-[1.02]`, raw `cubic-bezier`) should be tokenized.
+- **Imperative DOM orchestration** remains in `TimelineView` / `SidebarHeatmap` (`getElementById('timelineScroll')`, `querySelector('.day-section.is-today')`) — works, but fragile coupling flagged in §3.
+- **Deprecated `src/components/ui/Modal.jsx`** adapter has zero remaining call sites — safe to delete.
+- **Two `!important` rules kept** in `styles.css` (`button:active` tactile scale, `.calendar-day-cell:hover`) — intentional but still overrides utilities.
+- **No lint rule yet** blocking raw hex/px regression (Phase 5 item, §7).
+- **E2E + screenshot baselines not re-verified** in this pass (unit suite only: 645/645 green); role-based-locator migration status unchecked.
+- `index.html`/`index.jsx` `theme-color` chrome hex duplicates `--color-background-body` by hand — regenerate alongside theme rebuilds.

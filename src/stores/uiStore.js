@@ -45,7 +45,7 @@ const [uiState, setUiState] = createStore({
   themeBase: initialThemeBase, // accent slug ('amber', 'rose', ...)
   view: 'timeline', // 'timeline', 'calendar', 'tasks', 'archive'
   viewDirection: 'up', // 'up' or 'down' for slide animations
-  theme: ACCENTS[initialThemeBase], // resolved accent hex for the active mode
+  theme: ACCENTS[initialThemeBase], // the accent's base hex
   sidebarOpen: true,
   smartBarOpen: false,
   activeDate: new Date().toISOString(),
@@ -59,48 +59,23 @@ const [uiState, setUiState] = createStore({
   clickCoords: { x: window.innerWidth / 2, y: window.innerHeight / 2 },
 });
 
-// Apply the accent slug + mode to the document.
-// - dataset.accent drives the Astryx accent tokens (accents.css)
-// - --accent / --accent-rgb stay set inline for legacy consumers (aurora
-//   orbs, sidebar glow) until they are migrated; light mode desaturates by
-//   mixing 75% accent + 25% #666666, matching accents.css.
-const applyTheme = (slug, mode) => {
-  const baseColor = ACCENTS[slug] || ACCENTS.amber;
-  let r = parseInt(baseColor.slice(1, 3), 16);
-  let g = parseInt(baseColor.slice(3, 5), 16);
-  let b = parseInt(baseColor.slice(5, 7), 16);
-
-  let finalTheme = baseColor;
-
-  if (mode === 'light') {
-    // Desaturate and darken slightly for light mode contrast
-    r = Math.round(r * 0.75 + 102 * 0.25); // 102 is 0x66
-    g = Math.round(g * 0.75 + 102 * 0.25);
-    b = Math.round(b * 0.75 + 102 * 0.25);
-    finalTheme = `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
-  }
-
+// Apply the accent slug to the document: dataset.accent drives the Astryx
+// accent tokens via [data-accent] blocks in accents.css. Returns the accent's
+// base hex (mirrored into state.theme for consumers that need a plain color).
+const applyTheme = (slug) => {
   document.documentElement.dataset.accent = slug;
-  document.documentElement.style.setProperty('--accent', finalTheme);
-  document.documentElement.style.setProperty('--accent-rgb', `${r}, ${g}, ${b}`);
-  return finalTheme;
+  return ACCENTS[slug] || ACCENTS.amber;
 };
 
-// Apply the light/dark mode to the document.
-// - style.colorScheme drives light-dark() in the Astryx theme
-// - the .light class is kept for transition compat until Phase 5
+// Apply the light/dark mode to the document: style.colorScheme drives
+// light-dark() in the Astryx theme.
 const applyMode = (mode) => {
   document.documentElement.style.colorScheme = mode;
-  if (mode === 'light') {
-    document.documentElement.classList.add('light');
-  } else {
-    document.documentElement.classList.remove('light');
-  }
 };
 
 // Initialize document theming
 applyMode(uiState.mode);
-setUiState('theme', applyTheme(uiState.themeBase, uiState.mode));
+setUiState('theme', applyTheme(uiState.themeBase));
 
 window.addEventListener('click', (e) => {
   setUiState('clickCoords', { x: e.clientX, y: e.clientY });
@@ -115,7 +90,6 @@ export const uiStore = {
     localStorage.setItem('sequent_mode', mode);
     setUiState('mode', mode);
     applyMode(mode);
-    setUiState('theme', applyTheme(uiState.themeBase, mode));
   },
   setView: (view) => {
     const viewOrder = ['timeline', 'calendar', 'tasks', 'archive', 'settings'];
@@ -134,7 +108,7 @@ export const uiStore = {
     const slug = toSlug(accent);
     localStorage.setItem('sequent_theme', slug);
     setUiState('themeBase', slug);
-    setUiState('theme', applyTheme(slug, uiState.mode));
+    setUiState('theme', applyTheme(slug));
   },
   toggleSidebar: () => setUiState('sidebarOpen', !uiState.sidebarOpen),
   setSmartBarOpen: (isOpen) => setUiState('smartBarOpen', isOpen),

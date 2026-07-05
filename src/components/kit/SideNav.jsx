@@ -5,9 +5,8 @@
 // needs (button items, no href/nesting; controlled open state from uiStore).
 //
 // Landmark: the root is an <aside role="navigation" aria-label=…> — an explicit
-// navigation landmark per the spec, while keeping the `aside` element the
-// existing e2e locators (`aside >> button:has-text(…)`) target until the
-// Phase 5 role-based-locator migration.
+// navigation landmark per the spec (the e2e suite locates it via
+// getByRole('navigation', { name })).
 //
 // Width: var(--sidenav-width) (defined on :root in styles.css, 272px — inside
 // the Astryx 256–280px side-nav budget). Fallback baked into the classes for

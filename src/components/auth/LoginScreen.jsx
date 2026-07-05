@@ -1,6 +1,8 @@
 // LoginScreen — Phase 4 migration onto the kit (Astryx spec).
 // Retired here: raw <input>s with placeholder-as-label (kit TextInput with real
-// labels; placeholders kept as hints), the hand-rolled submit/OAuth <button>s
+// labels; the label-duplicating placeholders that were kept only for the old
+// `input[placeholder=…]` e2e locators are gone now that the suite uses
+// getByLabel), the hand-rolled submit/OAuth <button>s
 // (kit Button), and the raw-hex error/success boxes (kit Banner). Centered
 // token layout; authStore contract (signUpWithEmail / signInWithEmail /
 // signInWithOAuth) is unchanged. Brand heading stays in the display font via
@@ -87,7 +89,6 @@ function LoginScreen() {
               type="text"
               value={fullName()}
               onChange={(value) => setFullName(value)}
-              placeholder="Full Name"
               autocomplete="name"
               isRequired
               required
@@ -98,7 +99,6 @@ function LoginScreen() {
             type="email"
             value={email()}
             onChange={(value) => setEmail(value)}
-            placeholder="Email address"
             autocomplete="email"
             isRequired
             required
@@ -108,7 +108,6 @@ function LoginScreen() {
             type="password"
             value={password()}
             onChange={(value) => setPassword(value)}
-            placeholder="Password"
             autocomplete={isSignUp() ? 'new-password' : 'current-password'}
             isRequired
             required

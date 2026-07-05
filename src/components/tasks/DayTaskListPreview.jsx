@@ -3,12 +3,13 @@ import { format, isSameDay } from 'date-fns';
 import { taskStore } from '../../stores/taskStore';
 import { expandRecurringItems } from '../../lib/recurrenceEngine';
 import { IconButton, List, ListItem, CheckboxInput, Text, EmptyState, cx } from '../kit';
+import { snapUserColor } from '../../lib/colorTokens';
 
-// Per-item user colors fall back to the theme accent token. Stored colors are
+// Stored per-item user colors are snapped to the nearest Astryx hue token and
 // rendered through the CheckboxInput `color` prop (its documented token
-// exception); wave 2's colorTokens.js snapUserColor() will take over
-// hue-snapping once it lands.
+// exception); missing colors fall back to the theme accent token.
 const FALLBACK_COLOR = 'var(--color-accent)';
+const snappedColor = (stored) => (stored ? snapUserColor(stored).cssVar : FALLBACK_COLOR);
 
 function DayTaskListPreview(props) {
   const { state: taskState } = taskStore;
@@ -24,7 +25,7 @@ function DayTaskListPreview(props) {
     let tasks = expandedTasks.filter(t => t.scheduled_date && isSameDay(new Date(t.scheduled_date), d)).map(t => {
       return {
         ...t,
-        color: taskState.lists.find(l => l.id === t.listId)?.color || FALLBACK_COLOR,
+        color: snappedColor(taskState.lists.find(l => l.id === t.listId)?.color),
       };
     });
 
@@ -33,7 +34,7 @@ function DayTaskListPreview(props) {
       tasks.push({
         id: 'ghost-1',
         title: props.ghostTask.title || 'New Task',
-        color: props.ghostTask.color || FALLBACK_COLOR,
+        color: snappedColor(props.ghostTask.color),
         isGhost: true,
         completed: false
       });

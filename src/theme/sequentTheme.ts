@@ -3,8 +3,7 @@
  *
  * Astryx theme for the Sequent app — dark-first surfaces matching the
  * existing product (#1c1c1e body, translucent white cards, #2c2c2e
- * popovers) with a light mode derived from the app's `.light` palette
- * (#f4f5f7 body, white cards, #111827 ink).
+ * popovers) with a light mode (#f4f5f7 body, white cards, #111827 ink).
  *
  * Light/dark is driven by `color-scheme` + light-dark() — the [light, dark]
  * tuples below compile to light-dark() pairs. uiStore.js sets

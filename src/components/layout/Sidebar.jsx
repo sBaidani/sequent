@@ -1,13 +1,8 @@
-// Sidebar — the app's side navigation, rebuilt on the kit SideNav (Phase 3).
-// Retired here: the .glass-sidebar glassmorphism surface (token surfaces now),
-// the hand-rolled getBoundingClientRect/scroll-listener flyout (kit Popover),
-// the display:none checkbox hack (kit CheckboxInput), and the hardcoded
-// #1a1a1a/#52c41a/#ff4d4f colors (token surfaces + kit StatusDot).
-// Embedded widgets (SidebarAtAGlance, SidebarHeatmap, PomodoroWidget) stay
-// as-is and migrate in Phase 4.
+// Sidebar — the app's side navigation, built on the kit SideNav.
 import { createSignal, onMount, onCleanup, Show, For } from 'solid-js';
 import { uiStore } from '../../stores/uiStore';
 import { eventStore } from '../../stores/eventStore';
+import { snapUserColor } from '../../lib/colorTokens';
 import {
   SideNav,
   SideNavSection,
@@ -115,7 +110,7 @@ function Sidebar() {
                   label={uiState.isOnline ? 'Online' : 'Offline'}
                 />
                 {/* Brand typography (Major Mono) stays by decision. */}
-                <span class="font-display text-[9px] font-bold lowercase tracking-widest text-secondary">
+                <span class="font-display text-xs font-bold lowercase tracking-widest text-secondary">
                   {uiState.isOnline ? 'Cloud' : 'Offline'}
                 </span>
               </>
@@ -207,7 +202,7 @@ function Sidebar() {
               <CheckboxInput
                 label={cal.name}
                 value={cal.visible !== false}
-                color={cal.color}
+                color={cal.color ? snapUserColor(cal.color).cssVar : undefined}
                 size="sm"
                 onChange={(checked) => setCalendarVisible(cal.id, checked)}
               />
