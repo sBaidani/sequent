@@ -26,7 +26,6 @@ import { weatherService } from '../../services/weatherService';
 function CalendarView() {
   const [viewMode, setViewMode] = createSignal('month'); // 'month' or 'week'
   const [viewTransitionDir, setViewTransitionDir] = createSignal(1); // 1 = from right, -1 = from left
-  const [workWeekOnly, setWorkWeekOnly] = createSignal(settingsStore.state.workWeekOnly || false);
   const [currentDate, setCurrentDate] = createSignal(new Date());
   const [animationClass, setAnimationClass] = createSignal('');
   const [hoverBlock, setHoverBlock] = createSignal(null); // { date, hour, mins }
@@ -77,7 +76,7 @@ function CalendarView() {
   // collapse into a single value; the change handler preserves the original
   // per-button transition-direction + scroll behavior exactly.
   const viewSegment = () =>
-    viewMode() === 'month' ? 'month' : (workWeekOnly() ? 'work' : 'week');
+    viewMode() === 'month' ? 'month' : (settings.workWeekOnly ? 'work' : 'week');
 
   const scrollWeekToMorning = () => {
     setTimeout(() => {
@@ -94,13 +93,11 @@ function CalendarView() {
     } else if (value === 'week') {
       setViewTransitionDir(viewMode() === 'month' ? 1 : -1);
       setViewMode('week');
-      setWorkWeekOnly(false);
       settingsStore.setWorkWeekOnly(false);
       scrollWeekToMorning();
     } else if (value === 'work') {
       setViewTransitionDir(1);
       setViewMode('week');
-      setWorkWeekOnly(true);
       settingsStore.setWorkWeekOnly(true);
       scrollWeekToMorning();
     }
@@ -486,7 +483,7 @@ function CalendarView() {
                     });
 
                     const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-                    const isHidden = createMemo(() => workWeekOnly() && isWeekend);
+                    const isHidden = createMemo(() => settings.workWeekOnly && isWeekend);
 
                     return (
                       <div

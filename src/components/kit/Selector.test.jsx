@@ -175,6 +175,15 @@ describe('Selector', () => {
       expect(trigger).toHaveAttribute('aria-activedescendant', getOption('Date').id);
     });
 
+    test('ArrowUp decrements normally from a real highlight (does not wrap to the last item)', () => {
+      render(() => <Selector label="Fruit" options={FRUITS} />);
+      const trigger = getTrigger();
+      fireEvent.keyDown(trigger, { key: 'ArrowDown' }); // open, highlight Apple
+      fireEvent.keyDown(trigger, { key: 'ArrowDown' }); // Banana
+      fireEvent.keyDown(trigger, { key: 'ArrowUp' }); // back to Apple, not wrapped to Date
+      expect(trigger).toHaveAttribute('aria-activedescendant', getOption('Apple').id);
+    });
+
     test('Home and End jump to the first/last enabled option', () => {
       render(() => <Selector label="Fruit" options={FRUITS} />);
       const trigger = getTrigger();
@@ -293,6 +302,26 @@ describe('Selector', () => {
       fireEvent.keyDown(search, { key: 'Enter' });
       expect(onChange).toHaveBeenCalledWith('banana');
       expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    });
+
+    test('ArrowUp right after typing (which resets the highlight to -1) jumps to the last enabled match, not the first', () => {
+      // FIX #6: moveHighlight's -1 case used to clamp to 0 for both
+      // directions, so ArrowUp from "no highlight" landed on the first
+      // option instead of the documented "opens via ArrowUp highlights
+      // last item" behavior.
+      render(() => <Selector label="Fruit" options={FRUITS} hasSearch />);
+      fireEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+      const search = screen.getByRole('combobox', { name: 'Search options' });
+      // Matches Apple, Banana, Date (not the disabled Cherry) and resets
+      // the highlight to -1 as a side effect of filtering.
+      fireEvent.input(search, { target: { value: 'a' } });
+      expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual([
+        'Apple',
+        'Banana',
+        'Date',
+      ]);
+      fireEvent.keyDown(search, { key: 'ArrowUp' });
+      expect(search).toHaveAttribute('aria-activedescendant', getOption('Date').id);
     });
   });
 

@@ -276,6 +276,24 @@ describe('List', () => {
       expect(onEscape).toHaveBeenCalledTimes(1);
     });
 
+    test('caller-supplied onKeyDown fires alongside internal roving-tabindex navigation', () => {
+      const onKeyDown = vi.fn();
+      render(() => (
+        <List onKeyDown={onKeyDown}>
+          <ListItem label="First" onClick={() => {}} />
+          <ListItem label="Second" onClick={() => {}} />
+          <ListItem label="Third" onClick={() => {}} />
+        </List>
+      ));
+      const list = screen.getByRole('list');
+      const first = screen.getByRole('button', { name: 'First' });
+      const second = screen.getByRole('button', { name: 'Second' });
+      first.focus();
+      fireEvent.keyDown(list, { key: 'ArrowDown' });
+      expect(onKeyDown).toHaveBeenCalledTimes(1);
+      expect(second).toHaveFocus();
+    });
+
     test('Enter and Space activate the focused item via the native button contract', () => {
       const onClick = vi.fn();
       render(() => (

@@ -8,12 +8,16 @@
 // Internals: the hour and minute columns are kit List/ListItem rows
 // (edge-to-edge, keyboard navigable), the confirm action is a kit Button,
 // tokens for every color/radius/duration, Escape closes and refocuses.
-import { createSignal, onCleanup, onMount, For, Show, createMemo, createEffect } from 'solid-js';
+// Outside-dismiss and Escape ownership are delegated to the kit's shared
+// overlay primitives (see src/components/kit/overlayStack.js) so this
+// picker dismisses correctly on touch too, and so Escape doesn't wrongly
+// cascade to close an ancestor Dialog when opened from inside one.
+import { createSignal, For, Show, createMemo, createEffect } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { Clock } from 'lucide-solid';
 import { format } from 'date-fns';
 import { settingsStore } from '../../stores/settingsStore';
-import { List, ListItem, Button, cx } from '../kit';
+import { List, ListItem, Button, cx, EscapeLayer, useOutsideDismiss } from '../kit';
 
 const TRIGGER_DEFAULT_CLASS = cx(
   'w-full box-border flex items-center justify-between gap-2 py-2 px-3 cursor-pointer',
@@ -37,18 +41,12 @@ function TimePicker(props) {
   let hoursContainerRef;
   let minutesContainerRef;
 
-  const handleClickOutside = (e) => {
-    if (isOpen() && containerRef && !containerRef.contains(e.target) && popoverRef && !popoverRef.contains(e.target)) {
-      setIsOpen(false);
-    }
-  };
-
-  onMount(() => {
-    document.addEventListener('mousedown', handleClickOutside);
-  });
-
-  onCleanup(() => {
-    document.removeEventListener('mousedown', handleClickOutside);
+  // Upgrades the previous mousedown-only outside-click handling to also
+  // dismiss on touchstart (the shared hook's fuller behavior).
+  useOutsideDismiss({
+    isOpen,
+    refs: [() => containerRef, () => popoverRef],
+    onDismiss: () => setIsOpen(false),
   });
 
   const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
@@ -90,13 +88,6 @@ function TimePicker(props) {
     }
   });
 
-  const handlePanelKeyDown = (e) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      close({ refocus: true });
-    }
-  };
-
   const displayValue = createMemo(() => {
     if (!props.value) return 'Select time';
     if (settingsStore.state.use24HourClock) return props.value;
@@ -122,12 +113,15 @@ function TimePicker(props) {
       </button>
 
       <Show when={isOpen()}>
+        {/* Joins the shared overlay stack for as long as the panel is open,
+            so a nested Escape doesn't wrongly cascade to close an ancestor
+            Dialog (e.g. this picker opened from inside AddEventModal). */}
+        <EscapeLayer onEscape={() => close({ refocus: true })} />
         <Portal>
           <div
             ref={popoverRef}
             role="dialog"
             aria-label="Choose time"
-            onKeyDown={handlePanelKeyDown}
             class="fixed z-[var(--z-dialog,70)] w-max p-3 rounded-lg border border-border bg-popover shadow-md flex flex-col gap-3"
             style={{ top: `${coords().top}px`, left: `${coords().left}px` }}
           >

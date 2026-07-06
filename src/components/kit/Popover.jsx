@@ -30,9 +30,7 @@
 import { Show, createSignal, onMount, onCleanup, mergeProps } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { cx } from './cx';
-
-const FOCUSABLE_SELECTOR =
-  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+import { useOverlayLayer, trapFocus, FOCUSABLE_SELECTOR, useOutsideDismiss } from './overlayStack';
 
 /**
  * Pure placement math, exported for direct unit testing.
@@ -189,51 +187,30 @@ export function Popover(props) {
       if (merged.matchAnchorWidth) setAnchorWidth(anchorRect.width);
     };
 
-    const handleDocMouseDown = (e) => {
-      if (!merged.hasLightDismiss) return;
-      if (panelRef && panelRef.contains(e.target)) return;
-      const anchor = anchorEl();
-      // Never light-dismiss from the anchor: its own click handler toggles,
-      // and dismiss-then-reopen jitter is what the Astryx source guards too.
-      if (anchor && anchor.contains(e.target)) return;
-      props.onClose?.();
-    };
+    // Escape ownership is arbitrated by the shared overlay stack: whichever
+    // overlay (this Popover, or another layer opened later inside it) was
+    // pushed most recently owns the key, regardless of mount order.
+    useOverlayLayer({
+      onEscape: () => {
+        if (merged.hasEscapeDismiss) props.onClose?.();
+      },
+    });
 
-    const trapTab = (e) => {
-      if (!panelRef) return;
-      const focusables = Array.from(panelRef.querySelectorAll(FOCUSABLE_SELECTOR));
-      if (focusables.length === 0) {
-        e.preventDefault();
-        panelRef.focus();
-        return;
-      }
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-      const active = document.activeElement;
-      if (e.shiftKey) {
-        if (active === first || active === panelRef || !panelRef.contains(active)) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else if (active === last || !panelRef.contains(active)) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
+    // Never light-dismiss from the panel or the anchor: the anchor's own
+    // click handler toggles, and dismiss-then-reopen jitter is what the
+    // Astryx source guards too.
+    useOutsideDismiss({
+      isOpen: () => merged.hasLightDismiss,
+      refs: [() => panelRef, anchorEl],
+      onDismiss: () => props.onClose?.(),
+    });
 
-    const handleDocKeyDown = (e) => {
-      // A nested layer that already consumed this key owns it — don't also
-      // dismiss the popover (mirrors the Dialog guard).
-      if (e.defaultPrevented) return;
-      if (e.key === 'Escape') {
-        if (merged.hasEscapeDismiss) {
-          e.preventDefault();
-          props.onClose?.();
-        }
-        return;
-      }
-      // Focus trap only for dialog-role popovers; menus close on Tab instead.
-      if (e.key === 'Tab' && isDialog()) trapTab(e);
+    // Tab-trapping stays local/bubble-scoped (no document listener needed):
+    // focus never legitimately leaves a correctly-trapped panel, so a
+    // keydown handler on the panel itself sees every Tab press. Focus trap
+    // only for dialog-role popovers; menus close on Tab instead (Menu.jsx).
+    const handlePanelKeyDown = (e) => {
+      if (e.key === 'Tab' && isDialog()) trapFocus(panelRef, e);
     };
 
     onMount(() => {
@@ -246,8 +223,6 @@ export function Popover(props) {
       window.addEventListener('resize', update);
       // capture:true also catches scrolls of nested scroll containers.
       window.addEventListener('scroll', update, true);
-      document.addEventListener('mousedown', handleDocMouseDown);
-      document.addEventListener('keydown', handleDocKeyDown);
       let resizeObserver;
       if (typeof ResizeObserver !== 'undefined') {
         resizeObserver = new ResizeObserver(update);
@@ -257,8 +232,6 @@ export function Popover(props) {
       onCleanup(() => {
         window.removeEventListener('resize', update);
         window.removeEventListener('scroll', update, true);
-        document.removeEventListener('mousedown', handleDocMouseDown);
-        document.removeEventListener('keydown', handleDocKeyDown);
         resizeObserver?.disconnect();
         // Restore focus to the trigger unless the user already moved it
         // somewhere else (e.g. light-dismiss by clicking another control).
@@ -282,6 +255,7 @@ export function Popover(props) {
         role={isDialog() ? 'dialog' : undefined}
         aria-label={isDialog() ? props.label : undefined}
         tabindex="-1"
+        onKeyDown={handlePanelKeyDown}
         data-placement={pos()?.placement ?? merged.placement}
         class={cx(
           // bg/border/radius/shadow per the Astryx popover surface tokens.

@@ -9,6 +9,7 @@ import { render, screen, fireEvent } from '@solidjs/testing-library';
 import { describe, test, expect, beforeAll, vi } from 'vitest';
 import { createSignal } from 'solid-js';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from './Dialog';
+import { Popover } from './Popover';
 
 beforeAll(() => {
   // jsdom has no Web Animations API; solid-transition-group's enter/exit
@@ -146,6 +147,53 @@ describe('Dialog', () => {
       fireEvent.keyDown(document.body, { key: 'Escape' });
       expect(onClose).not.toHaveBeenCalled();
     });
+
+    test('Escape inside a nested Popover closes only the Popover, not the outer Dialog', () => {
+      // Regression test for the root cause: the Dialog and the Popover each
+      // used to register their own document keydown listener, and — because
+      // same-target listeners fire in registration order — the Dialog
+      // (mounted first) always "won" Escape over a Popover opened later
+      // inside it. The shared overlay stack instead hands Escape to
+      // whichever layer was pushed most recently (the Popover here).
+      const onDialogClose = vi.fn();
+      let anchor;
+      function Harness() {
+        const [popoverOpen, setPopoverOpen] = createSignal(false);
+        return (
+          <Dialog open={true} onClose={onDialogClose}>
+            <DialogHeader title="Outer dialog" />
+            <DialogBody>
+              <button ref={anchor} type="button" onClick={() => setPopoverOpen(true)}>
+                Open popover
+              </button>
+              <Popover
+                open={popoverOpen()}
+                onClose={() => setPopoverOpen(false)}
+                anchorRef={() => anchor}
+                label="Nested popover"
+              >
+                <p>Popover content</p>
+              </Popover>
+            </DialogBody>
+          </Dialog>
+        );
+      }
+      render(() => <Harness />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Open popover' }));
+      expect(screen.getByRole('dialog', { name: 'Nested popover' })).toBeInTheDocument();
+
+      fireEvent.keyDown(document, { key: 'Escape' });
+      expect(screen.queryByRole('dialog', { name: 'Nested popover' })).not.toBeInTheDocument();
+      expect(onDialogClose).not.toHaveBeenCalled();
+      // The outer dialog is untouched by that Escape press.
+      expect(screen.getByRole('dialog', { name: 'Outer dialog' })).toBeInTheDocument();
+
+      // A second Escape, with the popover already closed, now reaches the
+      // dialog (it's the only — and therefore topmost — layer left).
+      fireEvent.keyDown(document, { key: 'Escape' });
+      expect(onDialogClose).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('focus management', () => {
@@ -173,6 +221,40 @@ describe('Dialog', () => {
       expect(screen.getByRole('dialog')).toHaveFocus();
       setOpen(false);
       expect(trigger).toHaveFocus();
+    });
+
+    test('focus restoration is skipped when another element has since claimed focus', () => {
+      // FIX #3: onCleanup used to unconditionally call triggerEl.focus(),
+      // which could steal focus from a different overlay/control that took
+      // it after this dialog opened but before it closed. Restoration
+      // should only happen if focus is still "ours to give back" (on the
+      // body, or still inside this dialog's panel).
+      const [open, setOpen] = createSignal(false);
+      render(() => (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>
+            Open dialog
+          </button>
+          <button type="button">Other overlay control</button>
+          <Dialog open={open()} onClose={() => setOpen(false)}>
+            <DialogHeader title="Focus skip test" />
+            <DialogBody>Focus content</DialogBody>
+          </Dialog>
+        </>
+      ));
+      const trigger = screen.getByRole('button', { name: 'Open dialog' });
+      trigger.focus();
+      fireEvent.click(trigger);
+      expect(screen.getByRole('dialog')).toHaveFocus();
+
+      // Simulate another overlay (e.g. a second dialog, or a nested
+      // control) claiming focus before this one finishes closing.
+      const other = screen.getByRole('button', { name: 'Other overlay control' });
+      other.focus();
+
+      setOpen(false);
+      expect(other).toHaveFocus();
+      expect(trigger).not.toHaveFocus();
     });
 
     test('Tab on the last focusable element wraps to the first', () => {
@@ -217,6 +299,33 @@ describe('Dialog', () => {
       fireEvent.touchMove(dialog, { touches: [{ clientY: 150 }] });
       fireEvent.touchEnd(dialog);
       expect(onClose).not.toHaveBeenCalled();
+    });
+
+    test('dragging down past the threshold then back up before release does NOT close', () => {
+      // FIX #2: handleTouchMove used to only update touchDelta while
+      // dragging down (`if (diff > 0) setTouchDelta(diff)`), so reversing
+      // the drag left it stuck at its max value. A cancelled swipe (ending
+      // back at/above the start) must not close the dialog.
+      const { onClose } = renderDialog();
+      const dialog = screen.getByRole('dialog');
+      fireEvent.touchStart(dialog, { touches: [{ clientY: 100 }] });
+      fireEvent.touchMove(dialog, { touches: [{ clientY: 260 }] }); // past the 100px threshold
+      fireEvent.touchMove(dialog, { touches: [{ clientY: 100 }] }); // dragged back to the start
+      fireEvent.touchEnd(dialog);
+      expect(onClose).not.toHaveBeenCalled();
+    });
+
+    test('reversing a drag tracks the finger back down to 0 instead of clamping at the max', () => {
+      const { unmount } = renderDialog();
+      const dialog = screen.getByRole('dialog');
+      fireEvent.touchStart(dialog, { touches: [{ clientY: 100 }] });
+      fireEvent.touchMove(dialog, { touches: [{ clientY: 260 }] });
+      expect(dialog.style.transform).toBe('translateY(160px)');
+      fireEvent.touchMove(dialog, { touches: [{ clientY: 180 }] });
+      expect(dialog.style.transform).toBe('translateY(80px)');
+      fireEvent.touchMove(dialog, { touches: [{ clientY: 100 }] });
+      expect(dialog.style.transform).toBe('translateY(0px)');
+      unmount();
     });
 
     test('dragging up does NOT close', () => {

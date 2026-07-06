@@ -38,6 +38,7 @@ import {
 import { Portal } from 'solid-js/web';
 import { Transition } from 'solid-transition-group';
 import { cx } from './cx';
+import { useOverlayLayer, trapFocus } from './overlayStack';
 
 const DialogContext = createContext(null);
 
@@ -48,9 +49,6 @@ const SIZE_CLASSES = {
   md: 'sm:w-[500px]',
   lg: 'sm:w-[850px]',
 };
-
-const FOCUSABLE_SELECTOR =
-  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 // Bottom-sheet swipe-to-dismiss threshold, ported from Modal.jsx.
 const SWIPE_CLOSE_THRESHOLD = 100;
@@ -82,38 +80,16 @@ export function Dialog(props) {
     const [touchStart, setTouchStart] = createSignal(null);
     const [touchDelta, setTouchDelta] = createSignal(0);
 
-    const trapTab = (e) => {
-      if (!panelRef) return;
-      const focusables = Array.from(panelRef.querySelectorAll(FOCUSABLE_SELECTOR));
-      if (focusables.length === 0) {
-        e.preventDefault();
-        panelRef.focus();
-        return;
-      }
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-      const active = document.activeElement;
-      if (e.shiftKey) {
-        if (active === first || active === panelRef || !panelRef.contains(active)) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else if (active === last || !panelRef.contains(active)) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
+    // Escape ownership is arbitrated by the shared overlay stack: whichever
+    // overlay (this Dialog, or a Popover/Selector opened later inside it)
+    // was pushed most recently owns the key, regardless of mount order.
+    useOverlayLayer({ onEscape: () => close() });
 
-    const handleDocumentKeyDown = (e) => {
-      // A nested layer (e.g. an open Selector/Menu inside the dialog) that
-      // already consumed this key owns it — don't also dismiss the dialog.
-      if (e.defaultPrevented) return;
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        close();
-      } else if (e.key === 'Tab') {
-        trapTab(e);
-      }
+    // Tab-trapping stays local/bubble-scoped (no document listener needed):
+    // focus never legitimately leaves a correctly-trapped panel, so a
+    // keydown handler on the panel itself sees every Tab press.
+    const handlePanelKeyDown = (e) => {
+      if (e.key === 'Tab') trapFocus(panelRef, e);
     };
 
     onMount(() => {
@@ -122,13 +98,18 @@ export function Dialog(props) {
         document.activeElement && typeof document.activeElement.focus === 'function'
           ? document.activeElement
           : null;
-      document.addEventListener('keydown', handleDocumentKeyDown);
       panelRef?.focus();
     });
 
     onCleanup(() => {
-      document.removeEventListener('keydown', handleDocumentKeyDown);
-      triggerEl?.focus();
+      // Only take focus back if it's still "ours to give back" — skip
+      // restoration if some other element (e.g. a different stacked
+      // overlay, or focus deliberately moved elsewhere) has since claimed
+      // it, so we don't steal focus out from under it.
+      const active = document.activeElement;
+      if (!active || active === document.body || (panelRef && panelRef.contains(active))) {
+        triggerEl?.focus();
+      }
       triggerEl = null;
     });
 
@@ -140,7 +121,10 @@ export function Dialog(props) {
     const handleTouchMove = (e) => {
       if (touchStart() === null) return;
       const diff = e.touches[0].clientY - touchStart();
-      if (diff > 0) setTouchDelta(diff);
+      // Always track the finger (clamped to non-negative) so a reversed
+      // drag returns the panel to 0 instead of leaving touchDelta stuck at
+      // its max value from the downward part of the gesture.
+      setTouchDelta(Math.max(0, diff));
     };
     const handleTouchEnd = () => {
       if (touchDelta() > SWIPE_CLOSE_THRESHOLD) close();
@@ -178,6 +162,7 @@ export function Dialog(props) {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
+          onKeyDown={handlePanelKeyDown}
         >
           <DialogContext.Provider value={{ labelId, onClose: close }}>
             {props.children}

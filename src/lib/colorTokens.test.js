@@ -70,4 +70,22 @@ describe('snapUserColor', () => {
     expect(snapUserColor('rgb(a, b, c)')).toBe(gray);
     expect(snapUserColor({ hex: '#ff0000' })).toBe(gray);
   });
+
+  it('memoizes results for the same normalized input (reference-equal)', () => {
+    const first = snapUserColor('#3B6ED6');
+    const second = snapUserColor('#3B6ED6');
+    expect(second).toBe(first);
+  });
+
+  it('memoizes case/whitespace variants of the same input under one cache entry', () => {
+    const first = snapUserColor('#3b6ed6');
+    const second = snapUserColor('  #3B6ED6 ');
+    expect(second).toBe(first);
+  });
+
+  it('memoizes invalid/nullish inputs consistently', () => {
+    const first = snapUserColor(undefined);
+    const second = snapUserColor(null);
+    expect(second).toBe(first);
+  });
 });

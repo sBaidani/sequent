@@ -91,14 +91,14 @@ describe('AddTaskModal form-submit wiring (characterization)', () => {
   test('renders the New Task form while activeModal === "addTask"', () => {
     openTaskModal();
     expect(screen.getByRole('heading', { name: /new task/i })).toBeInTheDocument();
-    expect(screen.getByLabelText('Title')).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Title/)).toBeRequired();
     expect(screen.getByRole('button', { name: 'Add Task' })).toBeInTheDocument();
   });
 
   test('submit calls taskStore.addTask with the pinned shape and closes the modal', () => {
     openTaskModal();
 
-    fireEvent.input(screen.getByLabelText('Title'), {
+    fireEvent.input(screen.getByLabelText(/^Title/), {
       target: { value: 'Buy groceries' },
     });
     fireEvent.input(screen.getByLabelText('Description'), {
@@ -124,7 +124,7 @@ describe('AddTaskModal form-submit wiring (characterization)', () => {
   test('selected priority is passed through to addTask', () => {
     openTaskModal();
 
-    fireEvent.input(screen.getByLabelText('Title'), {
+    fireEvent.input(screen.getByLabelText(/^Title/), {
       target: { value: 'Urgent thing' },
     });
     // Priority is a SegmentedControl (radiogroup) post-refactor.
@@ -151,7 +151,7 @@ describe('AddTaskModal form-submit wiring (characterization)', () => {
     uiStore.setActiveListId('list-2');
     openTaskModal();
 
-    fireEvent.input(screen.getByLabelText('Title'), {
+    fireEvent.input(screen.getByLabelText(/^Title/), {
       target: { value: 'File report' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Add Task' }));
@@ -164,7 +164,7 @@ describe('AddTaskModal form-submit wiring (characterization)', () => {
   test('whitespace-only title is rejected: no addTask call, modal stays open', () => {
     openTaskModal();
 
-    fireEvent.input(screen.getByLabelText('Title'), {
+    fireEvent.input(screen.getByLabelText(/^Title/), {
       target: { value: '   ' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Add Task' }));
@@ -201,14 +201,14 @@ describe('AddEventModal form-submit wiring (characterization)', () => {
 
   test('renders the event form while activeModal === "addEvent"', () => {
     openEventModal();
-    expect(screen.getByLabelText('Title')).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Title/)).toBeRequired();
     expect(screen.getByRole('button', { name: 'Add Event' })).toBeInTheDocument();
   });
 
   test('submit calls eventStore.addEvent with the pinned shape and closes the modal', () => {
     openEventModal();
 
-    fireEvent.input(screen.getByLabelText('Title'), {
+    fireEvent.input(screen.getByLabelText(/^Title/), {
       target: { value: 'Team standup' },
     });
     fireEvent.input(screen.getByLabelText('Description'), {
@@ -232,7 +232,7 @@ describe('AddEventModal form-submit wiring (characterization)', () => {
   test('All-Day toggle is passed through as the allDay argument', () => {
     openEventModal();
 
-    fireEvent.input(screen.getByLabelText('Title'), {
+    fireEvent.input(screen.getByLabelText(/^Title/), {
       target: { value: 'Conference' },
     });
     // The toggle is an accessible kit Switch post-refactor (the old markup
@@ -250,7 +250,7 @@ describe('AddEventModal form-submit wiring (characterization)', () => {
   test('whitespace-only title is rejected: no addEvent call, modal stays open', () => {
     openEventModal();
 
-    fireEvent.input(screen.getByLabelText('Title'), {
+    fireEvent.input(screen.getByLabelText(/^Title/), {
       target: { value: '   ' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Add Event' }));

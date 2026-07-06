@@ -8,15 +8,19 @@
 //
 // Internals: kit IconButton for month navigation, kit Text for the header
 // and weekday captions, tokens for every color/radius/duration, standard
-// focus rings, Escape closes and refocuses the trigger.
-import { createSignal, createMemo, onCleanup, onMount, For, Show } from 'solid-js';
+// focus rings, Escape closes and refocuses the trigger. Outside-dismiss and
+// Escape ownership are delegated to the kit's shared overlay primitives
+// (see src/components/kit/overlayStack.js) so this picker dismisses
+// correctly on touch too, and so Escape doesn't wrongly cascade to close an
+// ancestor Dialog when the picker is opened from inside one.
+import { createSignal, createMemo, For, Show } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import {
   format, addMonths, subMonths, startOfMonth, endOfMonth,
   startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, parseISO
 } from 'date-fns';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-solid';
-import { IconButton, Text, cx } from '../kit';
+import { IconButton, Text, cx, EscapeLayer, useOutsideDismiss } from '../kit';
 
 const TRIGGER_DEFAULT_CLASS = cx(
   'w-full box-border flex items-center justify-between gap-2 py-2 px-3 cursor-pointer',
@@ -36,18 +40,12 @@ function DatePicker(props) {
   let popoverRef;
   let triggerRef;
 
-  const handleClickOutside = (e) => {
-    if (isOpen() && containerRef && !containerRef.contains(e.target) && popoverRef && !popoverRef.contains(e.target)) {
-      setIsOpen(false);
-    }
-  };
-
-  onMount(() => {
-    document.addEventListener('mousedown', handleClickOutside);
-  });
-
-  onCleanup(() => {
-    document.removeEventListener('mousedown', handleClickOutside);
+  // Upgrades the previous mousedown-only outside-click handling to also
+  // dismiss on touchstart (the shared hook's fuller behavior).
+  useOutsideDismiss({
+    isOpen,
+    refs: [() => containerRef, () => popoverRef],
+    onDismiss: () => setIsOpen(false),
   });
 
   const monthDays = createMemo(() => {
@@ -82,13 +80,6 @@ function DatePicker(props) {
     }
   };
 
-  const handlePanelKeyDown = (e) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      close({ refocus: true });
-    }
-  };
-
   const selectedDate = () => (props.value ? parseISO(props.value) : null);
 
   return (
@@ -106,12 +97,15 @@ function DatePicker(props) {
       </button>
 
       <Show when={isOpen()}>
+        {/* Joins the shared overlay stack for as long as the panel is open,
+            so a nested Escape doesn't wrongly cascade to close an ancestor
+            Dialog (e.g. this picker opened from inside AddEventModal). */}
+        <EscapeLayer onEscape={() => close({ refocus: true })} />
         <Portal>
           <div
             ref={popoverRef}
             role="dialog"
             aria-label="Choose date"
-            onKeyDown={handlePanelKeyDown}
             class="fixed z-[var(--z-dialog,70)] w-max p-3 rounded-lg border border-border bg-popover shadow-md"
             style={{ top: `${coords().top}px`, left: `${coords().left}px` }}
           >

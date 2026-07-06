@@ -342,6 +342,7 @@ export function TextInput(props) {
         readOnly={showsDisabledMessage() || undefined}
         autofocus={local.hasAutoFocus || undefined}
         aria-describedby={ariaDescribedBy()}
+        required={local.isRequired && !local.isOptional ? true : undefined}
         aria-required={local.isRequired && !local.isOptional ? 'true' : undefined}
         aria-invalid={local.status?.type === 'error' ? 'true' : undefined}
         aria-busy={isBusy() || undefined}

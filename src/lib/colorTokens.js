@@ -93,18 +93,36 @@ function colorDistance(a, b) {
  * @returns {{name: string, cssVar: string, hex: string}} the nearest entry
  *   of HUE_TOKENS; unknown/invalid input snaps to the gray token.
  */
-export function snapUserColor(cssColor) {
-  const rgb = parseCssColor(cssColor);
-  if (!rgb) return GRAY_TOKEN;
+// Memoizes snapUserColor results keyed by the normalized input color string.
+// Invalid/non-string inputs all resolve to GRAY_TOKEN regardless of the exact
+// value, so they share a single sentinel cache entry.
+const INVALID_INPUT_CACHE_KEY = '\0invalid';
+const snapCache = new Map();
 
-  let best = GRAY_TOKEN;
-  let bestDistance = Infinity;
-  for (const token of HUE_TOKENS) {
-    const distance = colorDistance(rgb, parseCssColor(token.hex));
-    if (distance < bestDistance) {
-      bestDistance = distance;
-      best = token;
+export function snapUserColor(cssColor) {
+  const cacheKey =
+    typeof cssColor === 'string' ? cssColor.trim().toLowerCase() : INVALID_INPUT_CACHE_KEY;
+
+  const cached = snapCache.get(cacheKey);
+  if (cached !== undefined) return cached;
+
+  const rgb = parseCssColor(cssColor);
+  let result;
+  if (!rgb) {
+    result = GRAY_TOKEN;
+  } else {
+    let best = GRAY_TOKEN;
+    let bestDistance = Infinity;
+    for (const token of HUE_TOKENS) {
+      const distance = colorDistance(rgb, parseCssColor(token.hex));
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        best = token;
+      }
     }
+    result = best;
   }
-  return best;
+
+  snapCache.set(cacheKey, result);
+  return result;
 }

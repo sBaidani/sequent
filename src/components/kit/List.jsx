@@ -113,13 +113,26 @@ export function List(props) {
 
   onMount(() => stampRoving());
 
+  // Capture any caller-supplied onKeyDown/onFocusIn from `rest` before the
+  // Dynamic spread below would otherwise let our own handlers win (props
+  // after a spread override spread props of the same name in JSX/Solid).
+  const callerOnKeyDown = rest.onKeyDown;
+  const callerOnFocusIn = rest.onFocusIn;
+
   const handleFocusIn = (e) => {
+    // Caller handler runs first, mirroring normal event-handler composition;
+    // internal roving-tabindex bookkeeping always follows.
+    if (typeof callerOnFocusIn === 'function') callerOnFocusIn(e);
     if (e.target instanceof Element && e.target.hasAttribute(CONTROL_ATTR)) {
       stampRoving(e.target);
     }
   };
 
   const handleKeyDown = (e) => {
+    // Caller handler runs first so it can call e.preventDefault() to opt out
+    // of the internal keyboard navigation below (which already respects
+    // e.defaultPrevented).
+    if (typeof callerOnKeyDown === 'function') callerOnKeyDown(e);
     if (e.defaultPrevented) return;
     if (e.key === 'Escape') {
       if (typeof local.onEscape === 'function') {

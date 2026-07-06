@@ -2,7 +2,7 @@ import { createMemo, For, Show, createSignal } from 'solid-js';
 import { format, isSameDay } from 'date-fns';
 import { taskStore } from '../../stores/taskStore';
 import { expandRecurringItems } from '../../lib/recurrenceEngine';
-import { IconButton, List, ListItem, CheckboxInput, Text, EmptyState, cx } from '../kit';
+import { IconButton, List, ListItem, CheckboxInput, Text, EmptyState, cx, Section } from '../kit';
 import { snapUserColor } from '../../lib/colorTokens';
 
 // Stored per-item user colors are snapped to the nearest Astryx hue token and
@@ -44,7 +44,13 @@ function DayTaskListPreview(props) {
   });
 
   return (
-    <div class={`flex flex-col h-full min-h-[500px] border-l border-border bg-body/50 transition-all duration-300 ease-in-out ${collapsed() ? 'w-12 min-w-[48px]' : 'w-[350px] min-w-[350px]'}`}>
+    <Section
+      variant="transparent"
+      padding={0}
+      width={collapsed() ? 48 : 350}
+      minHeight={500}
+      class={`flex flex-col h-full border-l border-border !bg-body/50 transition-all duration-300 ease-in-out ${collapsed() ? 'min-w-[48px]' : 'min-w-[350px]'}`}
+    >
 
       <div class="flex items-center p-4 border-b border-border gap-3">
         <IconButton
@@ -111,7 +117,7 @@ function DayTaskListPreview(props) {
           </List>
         </Show>
       </div>
-    </div>
+    </Section>
   );
 }
 

@@ -36,6 +36,7 @@ import {
 } from 'solid-js';
 import { cx } from './cx';
 import { FormLayoutContext } from './FormLayout';
+import { EscapeLayer, useOutsideDismiss } from './overlayStack';
 
 // ─── Option normalization (ported from swizzled utils.ts) ──────────────────
 
@@ -443,18 +444,7 @@ export function Selector(props) {
 
   // Light dismiss: pointer down anywhere outside the field closes the popup
   // (without stealing focus back), matching the popover's hasLightDismiss.
-  createEffect(() => {
-    if (!isOpen()) return;
-    const onDocumentPointerDown = (e) => {
-      if (rootEl && !rootEl.contains(e.target)) close();
-    };
-    document.addEventListener('mousedown', onDocumentPointerDown);
-    document.addEventListener('touchstart', onDocumentPointerDown);
-    onCleanup(() => {
-      document.removeEventListener('mousedown', onDocumentPointerDown);
-      document.removeEventListener('touchstart', onDocumentPointerDown);
-    });
-  });
+  useOutsideDismiss({ isOpen, refs: [() => rootEl], onDismiss: () => close() });
 
   // Keep the highlighted option visible inside the fixed-height listbox.
   createEffect(() => {
@@ -511,6 +501,14 @@ export function Selector(props) {
     const enabled = enabledIndices();
     if (enabled.length === 0) return;
     const pos = enabled.indexOf(highlightedIndex());
+    if (pos === -1) {
+      // No current highlight (e.g. right after the search input reset it
+      // on typing): ArrowDown starts at the first enabled option, ArrowUp
+      // at the last — matching the documented "open via ArrowUp highlights
+      // last item" behavior instead of always landing on the first.
+      setHighlightedIndex(delta < 0 ? enabled[enabled.length - 1] : enabled[0]);
+      return;
+    }
     const nextPos = Math.min(Math.max(pos + delta, 0), enabled.length - 1);
     setHighlightedIndex(enabled[nextPos] ?? highlightedIndex());
   };
@@ -552,12 +550,12 @@ export function Selector(props) {
         }
         break;
 
-      case 'Escape':
-        if (isOpen()) {
-          e.preventDefault();
-          close({ refocus: true });
-        }
-        break;
+      // Escape is handled by the shared overlay stack (see the EscapeLayer
+      // rendered alongside the dropdown below) rather than here: a local
+      // handler that closed synchronously on this element would pop this
+      // Selector off the stack before the keydown finished bubbling to
+      // `document`, which would let the shared listener wrongly fall
+      // through to an ancestor Dialog on the very same Escape press.
 
       case 'Tab':
         if (isOpen()) close(); // let focus move on
@@ -609,9 +607,10 @@ export function Selector(props) {
   };
 
   const handleSearchKeyDown = (e) => {
-    // Arrow keys navigate options; Enter selects; Escape/Tab close.
+    // Arrow keys navigate options; Enter selects; Tab closes (Escape is left
+    // to bubble to the shared overlay stack — see the EscapeLayer below).
     // Home/End are left to the input for caret movement.
-    if (['ArrowDown', 'ArrowUp', 'Enter', 'Escape', 'Tab'].includes(e.key)) {
+    if (['ArrowDown', 'ArrowUp', 'Enter', 'Tab'].includes(e.key)) {
       handleKeyDown(e);
     }
   };
@@ -801,6 +800,10 @@ export function Selector(props) {
 
   const dropdown = () => (
     <Show when={isOpen()}>
+      {/* Joins the shared overlay stack for as long as the dropdown is
+          open, so Escape ordering is correct even when this Selector is
+          nested inside a Dialog (or another overlay) opened earlier. */}
+      <EscapeLayer onEscape={() => close({ refocus: true })} />
       <div class={cx(DROPDOWN_BASE, DROPDOWN_PLACEMENT[local.placement] ?? DROPDOWN_PLACEMENT.below)}>
         <Show when={local.hasSearch}>
           <div class="px-2 py-1">

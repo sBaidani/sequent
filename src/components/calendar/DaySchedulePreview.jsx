@@ -5,7 +5,7 @@ import { taskStore } from '../../stores/taskStore';
 import { expandRecurringItems } from '../../lib/recurrenceEngine';
 import { calculateGridOverlap } from '../../lib/scheduling';
 import { snapUserColor } from '../../lib/colorTokens';
-import { IconButton, List, ListItem, Text, cx } from '../kit';
+import { IconButton, List, ListItem, Text, cx, Section } from '../kit';
 
 // Stored per-calendar / per-list colors render through the bounded Astryx hue
 // palette (snapUserColor → theme-adaptive var(--color-<hue>-vivid)); the old
@@ -143,7 +143,13 @@ function DaySchedulePreview(props) {
     new Date(props.date.includes('T') ? props.date : props.date + 'T12:00:00');
 
   return (
-    <div class={`flex flex-col h-full min-h-[500px] border-l border-border bg-body/50 transition-all duration-300 ease-in-out ${collapsed() ? 'w-12 min-w-[48px]' : 'w-[350px] min-w-[350px]'}`}>
+    <Section
+      variant="transparent"
+      padding={0}
+      width={collapsed() ? 48 : 350}
+      minHeight={500}
+      class={`flex flex-col h-full border-l border-border !bg-body/50 transition-all duration-300 ease-in-out ${collapsed() ? 'min-w-[48px]' : 'min-w-[350px]'}`}
+    >
 
       <div class="flex items-center p-4 border-b border-border gap-3">
         <IconButton
@@ -304,7 +310,7 @@ function DaySchedulePreview(props) {
           </For>
         </div>
       </div>
-    </div>
+    </Section>
   );
 }
 

@@ -205,6 +205,7 @@ function AddItemModal() {
                   value={title()}
                   onChange={(v) => setTitle(v)}
                   hasAutoFocus
+                  isRequired
                 />
 
                 <TextArea

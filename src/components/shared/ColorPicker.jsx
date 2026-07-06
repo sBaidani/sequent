@@ -10,10 +10,14 @@
 // A11y: the trigger is an icon-only button (aria-haspopup/aria-expanded);
 // the portal panel is a radiogroup of swatches with roving tabindex —
 // arrows/Home/End move focus, Enter/Space select, Escape closes and
-// refocuses the trigger.
-import { createSignal, onCleanup, onMount, Show, For } from 'solid-js';
+// refocuses the trigger. Outside-dismiss and Escape ownership are
+// delegated to the kit's shared overlay primitives (see
+// src/components/kit/overlayStack.js) so this picker dismisses correctly
+// on touch too, and so Escape doesn't wrongly cascade to close an ancestor
+// Dialog when opened from inside one.
+import { createSignal, Show, For } from 'solid-js';
 import { Portal } from 'solid-js/web';
-import { cx } from '../kit';
+import { cx, EscapeLayer, useOutsideDismiss } from '../kit';
 import { HUE_TOKENS, snapUserColor } from '../../lib/colorTokens';
 
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -28,18 +32,12 @@ function ColorPicker(props) {
 
   const selectedToken = () => (props.value ? snapUserColor(props.value) : null);
 
-  const handleClickOutside = (e) => {
-    if (isOpen() && containerRef && !containerRef.contains(e.target) && popoverRef && !popoverRef.contains(e.target)) {
-      setIsOpen(false);
-    }
-  };
-
-  onMount(() => {
-    document.addEventListener('mousedown', handleClickOutside);
-  });
-
-  onCleanup(() => {
-    document.removeEventListener('mousedown', handleClickOutside);
+  // Upgrades the previous mousedown-only outside-click handling to also
+  // dismiss on touchstart (the shared hook's fuller behavior).
+  useOutsideDismiss({
+    isOpen,
+    refs: [() => containerRef, () => popoverRef],
+    onDismiss: () => setIsOpen(false),
   });
 
   const close = ({ refocus = false } = {}) => {
@@ -79,11 +77,9 @@ function ColorPicker(props) {
       next = 0;
     } else if (e.key === 'End') {
       next = HUE_TOKENS.length - 1;
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      close({ refocus: true });
-      return;
     } else {
+      // Escape is handled by the shared overlay stack (see the EscapeLayer
+      // rendered alongside the panel below) rather than here.
       return;
     }
     e.preventDefault();
@@ -113,6 +109,10 @@ function ColorPicker(props) {
       />
 
       <Show when={isOpen()}>
+        {/* Joins the shared overlay stack for as long as the panel is open,
+            so a nested Escape doesn't wrongly cascade to close an ancestor
+            Dialog (e.g. this picker opened from inside AddEventModal). */}
+        <EscapeLayer onEscape={() => close({ refocus: true })} />
         <Portal>
           <div
             ref={popoverRef}
