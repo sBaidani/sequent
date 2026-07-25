@@ -124,12 +124,9 @@ function TimelineView() {
   };
 
   const openItem = (item) => {
-    if (item.type === 'event') {
-      uiStore.setActiveEvent(item.originalId || item.id, 'event');
-      uiStore.setActiveModal('eventView');
-    } else {
-      uiStore.setActiveEvent(item.originalId || item.id, 'task');
-    }
+    // setActiveEvent already sets activeModal to 'viewEvent' internally
+    // (uiStore.js) — do not also setActiveModal here with a different string.
+    uiStore.setActiveEvent(item.originalId || item.id, item.type === 'event' ? 'event' : 'task');
   };
 
   const setAgendaMode = (mode) => {
