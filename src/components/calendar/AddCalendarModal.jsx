@@ -1,62 +1,77 @@
 import { createSignal, For } from 'solid-js';
-import Modal from '../ui/Modal';
+import { Dialog, DialogHeader, DialogBody, DialogFooter, FormLayout, TextInput, Text, Button, cx } from '../kit';
 import { eventStore } from '../../stores/eventStore';
 import { uiStore } from '../../stores/uiStore';
+import { snapUserColor } from '../../lib/colorTokens';
+
+// Seed palette for user calendar colors. The hex values are DATA (persisted
+// via eventStore.addCalendar); swatches display through
+// snapUserColor's theme-adaptive hue tokens.
+const COLORS = [
+  { value: '#E8942A', name: 'Amber' },
+  { value: '#C0185A', name: 'Rose' },
+  { value: '#1FA7A7', name: 'Teal' },
+  { value: '#6B5BDB', name: 'Purple' },
+  { value: '#3B6ED6', name: 'Blue' },
+  { value: '#34A853', name: 'Green' },
+];
 
 function AddCalendarModal() {
   const [name, setName] = createSignal('');
   const [color, setColor] = createSignal('#E8942A');
-  
-  const colors = ['#E8942A', '#C0185A', '#1FA7A7', '#6B5BDB', '#3B6ED6', '#34A853'];
+
+  const close = () => uiStore.setActiveModal(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!name().trim()) return;
-    
+
     eventStore.addCalendar(name(), color());
     setName('');
-    uiStore.setActiveModal(null);
+    close();
   };
 
   return (
-    <Modal id="addCalendar" compact>
-      <h2 class="font-display lowercase text-2xl font-extrabold mb-5 text-text-primary">New Calendar</h2>
-      <form onSubmit={handleSubmit} class="flex flex-col gap-4">
-        
-        <div>
-          <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-1.5 tracking-wider">Calendar Name</label>
-          <input 
-            type="text" 
-            placeholder="Work, Personal..."
-            value={name()}
-            onInput={(e) => setName(e.target.value)}
-            class="w-full bg-text-primary/5 border border-border rounded-xl px-3.5 py-3 text-text-primary text-[15px] outline-none focus:border-accent transition-colors"
-            autofocus
-          />
-        </div>
-        
-        <div>
-          <label class="font-display lowercase block text-xs text-text-muted font-semibold mb-2 tracking-wider">Color</label>
-          <div class="flex gap-3">
-            <For each={colors}>{c => (
-              <button 
-                type="button"
-                onClick={() => setColor(c)}
-                class={`w-8 h-8 rounded-full border-4 cursor-pointer transition-transform hover:scale-110 ${color() === c ? 'border-text-primary' : 'border-transparent'}`}
-                style={{ background: c }}
-              />
-            )}</For>
-          </div>
-        </div>
-
-        <button 
-          type="submit"
-          class="mt-2 bg-accent text-text-primary border-none p-3.5 rounded-xl text-[15px] font-bold cursor-pointer hover:bg-accent/80 transition-colors shadow-lg shadow-accent/20"
-        >
-          Create Calendar
-        </button>
+    <Dialog open={uiStore.state.activeModal === 'addCalendar'} onClose={close} size="sm">
+      <DialogHeader title="New Calendar" />
+      <form class="contents" onSubmit={handleSubmit}>
+        <DialogBody>
+          <FormLayout>
+            <TextInput
+              label="Calendar Name"
+              placeholder="Work, Personal..."
+              value={name()}
+              onChange={(v) => setName(v)}
+              hasAutoFocus
+            />
+            <div class="flex flex-col gap-1">
+              <Text as="span" type="label" color="secondary" id="add-calendar-color-label">
+                Color
+              </Text>
+              <div role="group" aria-labelledby="add-calendar-color-label" class="flex gap-3">
+                <For each={COLORS}>{(c) => (
+                  <button
+                    type="button"
+                    aria-label={c.name}
+                    aria-pressed={color() === c.value}
+                    onClick={() => setColor(c.value)}
+                    class={cx(
+                      'h-8 w-8 cursor-pointer rounded-full border-4 border-solid transition-transform hover:scale-110',
+                      'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-accent)',
+                      color() === c.value ? 'border-primary' : 'border-transparent',
+                    )}
+                    style={{ background: snapUserColor(c.value).cssVar }}
+                  />
+                )}</For>
+              </div>
+            </div>
+          </FormLayout>
+        </DialogBody>
+        <DialogFooter>
+          <Button type="submit" variant="primary" label="Create Calendar" class="w-full" />
+        </DialogFooter>
       </form>
-    </Modal>
+    </Dialog>
   );
 }
 

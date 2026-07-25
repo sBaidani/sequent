@@ -88,25 +88,15 @@ describe('UI Store', () => {
       expect(uiStore.state.theme).toBe('#C0185A');
     });
 
-    test('setTheme sets --accent CSS variable on document', () => {
+    test('setTheme sets data-accent on the document root (drives accents.css)', () => {
       uiStore.setTheme('#C0185A');
-      const accent = document.documentElement.style.getPropertyValue('--accent');
-      expect(accent).toBe('#C0185A');
+      expect(document.documentElement.dataset.accent).toBe('rose');
     });
 
-    test('setTheme sets --accent-rgb CSS variable with correct RGB', () => {
-      uiStore.setTheme('#C0185A');
-      const accentRgb = document.documentElement.style.getPropertyValue('--accent-rgb');
-      // #C0 = 192, #18 = 24, #5A = 90
-      expect(accentRgb).toBe('192, 24, 90');
-    });
-
-    test('setTheme with Teal color sets correct variables', () => {
+    test('setTheme with Teal color resolves the slug and hex', () => {
       uiStore.setTheme('#1FA7A7');
       expect(uiStore.state.theme).toBe('#1FA7A7');
-      expect(document.documentElement.style.getPropertyValue('--accent')).toBe('#1FA7A7');
-      // #1F = 31, #A7 = 167, #A7 = 167
-      expect(document.documentElement.style.getPropertyValue('--accent-rgb')).toBe('31, 167, 167');
+      expect(document.documentElement.dataset.accent).toBe('teal');
     });
   });
 

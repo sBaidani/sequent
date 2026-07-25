@@ -31,6 +31,7 @@ const [state, setState] = createStore({
   weatherUnits: loadSetting('weatherUnits', 'metric'),
   focusDuration: parseInt(loadSetting('focusDuration', '25'), 10),
   restDuration: parseInt(loadSetting('restDuration', '5'), 10),
+  workWeekOnly: loadSetting('workWeekOnly', 'false') === 'true',
 });
 
 export const settingsStore = {
@@ -79,5 +80,10 @@ export const settingsStore = {
   setRestDuration: (mins) => {
     setState('restDuration', mins);
     localStorage.setItem('sequent_setting_restDuration', mins.toString());
+  },
+
+  setWorkWeekOnly: (workWeekOnly) => {
+    setState('workWeekOnly', workWeekOnly);
+    localStorage.setItem('sequent_setting_workWeekOnly', workWeekOnly ? 'true' : 'false');
   }
 };

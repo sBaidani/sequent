@@ -3,12 +3,10 @@
    Cache-first offline support
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'sequent-cache-v2';
+const CACHE_NAME = 'sequent-cache-v3';
 const ASSETS = [
   './',
   './index.html',
-  './styles.css',
-  './app.js',
   './manifest.json'
 ];
 
@@ -53,6 +51,28 @@ self.addEventListener('fetch', e => {
     return;
   }
 
+  // Navigations / HTML: network-first so new deploys are picked up,
+  // falling back to the cached shell when offline
+  if (
+    e.request.mode === 'navigate' ||
+    (e.request.headers.get('accept') || '').includes('text/html')
+  ) {
+    e.respondWith(
+      fetch(e.request).then(response => {
+        const responseToCache = response.clone();
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(e.request, responseToCache);
+        });
+        return response;
+      }).catch(() => {
+        return caches.match(e.request).then(cachedResponse => {
+          return cachedResponse || caches.match('./index.html');
+        });
+      })
+    );
+    return;
+  }
+
   e.respondWith(
     caches.match(e.request).then(cachedResponse => {
       if (cachedResponse) {
@@ -70,11 +90,23 @@ self.addEventListener('fetch', e => {
             cache.put(e.request, responseToCache);
           });
         }
+        // Cache hashed Vite build assets (same-origin GET, /assets/) dynamically
+        if (
+          e.request.method === 'GET' &&
+          e.request.url.startsWith(self.location.origin) &&
+          new URL(e.request.url).pathname.includes('/assets/') &&
+          response.ok
+        ) {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(e.request, responseToCache);
+          });
+        }
         return response;
       });
     }).catch(() => {
       // Fallback for HTML pages when network is down
-      if (e.request.headers.get('accept').includes('text/html')) {
+      if ((e.request.headers.get('accept') || '').includes('text/html')) {
         return caches.match('./index.html');
       }
     })

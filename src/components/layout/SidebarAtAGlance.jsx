@@ -1,15 +1,27 @@
+// SidebarAtAGlance — clock + "up next" event + weather (Phase 4, kit-based).
+// Retired here: the clickable <div> event card (kit List/ListItem invisible-
+// button pattern — real button semantics, keyboard reachable), hand-rolled
+// bg-white/NN + bg-accent/NN tints (token surfaces: bg-accent-muted,
+// border-border), the raw pulse div while weather loads (kit Skeleton), and
+// off-scale text-[9..42px] type (token type scale via the Tailwind bridge).
+// The event's calendar color renders through snapUserColor() as a StatusDot
+// (inline background from the snapped hue token — same documented user-color
+// pattern as kit CheckboxInput's `color` prop).
 import { createSignal, onMount, createMemo, createEffect, Show } from 'solid-js';
-import { format, differenceInMinutes } from 'date-fns';
+import { format } from 'date-fns';
 import { weatherService } from '../../services/weatherService';
 import { eventStore } from '../../stores/eventStore';
 import { uiStore } from '../../stores/uiStore';
 import { settingsStore } from '../../stores/settingsStore';
 import { expandRecurringItems } from '../../lib/recurrenceEngine';
+import { snapUserColor } from '../../lib/colorTokens';
+import { List, ListItem, Text, StatusDot, Skeleton, cx } from '../kit';
 
 function SidebarAtAGlance() {
   const [time, setTime] = createSignal(new Date());
   const { state: settings } = settingsStore;
-  
+  const { state: eventState } = eventStore;
+
   createEffect(() => {
     const lat = settings.weatherLocation?.lat;
     const lon = settings.weatherLocation?.lon;
@@ -102,7 +114,7 @@ function SidebarAtAGlance() {
         } else {
           gapMs = new Date(activeEvent.start_time).getTime() - now.getTime();
         }
-        
+
         if (gapMs >= 60000) {
           timeStr = `${fmt} • ${formatGap(gapMs)}`;
         } else {
@@ -115,61 +127,119 @@ function SidebarAtAGlance() {
     return { event: activeEvent, timeStr, pulse };
   });
 
+  // Per-item USER color: the event's calendar color snapped to the nearest
+  // Astryx hue token (theme-adaptive cssVar), never the raw stored hex.
+  const eventHue = () => {
+    const data = displayData();
+    if (!data) return null;
+    const cal = eventState.calendars?.find((c) => c.id === data.event.calendarId);
+    return snapUserColor(cal?.color);
+  };
+
+  const openActiveEvent = () => {
+    const data = displayData();
+    if (data) uiStore.setActiveEvent(data.event.originalId || data.event.id, 'event');
+  };
+
+  // Weather insight — shown with or without an upcoming event (as before).
+  const insightLine = () => (
+    <Show when={weatherService.state?.current?.insight}>
+      <Text size="xsm" weight="semibold" color="accent" maxLines={1} class="mt-1">
+        ✨ {weatherService.state.current.insight}
+      </Text>
+    </Show>
+  );
+
+  // Trailing weather block: kit Skeleton while loading, token border divider.
+  const weatherEnd = () => (
+    <Show
+      when={!weatherService.loading}
+      fallback={<Skeleton shape="circle" width={40} />}
+    >
+      <Show when={weatherService.state}>
+        <span class="flex flex-col items-center justify-center ps-3 border-s border-border">
+          <span
+            class="font-display lowercase text-2xl leading-none mb-1 drop-shadow-md"
+            title={weatherService.state.current.condition}
+          >
+            {weatherService.state.current.icon}
+          </span>
+          <Text size="xsm" weight="bold" color="secondary" class="leading-none">
+            {weatherService.state.current.temp}°{settings.weatherUnits === 'fahrenheit' ? 'F' : 'C'}
+          </Text>
+        </span>
+      </Show>
+    </Show>
+  );
+
+  const cardClass = () =>
+    cx(
+      'rounded-lg border transition-all duration-(--duration-medium)',
+      displayData() ? 'border-accent-muted bg-accent-muted' : 'border-border',
+      displayData()?.pulse
+        ? 'animate-pulse-glow'
+        : displayData() &&
+            'shadow-[0_0_20px_color-mix(in_srgb,var(--color-accent)_20%,transparent)]',
+    );
+
   return (
     <div class="px-5 pb-4 mb-4 flex flex-col gap-6 pt-0">
       {/* Clock Section */}
       <div class="flex flex-col">
-        <span class="text-white text-[42px] font-extrabold tracking-tighter leading-none drop-shadow-sm">{format(time(), timeFormat())}</span>
-        <span class="font-display lowercase text-white/40 text-[9px] font-bold tracking-widest mt-2">{format(time(), 'EEEE, MMMM d')}</span>
+        <Text weight="bold" hasTabularNumbers display="block" class="text-5xl tracking-tighter leading-none drop-shadow-sm">
+          {format(time(), timeFormat())}
+        </Text>
+        {/* Brand typography (Major Mono via font-display) stays by decision. */}
+        <Text size="xsm" weight="bold" color="disabled" display="block" class="font-display lowercase tracking-widest mt-2">
+          {format(time(), 'EEEE, MMMM d')}
+        </Text>
       </div>
 
       {/* At a Glance Section */}
-      <div class="flex flex-col gap-3">
-        <div 
-          classList={{
-            "group flex items-center justify-between gap-4 bg-accent/10 border border-accent/20 rounded-2xl p-4 transition-all duration-300": true,
-            "hover:bg-accent/20 cursor-pointer": !!displayData(),
-            "animate-pulse-glow hover:!shadow-[0_0_35px_rgba(var(--accent-rgb),0.8)]": displayData()?.pulse,
-            "shadow-[0_0_20px_rgba(var(--accent-rgb),0.2)] hover:shadow-[0_0_25px_rgba(var(--accent-rgb),0.4)]": displayData() && !displayData().pulse
-          }}
-          onClick={() => displayData() && uiStore.setActiveEvent(displayData().event.originalId || displayData().event.id, 'event')}
+      <List aria-label="Up next">
+        <Show
+          when={displayData()}
+          fallback={
+            <ListItem
+              class={cardClass()}
+              label={
+                <Text size="sm" color="disabled" class="italic">
+                  No upcoming events
+                </Text>
+              }
+              description={insightLine()}
+              endContent={weatherEnd()}
+            />
+          }
         >
-          <div class="flex-1 min-w-0 flex flex-col gap-1">
-            <Show when={displayData()} fallback={<span class="text-white/40 text-[11px] italic">No upcoming events</span>}>
-              {(data) => (
+          {(data) => (
+            <ListItem
+              class={cardClass()}
+              startContent={
+                <StatusDot
+                  label={`Calendar color: ${eventHue().name}`}
+                  isPulsing={data().pulse}
+                  // Snapped user hue token (see header comment) — the inline
+                  // background is a token cssVar, not the raw stored color.
+                  style={{ 'background-color': eventHue().cssVar }}
+                />
+              }
+              label={`${data().event.title}${data().event.rrule ? ' 🔄' : ''}`}
+              description={
                 <>
-                  <span class="text-white text-[16px] font-extrabold truncate tracking-wide leading-tight group-hover:text-accent transition-colors">
-                    {data().event.title} {data().event.rrule && '🔄'}
-                  </span>
-                  
-                  <div class="flex items-center gap-2 mt-0.5">
-                    <span class="text-white/70 text-[11px] font-semibold">{data().timeStr}</span>
-                    <Show when={data().event.location}>
-                      <span class="w-1 h-1 rounded-full bg-white/20" />
-                      <span class="text-white/50 text-[10px] truncate">{data().event.location}</span>
-                    </Show>
-                  </div>
+                  <Text type="supporting" weight="semibold" display="block" maxLines={1}>
+                    {data().timeStr}
+                    <Show when={data().event.location}> • {data().event.location}</Show>
+                  </Text>
+                  {insightLine()}
                 </>
-              )}
-            </Show>
-
-            <Show when={weatherService.state?.current?.insight}>
-              <div class="text-accent/90 text-[10px] font-semibold mt-1 leading-tight line-clamp-1 group-hover:line-clamp-none transition-all">
-                ✨ {weatherService.state.current.insight}
-              </div>
-            </Show>
-          </div>
-
-          <Show when={!weatherService.loading} fallback={<div class="w-10 h-10 rounded-full bg-white/5 animate-pulse shrink-0" />}>
-            <Show when={weatherService.state}>
-              <div class="flex flex-col items-center justify-center shrink-0 pl-3 border-l border-white/5">
-                <span class="font-display lowercase text-2xl drop-shadow-md leading-none mb-1" title={weatherService.state.current.condition}>{weatherService.state.current.icon}</span>
-                <span class="text-white/80 font-bold text-[10px] leading-none">{weatherService.state.current.temp}°{settings.weatherUnits === 'fahrenheit' ? 'F' : 'C'}</span>
-              </div>
-            </Show>
-          </Show>
-        </div>
-      </div>
+              }
+              endContent={weatherEnd()}
+              onClick={openActiveEvent}
+            />
+          )}
+        </Show>
+      </List>
     </div>
   );
 }
